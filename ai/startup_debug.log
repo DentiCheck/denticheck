@@ -1,0 +1,47 @@
+/Users/ryu_ni/Desktop/DentiCheck/denticheck/ai/src/denticheck_ai/pipelines/rag/retrieve.py:39: LangChainDeprecationWarning: The class `HuggingFaceEmbeddings` was deprecated in LangChain 0.2.2 and will be removed in 1.0. An updated version of the class exists in the `langchain-huggingface package and should be used instead. To use it run `pip install -U `langchain-huggingface` and import as `from `langchain_huggingface import HuggingFaceEmbeddings``.
+  self.embeddings = HuggingFaceEmbeddings(
+2026-02-10 23:14:05.507 | INFO     | denticheck_ai.pipelines.detect.service:__init__:19 - Loaded YOLO model from /Users/ryu_ni/Desktop/DentiCheck/denticheck/ai/models/yolo/weights/best.pt
+INFO:     Started server process [52174]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+MilvusRetriever 초기화 완료 (URI: http://localhost:19530)
+INFO:     127.0.0.1:56685 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56690 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56693 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56701 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56706 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56717 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56722 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56732 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56736 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56741 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56760 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56774 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56778 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56795 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56800 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56810 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56821 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56827 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56882 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56887 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56904 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56903 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56939 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56946 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56955 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56962 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56970 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56977 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56986 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56997 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57005 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57015 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57030 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57038 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57047 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57057 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57069 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57082 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57082 - "GET /metrics HTTP/1.1" 404 Not Found

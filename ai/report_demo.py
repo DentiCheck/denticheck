@@ -8,7 +8,7 @@ $ export PYTHONPATH=$PYTHONPATH:.
 $ python3 report_demo.py
 """
 
-from src.denticheck_ai.api.routers.report import ReportRequest, YoloSummary, MlResult, OverallResult, RecommendedAction
+from src.denticheck_ai.api.routers.report import ReportRequest, YoloSummary, MlResult, OverallInfo, OverallAction
 from src.denticheck_ai.pipelines.llm.client import LlmClient
 
 def test_report_generation():
@@ -16,7 +16,6 @@ def test_report_generation():
     
     # 최신 Decision Record Projection 데이터 규격 (v2.0)
     req = ReportRequest(
-        session_id="4a834022-2e45-422d-adad-6aa61d33cd17",
         yolo={
             "Calculus": YoloSummary(present=True, count=2, area_ratio=0.05, max_score=0.92),
             "Caries": YoloSummary(present=False, count=0, area_ratio=0.0, max_score=0.0)
@@ -32,9 +31,10 @@ def test_report_generation():
         history={
             "delta_from_last": {"CalculusCount": "+1"}
         },
-        overall=OverallResult(
+        overall=OverallInfo(
             level="YELLOW",
-            recommended_actions=[RecommendedAction(code="D100", description="스케일링")]
+            recommended_actions=[OverallAction(code="D100", priority="HIGH")],
+            safety_flags={"Emergency": False}
         ),
         language="ko"
     )
