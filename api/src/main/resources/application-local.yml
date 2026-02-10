@@ -2,6 +2,8 @@ spring:
   config:
     activate:
       on-profile: local
+  flyway:
+    clean-disabled: false
   datasource:
     url: jdbc:postgresql://localhost:5432/denticheck
     username: admin
@@ -20,5 +22,5 @@ spring:
 # If running API in IDE, this connects to localhost:8000 (where AI service is exposed)
 ai:
   client:
-    url: http://localhost:8000
+    url: ${AI_SERVICE_URL:http://localhost:8001}
     timeout: 5000

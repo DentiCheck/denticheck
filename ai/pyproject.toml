@@ -9,7 +9,7 @@ packages = [{include = "denticheck_ai", from = "src"}]
 [tool.poetry.dependencies]
 python = "^3.11"
 fastapi = "^0.111.0"
-uvicorn = "^0.30.1"
+uvicorn = {extras = ["standard"], version = "^0.40.0"}
 pydantic = "^2.7.1"
 pydantic-settings = "^2.2.1"
 ultralytics = "^8.2.0"

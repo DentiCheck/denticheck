@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.11-slim-bullseye
 
 WORKDIR /app
 
@@ -8,11 +8,12 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir poetry
+# Copy only requirements to cache them in docker layer
+# For now, we don't have requirements.txt, so we will install dependencies directly
+# In production, generated requirements.txt from poetry should be used
+RUN pip install --no-cache-dir fastapi uvicorn[standard] pydantic pydantic-settings ultralytics torch torchvision python-multipart httpx openai langchain langchain-ollama langchain-milvus langchain-community sentence-transformers pymilvus python-dotenv loguru
 
-COPY pyproject.toml poetry.lock* ./
-RUN poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi --only main
+ENV PYTHONPATH=/app/src
 
 COPY . .
 

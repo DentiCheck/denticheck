@@ -14,8 +14,8 @@ spring:
 google:
   mobile:
     allowed-audiences:
-      - "TODO_ANDROID_CLIENT_ID.apps.googleusercontent.com"
-      - "TODO_IOS_CLIENT_ID.apps.googleusercontent.com"
+      - "1021358190527-k664ga1ctlhjhe7kpkt7o8765s21n4lt.apps.googleusercontent.com"
+      - "1021358190527-olr95e805qqqd53kffu5v33gpm4um7ad.apps.googleusercontent.com"
 admin:
   web:
     # TODO: 운영 관리자 웹 refreshToken JWT을 받을 주소.  Cookie <- "refreshToken" : refreshToken
