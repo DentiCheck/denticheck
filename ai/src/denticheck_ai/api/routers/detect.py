@@ -1,24 +1,23 @@
-from fastapi import APIRouter
-from denticheck_ai.schemas.detect import DetectRequest, DetectResponse, DetectionResult, BBox
+from fastapi import APIRouter, HTTPException
+from denticheck_ai.schemas.detect import DetectRequest, DetectResponse
+from denticheck_ai.pipelines.detect.service import DetectionService
+from loguru import logger
 
 router = APIRouter(prefix="/v1/detect", tags=["detect"])
+detector = DetectionService()
 
 @router.post("", response_model=DetectResponse)
 async def detect_objects(request: DetectRequest):
-    # Stub: return dummy detections
-    print(f"Running detection on: {request.storage_key}")
-    
-    return DetectResponse(
-        detections=[
-            DetectionResult(
-                label="calculus",
-                confidence=0.85,
-                bbox=BBox(x=0.1, y=0.1, w=0.2, h=0.2)
-            )
-        ],
-        summary={
-            "calculus": {"count": 1, "max_score": 0.85},
-            "caries": {"count": 0},
-            "lesion": {"count": 0}
-        }
-    )
+    """
+    이미지에서 치과 관련 질환(치석, 충치 등)을 탐지합니다.
+    """
+    logger.info(f"Detection request received: storage_key={request.storage_key}")
+    try:
+        result = await detector.detect(
+            storage_key=request.storage_key,
+            image_url=request.image_url
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Detection failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="이미지 분석 중 오류가 발생했습니다.")
