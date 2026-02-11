@@ -13,9 +13,7 @@ public class MobileIdTokenVerifierService {
     private final JwtDecoder idTokenDecoder;
     private final List<String> allowedAudiences;
 
-    public MobileIdTokenVerifierService(
-            JwtDecoder idTokenDecoder,
-            GoogleMobileProperties props) {
+    public MobileIdTokenVerifierService(JwtDecoder idTokenDecoder, GoogleMobileProperties props) {
         this.idTokenDecoder = idTokenDecoder;
         this.allowedAudiences = props.getAllowedAudiences();
 

@@ -24,18 +24,23 @@ public class RefreshTokenLogoutHandler implements LogoutHandler {
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
         try {
-            String body = new BufferedReader(new InputStreamReader(request.getInputStream()))
-                    .lines().reduce("", String::concat);
+            String body;
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(request.getInputStream()))) {
+                body = reader.lines().reduce("", String::concat);
+            }
 
-            if (!StringUtils.hasText(body)) return;
+            if (!StringUtils.hasText(body))
+                return;
 
             ObjectMapper mapper = new ObjectMapper();
             JsonNode jsonNode = mapper.readTree(body);
             String refreshToken = jsonNode.has("refreshToken") ? jsonNode.get("refreshToken").asText() : null;
 
             // 유효성 검증
-            if (refreshToken == null) return;
-            if (!jwtUtil.isValid(refreshToken, false)) return;
+            if (refreshToken == null)
+                return;
+            if (!jwtUtil.isValid(refreshToken, false))
+                return;
 
             // Refresh 토큰 삭제
             jwtServiceImpl.removeRefresh(refreshToken);

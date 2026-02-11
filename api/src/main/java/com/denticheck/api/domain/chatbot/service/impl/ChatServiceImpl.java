@@ -12,6 +12,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -42,8 +44,8 @@ public class ChatServiceImpl implements ChatService {
     // Session ID -> SseEmitter Map
     private final Map<UUID, SseEmitter> emitters = new ConcurrentHashMap<>();
 
-    private static final String AI_CHAT_URL = "http://localhost:8000/v1/chat/ask";
-    private static final String AI_REPORT_URL = "http://localhost:8000/v1/report/generate";
+    @Value("${ai.client.url}")
+    private String AI_SERVICE_URL;
 
     @Override
     @Transactional
@@ -165,7 +167,8 @@ public class ChatServiceImpl implements ChatService {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
         try {
-            ResponseEntity<String> response = restTemplate.postForEntity(AI_CHAT_URL, entity, String.class);
+            ResponseEntity<String> response = restTemplate.postForEntity(AI_SERVICE_URL + "/v1/chat/ask", entity,
+                    String.class);
             return response.getBody();
         } catch (Exception e) {
             log.error("Error calling AI server", e);

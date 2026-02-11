@@ -23,6 +23,7 @@ public class CustomOAuth2UserServiceImpl extends DefaultOAuth2UserService {
 
     // 소셜 로그인 (매 로그인시 : 신규 = 가입, 기존 = 업데이트)
     @Override
+    @SuppressWarnings("unchecked")
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
 
         // 부모 메소드 호출
@@ -59,7 +60,6 @@ public class CustomOAuth2UserServiceImpl extends DefaultOAuth2UserService {
         // 공통 로직으로 유저 생성/조회 (Admin 권한 부여 포함)
         UserEntity user = userServiceImpl.getOrCreateUser(providerType, providerId, email, nickname);
 
-        // TODO: 다중 권한 처리 로직 개선 필요 (현재는 첫 번째 권한만 사용)
         String roleName = user.getRole() != null ? user.getRole().getName() : "USER";
         String role = "ROLE_" + roleName;
         String username = user.getUsername();

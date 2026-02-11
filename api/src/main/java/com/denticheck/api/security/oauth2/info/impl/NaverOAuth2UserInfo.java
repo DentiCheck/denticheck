@@ -7,6 +7,7 @@ public class NaverOAuth2UserInfo implements OAuth2UserInfo {
 
     private Map<String, Object> attributes;
 
+    @SuppressWarnings("unchecked")
     public NaverOAuth2UserInfo(Map<String, Object> attributes) {
         this.attributes = (Map<String, Object>) attributes.get("response");
     }
@@ -18,7 +19,7 @@ public class NaverOAuth2UserInfo implements OAuth2UserInfo {
 
     @Override
     public String getProvider() {
-        return "naver";
+        return "NAVER";
     }
 
     @Override

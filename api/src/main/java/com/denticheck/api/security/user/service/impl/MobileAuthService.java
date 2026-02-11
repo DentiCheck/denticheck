@@ -18,9 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class MobileAuthService {
 
     private final MobileIdTokenVerifierService googleVerifier;
-    private final UserServiceImpl userServiceImpl; // 너 프로젝트 유저 생성/조회 로직
-    private final JwtServiceImpl jwtServiceImpl; // refresh 저장/삭제
-    private final JWTUtil jwtUtil; // access/refresh 생성
+    private final UserServiceImpl userServiceImpl;
+    private final JwtServiceImpl jwtServiceImpl;
+    private final JWTUtil jwtUtil;
 
     @Transactional
     public JWTResponseDTO googleLogin(String idToken) {
