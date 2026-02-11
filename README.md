@@ -52,7 +52,7 @@ cd ai
 pip install -r requirements.txt  # 또는 직접 패키지 설치
 
 # 서비스 실행
-$env:PYTHONPATH="src"; $env:MILVUS_URI="http://localhost:19530"; python -m uvicorn denticheck_ai.api.main:app --reload --port 8001
+$env:PYTHONPATH="src"; c:\Python311\python.exe -m uvicorn denticheck_ai.api.main:app --reload --port 8001
 ```
 
 - API 주소: `http://localhost:8001`
@@ -88,10 +88,14 @@ npm run dev
 
 **B. 모바일 앱 (App)**
 
+```
+./scripts/start-emulator.ps1
+```
+
 ```bash
 cd app
 npm install
-npm start
+npx expo run:android
 ```
 
 - Expo QR코드를 스캔하여 실행
