@@ -8,8 +8,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
@@ -22,7 +20,7 @@ import java.util.UUID;
 @Table(name = "users")
 @EntityListeners(AuditingEntityListener.class)
 @Entity
-public class UserEntity {
+public class UserEntity extends com.denticheck.api.common.entity.BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -58,16 +56,12 @@ public class UserEntity {
     @Column(name = "withdrawn_at")
     private LocalDateTime withdrawnAt;
 
-    @CreatedDate
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
     public void updateUser(UserRequestDTO dto) {
         this.email = dto.getEmail();
         this.nickname = dto.getNickname();
     }
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private java.util.List<com.denticheck.api.domain.hospital.entity.UserHospitalEntity> favorites = new java.util.ArrayList<>();
 }

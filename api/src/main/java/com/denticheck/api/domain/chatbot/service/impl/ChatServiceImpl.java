@@ -1,7 +1,5 @@
 package com.denticheck.api.domain.chatbot.service.impl;
 
-import com.denticheck.api.domain.ai_check.entity.AiReportEntity;
-import com.denticheck.api.domain.ai_check.repository.AiReportRepository;
 import com.denticheck.api.domain.chatbot.entity.AiChatMessageEntity;
 import com.denticheck.api.domain.chatbot.entity.ChatSessionEntity;
 import com.denticheck.api.domain.chatbot.repository.AiChatMessageRepository;
@@ -37,7 +35,8 @@ public class ChatServiceImpl implements ChatService {
     private final ChatSessionRepository chatSessionRepository;
     private final AiChatMessageRepository aiChatMessageRepository;
     private final UserRepository userRepository;
-    private final AiReportRepository aiReportRepository;
+    // private final AiReportRepository aiReportRepository; // Removed unused
+    // dependency
     private final ObjectMapper objectMapper;
 
     // Session ID -> SseEmitter Map
@@ -175,25 +174,32 @@ public class ChatServiceImpl implements ChatService {
     }
 
     private void saveAiReport(ChatSessionEntity session, JsonNode reportNode, String language) {
-        String summary = reportNode.path("summary").asText();
-        String routineGuide = reportNode.path("routine_guide").asText();
-        String warnings = reportNode.path("warnings").asText();
-        String disclaimerVersion = reportNode.path("disclaimer_version").asText();
+        // TODO: AI Report now requires an AiCheckSessionEntity
+        // (AiReportEntity.session).
+        // The current ChatSessionEntity does not link to AiCheckSessionEntity.
+        // We need to either pass the check session ID in the chat request or redesign
+        // this flow.
+        // For now, we log the report content and skip saving.
 
-        AiReportEntity report = AiReportEntity.builder()
-                .session(session)
-                .summary(summary)
-                .routineGuide(routineGuide)
-                .warnings(warnings)
-                .disclaimerVersion(disclaimerVersion)
-                .language(language)
-                .build();
+        log.warn(
+                "Received AI Report for chat session {}, but cannot save because no AiCheckSession is linked. Report: {}",
+                session.getId(), reportNode);
 
-        // Check if report already exists for session (shouldn't for new chat, but for
-        // safety)
-        aiReportRepository.findBySessionId(session.getId())
-                .ifPresent(existing -> aiReportRepository.delete(existing));
-
-        aiReportRepository.save(report);
+        /*
+         * String summary = reportNode.path("summary").asText();
+         * String routineGuide = reportNode.path("routine_guide").asText();
+         * String warnings = reportNode.path("warnings").asText();
+         * String disclaimerVersion = reportNode.path("disclaimer_version").asText();
+         * 
+         * AiReportEntity report = AiReportEntity.builder()
+         * .summary(summary)
+         * .details("Checkup required")
+         * .disclaimer("Consult a dentist")
+         * .disclaimerVersion(disclaimerVersion)
+         * .language(language)
+         * .build();
+         * 
+         * // aiReportRepository.save(report);
+         */
     }
 }

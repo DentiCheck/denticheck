@@ -88,13 +88,18 @@ npm run dev
 
 **B. 모바일 앱 (App)**
 
-```
+```bash
+cd app
+# DentiCheck\app 폴더에서 실행
 ./scripts/start-emulator.ps1
 ```
 
+- 안드로이드 시뮬레이터 실행
+
 ```bash
 cd app
-npm install
+# DentiCheck\app 폴더에서 실행
+npm install # 최초 1회 실행
 npx expo run:android
 ```
 

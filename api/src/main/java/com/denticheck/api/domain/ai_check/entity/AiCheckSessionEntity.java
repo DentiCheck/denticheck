@@ -37,4 +37,10 @@ public class AiCheckSessionEntity extends BaseTimeEntity {
 
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
+
+    @OneToOne(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
+    private AiReportEntity report;
+
+    @OneToOne(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
+    private AiDecisionRecordEntity decisionRecord;
 }

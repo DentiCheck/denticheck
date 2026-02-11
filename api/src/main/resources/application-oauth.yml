@@ -13,9 +13,10 @@ spring:
             client-secret: ${GOOGLE_CLIENT_SECRET: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}
 google:
   mobile:
-    - "1021358190527-k664ga1ctlhjhe7kpkt7o8765s21n4lt.apps.googleusercontent.com"
-    - "1021358190527-olr95e805qqqd53kffu5v33gpm4um7ad.apps.googleusercontent.com"
-    - "1021358190527-5pvv06ji3j626itofgsndt8cvf4q6nal.apps.googleusercontent.com" # Web Client ID
+    allowed-audiences:
+      - "1021358190527-k664ga1ctlhjhe7kpkt7o8765s21n4lt.apps.googleusercontent.com"
+      - "1021358190527-olr95e805qqqd53kffu5v33gpm4um7ad.apps.googleusercontent.com"
+      - "1021358190527-5pvv06ji3j626itofgsndt8cvf4q6nal.apps.googleusercontent.com" # Web Client ID
 admin:
   web:
     # TODO: 운영 관리자 웹 refreshToken JWT을 받을 주소.  Cookie <- "refreshToken" : refreshToken
