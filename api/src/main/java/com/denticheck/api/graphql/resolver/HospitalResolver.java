@@ -22,8 +22,9 @@ public class HospitalResolver {
     }
 
     @QueryMapping
-    public List<HospitalEntity> searchHospitals(@Argument double latitude, @Argument double longitude,
-            @Argument Double radius) {
+    public List<HospitalEntity> searchHospitals(@Argument("latitude") double latitude,
+            @Argument("longitude") double longitude,
+            @Argument("radius") Double radius) {
         // Default radius to 5km if not provided
         double searchRadius = (radius != null) ? radius : 5.0;
         return hospitalService.getNearbyHospitals(latitude, longitude, searchRadius);
