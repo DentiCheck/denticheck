@@ -22,7 +22,8 @@ admin:
     # TODO: 운영 관리자 웹 refreshToken JWT을 받을 주소.  Cookie <- "refreshToken" : refreshToken
     login-success-redirect: "http://localhost:5173/cookie"
     refresh-cookie-max-age-seconds: 300
-    refresh-cookie-secure: false
+    refresh-cookie-secure: true
+    refresh-cookie-httponly: true
 
 app:
   auth:

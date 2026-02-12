@@ -27,6 +27,9 @@ public class JwtServiceImpl implements JwtService {
     @Value("${admin.web.refresh-cookie-secure}")
     boolean refreshCookieSecure;
 
+    @Value("${admin.web.refresh-cookie-httponly}")
+    boolean refreshCookieHttpOnly;
+
     // 소셜 로그인 성공 후 쿠키(Refresh) -> 헤더 방식으로 응답
     @Transactional
     @Override
@@ -78,7 +81,7 @@ public class JwtServiceImpl implements JwtService {
 
         // 기존 쿠키 제거
         Cookie refreshCookie = new Cookie("refreshToken", null);
-        refreshCookie.setHttpOnly(true);
+        refreshCookie.setHttpOnly(refreshCookieHttpOnly);
         refreshCookie.setSecure(refreshCookieSecure);
         refreshCookie.setPath("/");
         refreshCookie.setMaxAge(refreshCookieMaxAgeSeconds);
