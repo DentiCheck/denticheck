@@ -87,21 +87,20 @@ class LlmClient:
         ]
         return (self.llm | self.parser).stream(messages)
 
-    def generate_report(self, data, language: str = "ko") -> dict:
+    def generate_report(self, data, context: str = "", language: str = "ko") -> dict:
         """
-        분석 데이터를 기반으로 전문적인 치과 소견서를 생성합니다.
-        (Decision Record 기반 NLG 추론 로직)
+        분석 데이터와 RAG 컨텍스트를 기반으로 전문적인 치과 소견서를 생성합니다.
         """
         # 1. 템플릿 가져오기
         template = prompts.get_report_generation_template(language)
         
         # 2. 데이터 포맷팅
-        formatted_context = self._format_data_for_prompt(data)
+        formatted_data = self._format_data_for_prompt(data, context)
         
-        # 3. 프롬프트 구성 (3단 구조 응답을 위한 추가 지침)
+        # 3. 프롬프트 구성
         system_prompt = prompts.get_system_persona_doctor(language)
         format_instruction = "\n\n반드시 아래 형식으로 답변하세요:\nSUMMARY: <한줄요약>\nDETAILS: <상세분석 및 가이드>\nDISCLAIMER: <면책고지>"
-        user_prompt = template.format(context=formatted_context) + format_instruction
+        user_prompt = template.format(context=formatted_data) + format_instruction
         
         # 4. LLM 호출 및 파싱
         raw_response = self._call_ollama(system_prompt, user_prompt)
@@ -138,10 +137,19 @@ class LlmClient:
             result["details"] = text
         return result
 
-    def _format_data_for_prompt(self, data) -> str:
-        """Decision Record 데이터를 LLM 전용 텍스트 컨텍스트로 변환합니다."""
+    def _format_data_for_prompt(self, data, context: str = "") -> str:
+        """분석 데이터와 RAG 지식을 LLM 전용 텍스트 컨텍스트로 변환합니다."""
         lines = []
         
+        # [RAG 연동 포인트]
+        # Milvus에서 검색된 전문 치과 지식(context)을 프롬프트 최상단에 배치합니다.
+        # LLM은 프롬프트의 앞부분을 가장 중요한 참조 정보로 인식하므로, 
+        # 이를 통해 생성되는 답변이 실제 의학적 근거에 기반하도록 유도합니다.
+        if context:
+            lines.append("[참고할 전문 치과 지식]")
+            lines.append(context)
+            lines.append("")
+
         # YOLO 탐지 결과
         lines.append("[YOLO 탐지 요약]")
         for label, info in data.yolo.items():
