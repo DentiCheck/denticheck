@@ -105,9 +105,10 @@ cd app
 npm install # 최초 1회 실행
 npx expo run:android
 ```
-
+```bash
 - Expo QR코드를 스캔하여 실행
-
+npx expo start --tunnel
+```
 ---
 
 ## ⚠️ 트러블슈팅
