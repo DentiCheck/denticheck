@@ -84,7 +84,7 @@ public class JwtServiceImpl implements JwtService {
         refreshCookie.setMaxAge(refreshCookieMaxAgeSeconds);
         response.addCookie(refreshCookie);
 
-        return new JWTResponseDTO(newAccessToken, newRefreshToken);
+        return new JWTResponseDTO(newAccessToken, newRefreshToken, null);
     }
 
     // Refresh 토큰으로 Access 토큰 재발급 로직 (Rotate 포함)
@@ -118,7 +118,7 @@ public class JwtServiceImpl implements JwtService {
                 .refresh(newRefreshToken)
                 .build());
 
-        return new JWTResponseDTO(newAccessToken, newRefreshToken);
+        return new JWTResponseDTO(newAccessToken, newRefreshToken, null);
     }
 
     // JWT Refresh 토큰 발급 후 저장 메소드

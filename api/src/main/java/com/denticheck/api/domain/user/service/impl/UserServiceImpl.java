@@ -84,7 +84,7 @@ public class UserServiceImpl implements UserService {
         UserEntity entity = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다: " + username));
 
-        return new UserResponseDTO(entity.getNickname(), entity.getEmail());
+        return new UserResponseDTO(entity.getNickname(), entity.getEmail(), entity.getProfileImage());
     }
 
     // 소셜 유저 정보 조회
@@ -104,7 +104,7 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     public UserEntity getOrCreateUser(SocialProviderType providerType, String providerId, String email,
-            String nickname) {
+            String nickname, String profileImage) {
         String username = providerType.name() + "_" + providerId;
 
         return userRepository.findWithRoleByUsername(username)
@@ -113,6 +113,7 @@ public class UserServiceImpl implements UserService {
                     UserRequestDTO dto = new UserRequestDTO();
                     dto.setEmail(email);
                     dto.setNickname(nickname);
+                    dto.setProfileImage(profileImage);
                     entity.updateUser(dto);
                     return entity;
                 })
@@ -135,6 +136,7 @@ public class UserServiceImpl implements UserService {
                             .socialProviderType(providerType)
                             .nickname(nickname)
                             .email(email)
+                            .profileImage(profileImage)
                             .role(role)
                             .build();
 

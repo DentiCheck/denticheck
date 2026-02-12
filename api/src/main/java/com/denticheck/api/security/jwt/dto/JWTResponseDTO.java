@@ -1,4 +1,6 @@
 package com.denticheck.api.security.jwt.dto;
 
-public record JWTResponseDTO(String accessToken, String refreshToken) {
+import com.denticheck.api.domain.user.dto.UserResponseDTO;
+
+public record JWTResponseDTO(String accessToken, String refreshToken, UserResponseDTO user) {
 }
