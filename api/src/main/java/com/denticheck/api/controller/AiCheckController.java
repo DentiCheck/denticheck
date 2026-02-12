@@ -1,0 +1,29 @@
+package com.denticheck.api.controller;
+
+import com.denticheck.api.domain.ai_check.dto.AiCheckRunResponse;
+import com.denticheck.api.domain.ai_check.service.AiCheckOrchestratorService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+@RestController
+@RequestMapping("/api")
+@RequiredArgsConstructor
+public class AiCheckController {
+
+    private final AiCheckOrchestratorService aiCheckOrchestratorService;
+
+    @PostMapping(value = "/ai-check", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public AiCheckRunResponse runAiCheck(@RequestPart("file") MultipartFile file) {
+        return aiCheckOrchestratorService.run(file);
+    }
+
+    @PostMapping(value = "/ai-check/quick", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public AiCheckRunResponse runAiCheckQuick(@RequestPart("file") MultipartFile file) {
+        return aiCheckOrchestratorService.runQuick(file);
+    }
+}

@@ -1,246 +1,298 @@
-import React, { useState } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import * as ImagePicker from 'expo-image-picker';
-import { Camera, Upload, TrendingUp, AlertCircle, CheckCircle2, Sparkles, ChevronLeft } from 'lucide-react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import React, { useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Linking,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { Camera, ImagePlus } from "lucide-react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Card } from '../shared/components/ui/Card';
-import { Button } from '../shared/components/ui/Button';
-import { Badge } from '../shared/components/ui/Badge';
-import { Progress } from '../shared/components/ui/Progress';
-import { useColorTheme } from '../shared/providers/ColorThemeProvider';
+import { Button } from "../shared/components/ui/Button";
+import { useAuth } from "../shared/providers/AuthProvider";
 
-type AnalysisResult = {
-    quality: 'good' | 'poor';
-    detections: Array<{ type: string; severity: string; position: string }>;
-    riskLevel: 'low' | 'medium' | 'high';
-    summary: string;
-    recommendations: string[];
+type BBox = { x: number; y: number; w: number; h: number };
+type Detection = { label: string; confidence: number; bbox: BBox };
+
+type LlmResult = {
+  overall?: {
+    level?: "GREEN" | "YELLOW" | "RED";
+    badgeText?: string;
+    oneLineSummary?: string;
+  };
 };
 
+type SelectedImage = {
+  uri: string;
+  fileName: string;
+  mimeType: string;
+};
+
+type AiCheckResponse = {
+  sessionId: string;
+  status: "uploaded" | "quality_failed" | "analyzing" | "done" | "error";
+  storageKey: string;
+  imageUrl: string;
+  qualityPass: boolean;
+  qualityScore: number;
+  qualityReasons: string[];
+  detections: Detection[];
+  summary: Record<string, unknown>;
+  llmResult?: LlmResult;
+  pdfUrl?: string;
+};
+
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_SERVER_URL;
+const REQUEST_TIMEOUT_MS = 30_000;
+
 export default function AICheckScreen() {
-    const navigation = useNavigation();
-    const { theme } = useColorTheme();
-    const [image, setImage] = useState<string | null>(null);
-    const [analyzing, setAnalyzing] = useState(false);
-    const [result, setResult] = useState<AnalysisResult | null>(null);
+  const { token } = useAuth();
+  const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
+  const [uiState, setUiState] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [result, setResult] = useState<AiCheckResponse | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
-    const pickImage = async (useCamera: boolean) => {
-        let result;
-        if (useCamera) {
-            const permission = await ImagePicker.requestCameraPermissionsAsync();
-            if (permission.granted === false) {
-                Alert.alert("Permission to access camera is required!");
-                return;
-            }
-            result = await ImagePicker.launchCameraAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                allowsEditing: true,
-                aspect: [4, 3],
-                quality: 1,
-            });
-        } else {
-            const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (permission.granted === false) {
-                Alert.alert("Permission to access gallery is required!");
-                return;
-            }
-            result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                allowsEditing: true,
-                aspect: [4, 3],
-                quality: 1,
-            });
-        }
+  const canAnalyze = useMemo(
+    () => !!selectedImage && uiState !== "loading",
+    [selectedImage, uiState],
+  );
 
-        if (!result.canceled) {
-            setImage(result.assets[0].uri);
-            analyzeImage();
-        }
-    };
+  const pickImage = async (useCamera: boolean) => {
+    const permission = useCamera
+      ? await ImagePicker.requestCameraPermissionsAsync()
+      : await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    const analyzeImage = () => {
-        setAnalyzing(true);
-        setResult(null);
-        setTimeout(() => {
-            setResult({
-                quality: 'good',
-                detections: [
-                    { type: '치석', severity: '경미', position: '하악 전치부' },
-                    { type: '잇몸 염증', severity: '중등도', position: '상악 좌측' },
-                ],
-                riskLevel: 'medium',
-                summary: '전반적인 구강 상태는 양호하나, 치석과 잇몸 염증이 관찰됩니다.',
-                recommendations: [
-                    '정기적인 스케일링 (3-6개월 마다)',
-                    '잇몸 마사지 및 치실 사용',
-                    '염증 부위 주의 깊게 관리',
-                    '필요시 치과 상담 권장',
-                ],
-            });
-            setAnalyzing(false);
-        }, 3000);
-    };
+    if (!permission.granted) {
+      Alert.alert("권한 필요", useCamera ? "카메라 권한이 필요합니다." : "갤러리 권한이 필요합니다.");
+      return;
+    }
 
-    const getRiskColor = (level: string) => {
-        switch (level) {
-            case 'low': return 'bg-green-100';
-            case 'medium': return 'bg-yellow-100';
-            case 'high': return 'bg-red-100';
-            default: return 'bg-gray-100';
-        }
-    };
+    const picked = useCamera
+      ? await ImagePicker.launchCameraAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          quality: 1,
+        })
+      : await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          quality: 1,
+        });
 
-    const getRiskTextColor = (level: string) => {
-        switch (level) {
-            case 'low': return '#166534';
-            case 'medium': return '#854d0e';
-            case 'high': return '#991b1b';
-            default: return '#1f2937';
-        }
-    };
+    if (picked.canceled) return;
 
-    const getRiskLabel = (level: string) => {
-        switch (level) {
-            case 'low': return '낮음';
-            case 'medium': return '보통';
-            case 'high': return '높음';
-            default: return '알 수 없음';
-        }
-    };
+    const asset = picked.assets[0];
+    const uri = asset?.uri;
+    if (!uri) {
+      Alert.alert("오류", "이미지를 불러오지 못했습니다.");
+      return;
+    }
 
-    return (
-        <View className="flex-1 bg-gray-50 dark:bg-slate-900">
-            <SafeAreaView edges={['top']} className="flex-1">
-                {/* Minimal Header */}
-                <View className="px-6 py-4 flex-row items-center border-b border-gray-100 dark:border-slate-800">
-                    <Text className="text-2xl font-extrabold text-slate-800 dark:text-white">Run AI</Text>
-                </View>
+    const fileName =
+      asset.fileName ?? `ai-check-${Date.now()}.${asset.mimeType?.split("/")[1] ?? "jpg"}`;
+    const mimeType =
+      asset.mimeType ??
+      (fileName.endsWith(".png")
+        ? "image/png"
+        : fileName.endsWith(".webp")
+          ? "image/webp"
+          : "image/jpeg");
 
-                <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 100 }}>
-                    <View className="mb-6">
-                        <Text className="text-lg font-bold text-slate-800 dark:text-white mb-2">구강 상태 분석</Text>
-                        <Text className="text-slate-500 text-sm">AI가 치아 사진을 분석하여{'\n'}건강 상태와 관리법을 알려드립니다.</Text>
-                    </View>
+    setSelectedImage({ uri, fileName, mimeType });
+    setResult(null);
+    setErrorMessage("");
+    setUiState("idle");
+  };
 
-                    {!image && (
-                        <TouchableOpacity
-                            activeOpacity={0.9}
-                            className="bg-white dark:bg-slate-800 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-8 items-center justify-center space-y-4"
-                            onPress={() => pickImage(true)}
-                        >
-                            <View className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full items-center justify-center">
-                                <Camera size={32} color={theme.primary} />
-                            </View>
-                            <View className="items-center">
-                                <Text className="font-bold text-slate-800 dark:text-white text-lg">사진 촬영하기</Text>
-                                <Text className="text-slate-400 text-sm text-center mt-1">
-                                    밝은 곳에서 입을 크게 벌리고{'\n'}치아가 잘 보이도록 촬영하세요
-                                </Text>
-                            </View>
-                            <Button variant="outline" onPress={() => pickImage(false)} className="mt-4 border-slate-200">
-                                <Text className="text-slate-600">갤러리에서 선택</Text>
-                            </Button>
-                        </TouchableOpacity>
-                    )}
+  const analyzeImage = async () => {
+    if (!selectedImage) {
+      Alert.alert("이미지 필요", "먼저 이미지를 선택해 주세요.");
+      return;
+    }
+    if (!API_BASE_URL) {
+      Alert.alert("환경 변수 오류", "EXPO_PUBLIC_API_SERVER_URL 값이 없습니다.");
+      return;
+    }
 
-                    {image && !result && !analyzing && (
-                        <View className="space-y-6">
-                            <View className="rounded-3xl overflow-hidden shadow-sm bg-black">
-                                <Image source={{ uri: image }} style={{ width: '100%', height: 300 }} resizeMode="contain" />
-                            </View>
-                            <Button onPress={analyzeImage} size="lg" className="rounded-full shadow-lg shadow-blue-200">
-                                <Text className="text-white font-bold text-lg">분석 시작하기</Text>
-                            </Button>
-                            <Button variant="ghost" onPress={() => setImage(null)}>
-                                <Text className="text-slate-500">다시 선택하기</Text>
-                            </Button>
-                        </View>
-                    )}
+    setUiState("loading");
+    setResult(null);
+    setErrorMessage("");
 
-                    {analyzing && (
-                        <View className="py-20 items-center justify-center space-y-8">
-                            <View className="w-24 h-24 bg-blue-50 rounded-full items-center justify-center animate-pulse">
-                                <TrendingUp size={40} color={theme.primary} />
-                            </View>
-                            <View className="items-center space-y-2">
-                                <Text className="text-xl font-bold text-slate-800">분석 중입니다...</Text>
-                                <Text className="text-slate-500">잠시만 기다려주세요</Text>
-                            </View>
-                            <View className="w-full max-w-[200px]">
-                                <Progress value={66} className="h-2" />
-                            </View>
-                        </View>
-                    )}
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-                    {result && (
-                        <View className="space-y-6">
-                            {/* Summary Card */}
-                            <LinearGradient
-                                colors={['#ffffff', '#f8fafc']}
-                                className="p-6 rounded-3xl border border-slate-100 shadow-sm"
-                            >
-                                <View className="flex-row items-center justify-between mb-4">
-                                    <View className="flex-row items-center gap-2">
-                                        <Sparkles size={20} color={theme.primary} fill={theme.primary} />
-                                        <Text className="font-bold text-lg text-slate-800">분석 결과</Text>
-                                    </View>
-                                    <View className={`px-3 py-1 rounded-full ${getRiskColor(result.riskLevel)}`}>
-                                        <Text style={{ color: getRiskTextColor(result.riskLevel), fontSize: 12, fontWeight: 'bold' }}>
-                                            위험도 {getRiskLabel(result.riskLevel)}
-                                        </Text>
-                                    </View>
-                                </View>
-                                <Text className="text-slate-700 leading-relaxed font-medium text-base">
-                                    {result.summary}
-                                </Text>
-                            </LinearGradient>
+    try {
+      const formData = new FormData();
+      formData.append("file", {
+        uri: selectedImage.uri,
+        name: selectedImage.fileName,
+        type: selectedImage.mimeType,
+      } as never);
 
-                            {/* Detections */}
-                            {result.detections.length > 0 && (
-                                <View>
-                                    <Text className="font-bold text-lg text-slate-800 mb-3 ml-1">발견된 증상</Text>
-                                    <View className="space-y-3">
-                                        {result.detections.map((detection, idx) => (
-                                            <View key={idx} className="flex-row items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                                                <View className="flex-row items-center gap-3">
-                                                    <View className="w-2 h-10 rounded-full bg-red-400" />
-                                                    <View>
-                                                        <Text className="font-bold text-slate-800">{detection.type}</Text>
-                                                        <Text className="text-xs text-slate-500 mt-0.5">{detection.position}</Text>
-                                                    </View>
-                                                </View>
-                                                <View className="bg-slate-100 px-2 py-1 rounded-md">
-                                                    <Text className="text-slate-600 text-xs font-medium">{detection.severity}</Text>
-                                                </View>
-                                            </View>
-                                        ))}
-                                    </View>
-                                </View>
-                            )}
+      const headers: Record<string, string> = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
 
-                            {/* Recommendations */}
-                            <View>
-                                <Text className="font-bold text-lg text-slate-800 mb-3 ml-1">맞춤 케어 가이드</Text>
-                                <View className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-4">
-                                    {result.recommendations.map((rec, idx) => (
-                                        <View key={idx} className="flex-row items-start gap-3">
-                                            <CheckCircle2 size={20} color={theme.secondary} style={{ marginTop: 2 }} />
-                                            <Text className="text-slate-600 text-sm flex-1 leading-5">{rec}</Text>
-                                        </View>
-                                    ))}
-                                </View>
-                            </View>
+      const url = `${API_BASE_URL}/api/ai-check/quick`;
+      console.log("POST", url);
+      console.log("file", selectedImage.uri);
 
-                            <Button onPress={() => { setImage(null); setResult(null); }} size="lg" className="rounded-full mt-4">
-                                <Text className="font-bold text-white">처음으로</Text>
-                            </Button>
-                        </View>
-                    )}
-                </ScrollView>
-            </SafeAreaView>
-        </View>
-    );
+      const res = await fetch(url, {
+        method: "POST",
+        headers,
+        body: formData,
+        signal: controller.signal,
+      });
+
+      const text = await res.text();
+      const parsed = text ? (JSON.parse(text) as AiCheckResponse) : null;
+
+      if (!res.ok || !parsed) {
+        const msg = `요청 실패 (HTTP ${res.status})`;
+        setUiState("error");
+        setErrorMessage(msg);
+        return;
+      }
+
+      setResult(parsed);
+      setUiState("success");
+
+      if (parsed.status === "quality_failed") {
+        Alert.alert("품질 검사 실패", parsed.qualityReasons?.join("\n") || "사진 품질을 확인해 주세요.");
+      }
+      if (parsed.status === "error") {
+        Alert.alert("분석 오류", "분석 중 서버 오류가 발생했습니다.");
+      }
+    } catch (e) {
+      const isAbortError =
+        (e instanceof Error && e.name === "AbortError") ||
+        (e instanceof Error && e.message.toLowerCase().includes("aborted"));
+      const message = isAbortError
+        ? `요청 타임아웃 (${REQUEST_TIMEOUT_MS / 1000}초)`
+        : e instanceof Error
+          ? e.message
+          : "네트워크 오류가 발생했습니다.";
+      setUiState("error");
+      setErrorMessage(message);
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  };
+
+  const openPdf = async () => {
+    if (!result?.pdfUrl) return;
+    const canOpen = await Linking.canOpenURL(result.pdfUrl);
+    if (!canOpen) {
+      Alert.alert("열기 실패", "PDF 링크를 열 수 없습니다.");
+      return;
+    }
+    await Linking.openURL(result.pdfUrl);
+  };
+
+  return (
+    <View className="flex-1 bg-slate-50">
+      <SafeAreaView className="flex-1">
+        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
+          <Text className="text-2xl font-bold text-slate-800">Run AI</Text>
+          <Text className="text-sm text-slate-500 mt-2">이미지 업로드 후 AI 분석 결과를 확인하세요.</Text>
+
+          <View className="flex-row gap-3 mt-6">
+            <TouchableOpacity
+              onPress={() => pickImage(true)}
+              className="flex-1 bg-white rounded-2xl p-4 border border-slate-200"
+              activeOpacity={0.85}
+            >
+              <Camera size={24} color="#0ea5e9" />
+              <Text className="mt-2 font-semibold text-slate-700">카메라 촬영</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => pickImage(false)}
+              className="flex-1 bg-white rounded-2xl p-4 border border-slate-200"
+              activeOpacity={0.85}
+            >
+              <ImagePlus size={24} color="#0ea5e9" />
+              <Text className="mt-2 font-semibold text-slate-700">갤러리 선택</Text>
+            </TouchableOpacity>
+          </View>
+
+          {selectedImage && (
+            <View className="mt-6 rounded-2xl overflow-hidden border border-slate-200 bg-black">
+              <Image
+                source={{ uri: selectedImage.uri }}
+                style={{ width: "100%", height: 280 }}
+                resizeMode="contain"
+              />
+            </View>
+          )}
+
+          <Button className="mt-6 rounded-xl" onPress={analyzeImage} disabled={!canAnalyze}>
+            <Text className="text-white font-semibold">
+              {uiState === "loading" ? "분석 중..." : "분석 실행"}
+            </Text>
+          </Button>
+
+          {uiState === "loading" && (
+            <View className="mt-6 bg-white border border-slate-200 rounded-2xl p-4 flex-row items-center gap-3">
+              <ActivityIndicator />
+              <Text className="text-slate-700">분석 중...</Text>
+            </View>
+          )}
+
+          {uiState === "error" && (
+            <View className="mt-6 bg-white border border-red-200 rounded-2xl p-4">
+              <Text className="text-red-700 font-semibold">분석 실패</Text>
+              <Text className="text-red-600 mt-2 text-sm">
+                {errorMessage || "요청 중 오류가 발생했습니다."}
+              </Text>
+            </View>
+          )}
+
+          {uiState === "success" && result && (
+            <View className="mt-6 gap-4">
+              <View className="bg-white border border-slate-200 rounded-2xl p-4">
+                <Text className="text-lg font-bold text-slate-800">분석 결과</Text>
+                <Text className="text-sm text-slate-600 mt-2">Session ID: {result.sessionId}</Text>
+                <Text className="text-sm text-slate-600 mt-1">Status: {result.status}</Text>
+                <Text className="text-sm text-slate-600 mt-1">
+                  Detections: {result.detections?.length ?? 0}개
+                </Text>
+                <Text className="text-slate-700 mt-3">
+                  {result.llmResult?.overall?.oneLineSummary ?? "요약 정보가 없습니다."}
+                </Text>
+              </View>
+
+              <View className="bg-white border border-slate-200 rounded-2xl p-4">
+                <Text className="font-bold text-slate-800">탐지 목록 (최대 5개)</Text>
+                {(result.detections?.length ?? 0) === 0 && (
+                  <Text className="text-slate-600 mt-2">탐지 없음</Text>
+                )}
+                {(result.detections ?? []).slice(0, 5).map((d, idx) => (
+                  <Text key={`det-${idx}`} className="text-slate-700 mt-2">
+                    {idx + 1}. {d.label} ({d.confidence.toFixed(2)})
+                  </Text>
+                ))}
+              </View>
+
+              <View className="bg-white border border-slate-200 rounded-2xl p-4">
+                <Button className="rounded-xl" onPress={openPdf} disabled={!result.pdfUrl}>
+                  <Text className="text-white font-semibold">
+                    {result.pdfUrl ? "리포트 열기" : "리포트 없음"}
+                  </Text>
+                </Button>
+                {result.pdfUrl ? (
+                  <Text className="text-xs text-slate-500 mt-2">{result.pdfUrl}</Text>
+                ) : null}
+              </View>
+            </View>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </View>
+  );
 }
+

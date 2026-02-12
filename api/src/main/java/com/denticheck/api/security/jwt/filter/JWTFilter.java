@@ -25,6 +25,14 @@ public class JWTFilter extends OncePerRequestFilter {
     private final JWTUtil jwtUtil;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String contextPath = request.getContextPath() == null ? "" : request.getContextPath();
+        String requestUri = request.getRequestURI() == null ? "" : request.getRequestURI();
+        String path = requestUri.startsWith(contextPath) ? requestUri.substring(contextPath.length()) : requestUri;
+        return path.equals("/api/ai-check") || path.startsWith("/api/ai-check/");
+    }
+
+    @Override
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,

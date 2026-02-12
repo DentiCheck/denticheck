@@ -8,7 +8,7 @@ class BBox(BaseModel):
     h: float
 
 class DetectionResult(BaseModel):
-    label: str # tartar/caries/lesion
+    label: str  # caries|tartar|oral_cancer|normal
     confidence: float
     bbox: BBox
 

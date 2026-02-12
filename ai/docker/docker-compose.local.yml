@@ -68,7 +68,7 @@ ollama:
   volumes:
     - ./data/ollama:/root/.ollama
 
-ai:
+  ai:
   build:
     context: .
     dockerfile: docker/Dockerfile
@@ -81,6 +81,7 @@ ai:
     - API_URL=http://localhost:8000
     - OLLAMA_BASE_URL=http://ollama:11434
     - MILVUS_URI=http://milvus:19530
+    - YOLO_MODEL_PATH=/app/models/yolo/weights/best.pt
   extra_hosts:
     - "host.docker.internal:host-gateway"
   env_file:
