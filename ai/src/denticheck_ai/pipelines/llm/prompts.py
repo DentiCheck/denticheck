@@ -75,12 +75,11 @@ Based on the following structured analysis data, please write a professional den
 {context}
 
 [Writing Guidelines]
-1. One-line Summary: Intuitively explain the current status.
-2. Detailed Analysis: Explain the location and status of the discovered problems based on YOLO and ML results.
-3. Care Guide: Specific actions for the patient to practice at home based on their survey and history.
-4. Expert Advice: Clarify the necessity of visiting a dentist based on the 'Overall Level'.
+1. SUMMARY: Provide a one-line summary of the current dental status.
+2. DETAILS: Explain the discovered problems based on YOLO detection results and suggest a care guide based on the user's survey and history.
+3. DISCLAIMER: State that this report is for information purposes and requires a dentist's visit.
 
-Caution: DO NOT use ** symbols in the response. Use plain text only. Avoid definitive diagnostic terms.
+Caution: DO NOT use ** symbols in the response. Use plain text only. Avoid definitive diagnostic terms like 'diagnosis'.
 """
     else:
         return """
@@ -90,10 +89,9 @@ Caution: DO NOT use ** symbols in the response. Use plain text only. Avoid defin
 {context}
 
 [작성 가이드라인]
-1. 한 줄 요약: 현재 상태를 직관적으로 설명 (예: 치석이 관찰되어 주의가 필요한 상태입니다.)
-2. 상세 분석: YOLO 탐지 결과와 ML 분석 결과를 바탕으로 발견된 문제점의 위치 및 상태를 설명
-3. 관리 가이드: 사용자의 설문 데이터와 히스토리를 고려하여 집에서 실천할 구체적인 관리법 제안
-4. 전문가 조언: 시스템 종합 판단 레벨(Overall Level)에 따라 치과 방문 필요성 및 긴급도 권고
+1. SUMMARY: 현재 상태를 직관적으로 설명하는 한 줄 요약 (예: 치석이 관찰되어 주의가 필요한 상태입니다.)
+2. DETAILS: YOLO 탐지 결과와 사용자 문진/히스토리를 바탕으로 발견된 문제점의 위치 및 상태를 설명하고, 집에서 실천할 구체적인 관리법을 제안
+3. DISCLAIMER: AI 분석의 한계와 치과 방문의 필요성을 명시하는 법적 고지 문구
 
 주의: 답변에 한자(漢字)를 절대 사용하지 말고, ** 기호도 사용하지 마세요. '진료'나 '소견'이라는 표현을 사용하고 확정적 '진단'은 피하세요.
 """

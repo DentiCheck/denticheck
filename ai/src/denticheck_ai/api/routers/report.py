@@ -52,6 +52,7 @@ class ReportResponse(BaseModel):
     details: str                        # RAG 기반 상세 소견
     disclaimer: str                     # AI 판독에 대한 법적 고지
     language: str                       # 생성된 언어
+    pdf_url: Optional[str] = None       # [선택] 생성된 PDF 다운로드 URL
 
 @router.post("/generate", response_model=ReportResponse, summary="AI 소견서 생성")
 async def generate_report(req: ReportRequest):
@@ -85,5 +86,25 @@ async def generate_report(req: ReportRequest):
             language=req.language
         )
     except Exception as e:
+        from loguru import logger
         logger.error(f"소견서 생성 오류: {str(e)}")
         raise HTTPException(status_code=500, detail="소견서 생성 중 오류가 발생했습니다.")
+
+@router.post("/pdf", response_model=Dict[str, Any], summary="소견서 PDF 변환")
+async def generate_pdf(report: ReportResponse):
+    """
+    생성된 텍스트 소견서를 PDF 파일로 변환합니다.
+    (현재는 구조 정의 단계이며, 실제 PDF 생성 라이브러리 연동이 필요합니다.)
+    """
+    try:
+        # TODO: report 데이터를 바탕으로 PDF 생성 로직 구현 (예: WeasyPrint, ReportLab 등)
+        # 생성 후 S3/MinIO에 업로드하고 해당 URL을 반환하는 흐름
+        return {
+            "status": "success",
+            "pdf_url": f"http://localhost:9000/denticheck/reports/sample_report.pdf",
+            "message": "PDF 생성 기능이 준비 중입니다."
+        }
+    except Exception as e:
+        from loguru import logger
+        logger.error(f"PDF 생성 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="PDF 변환 중 오류가 발생했습니다.")

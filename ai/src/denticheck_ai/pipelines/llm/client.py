@@ -158,25 +158,28 @@ class LlmClient:
         lines.append("[이미지 분석(YOLO) 결과]")
         for label, info in data.yolo.items():
             if info.present:
-                lines.append(f"- {label}: {info.count}건 발견 (점유비: {info.area_ratio}, 신뢰도: {info.max_score})")
+                lines.append(f"- {label}: {info.count}건 발견 (내부 신뢰도: {info.max_score})")
             else:
                 lines.append(f"- {label}: 정상 (특이사항 없음)")
         
         # 사용자 문진(Survey) 데이터
-        lines.append("\n[사용자 문진 결과]")
-        for key, value in data.survey.items():
-            lines.append(f"- {key}: {value}")
+        if data.survey and data.survey.answers:
+            lines.append("\n[사용자 문진 결과]")
+            for key, value in data.survey.answers.items():
+                lines.append(f"- {key}: {value}")
             
         # 과거 데이터와의 변화량 (시계열 분석용)
-        if data.history.get("delta_from_last"):
+        if data.history and data.history.get("delta_from_last"):
             lines.append("\n[과거 대비 변화 정보]")
             for key, val in data.history["delta_from_last"].items():
                 lines.append(f"- {key}: {val}")
                 
         # 종합 판단 요약
-        lines.append("\n[시스템 종합 판단]")
-        lines.append(f"- 건강 레벨: {data.overall.level}")
-        actions = ", ".join([a.code for a in data.overall.recommended_actions])
-        lines.append(f"- 권장 조치 코드: {actions}")
+        if data.overall:
+            lines.append("\n[시스템 종합 판단]")
+            lines.append(f"- 건강 레벨: {data.overall.level}")
+            if data.overall.recommended_actions:
+                actions = ", ".join([a.code for a in data.overall.recommended_actions])
+                lines.append(f"- 권장 조치 코드: {actions}")
         
         return "\n".join(lines)
