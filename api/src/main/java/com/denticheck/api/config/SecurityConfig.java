@@ -7,6 +7,7 @@ import com.denticheck.api.security.jwt.handler.RefreshTokenLogoutHandler;
 import com.denticheck.api.security.jwt.service.impl.JwtServiceImpl;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
@@ -100,7 +101,10 @@ public class SecurityConfig {
                         .requestMatchers("/oauth2/**", "/oauth2/callback/**").permitAll()
                         .requestMatchers("/auth/mobile/google").permitAll() // 모바일 네이티브 로그인
                         .requestMatchers("/jwt/exchange", "/jwt/refresh").permitAll()
-                        .requestMatchers("/graphql", "/graphiql").hasRole(UserRoleType.USER.name())
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll() // REST 문서 기본 경로(springdoc)
+                        .requestMatchers("/docs/api-docs/**", "/docs/swagger-ui/**").permitAll() // REST 문서 (springdoc)
+                        .requestMatchers("/docs/graphql", "/docs/graphql/", "/docs/graphql/**").permitAll() // GraphQL 문서 (Magidoc)
+                        .requestMatchers("/graphql").hasRole(UserRoleType.USER.name())
                         .requestMatchers("/admin/**").hasRole(UserRoleType.ADMIN.name())
                         .anyRequest().authenticated())
                 // 예외 처리
@@ -125,5 +129,12 @@ public class SecurityConfig {
     @Bean
     public RefreshTokenLogoutHandler refreshTokenLogoutHandler(JwtServiceImpl jwtServiceImpl, JWTUtil jwtUtil) {
         return new RefreshTokenLogoutHandler(jwtServiceImpl, jwtUtil);
+    }
+
+    @Bean
+    public FilterRegistrationBean<JWTFilter> jwtFilterRegistration(JWTFilter filter) {
+        var reg = new FilterRegistrationBean<>(filter);
+        reg.setEnabled(false); // ✅ 서블릿 컨테이너 자동 등록 OFF
+        return reg;
     }
 }

@@ -69,8 +69,8 @@ cd api
 ```
 
 - API 서버: `http://localhost:8080`
-- Swagger UI: `http://localhost:8080/swagger-ui.html`
-- GraphiQL: `http://localhost:8080/graphiql`
+- Swagger UI (REST API 문서): `http://localhost:8080/docs/swagger-ui`
+- MAGIDOC (GraphQL 문서) : `http://localhost:8080/docs/graphql`
 
 ### 4단계: 프론트엔드 (Frontend)
 

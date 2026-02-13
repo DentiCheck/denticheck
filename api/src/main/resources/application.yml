@@ -1,20 +1,27 @@
 spring:
-  profiles:
-    active: local
-    include: oauth
-  graphql:
-    graphiql:
-      enabled: true
-    schema:
-      printer:
-        enabled: true
+    profiles:
+        active: local
+        include: oauth
+    graphql:
+        graphiql:
+            enabled: true
+        schema:
+            printer:
+                enabled: true
 jwt:
-  secret-key: himynameiskimjihunmyyoutubechann
-  accessTokenExpiresIn: 1h
-  refreshTokenExpiresIn: 30d
+    secret-key: himynameiskimjihunmyyoutubechann
+    accessTokenExpiresIn: 1h
+    refreshTokenExpiresIn: 30d
 
 logging:
-  level:
-    root: INFO
-    com.denticheck.api: DEBUG
-    # org.hibernate.SQL: DEBUG
+    level:
+        root: INFO
+        com.denticheck.api: DEBUG
+        # org.hibernate.SQL: DEBUG
+
+springdoc:
+    api-docs:
+        path: /docs/api-docs
+    swagger-ui:
+        path: /docs/swagger-ui
+        disable-swagger-default-url: true
