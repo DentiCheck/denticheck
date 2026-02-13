@@ -14,7 +14,7 @@ import os
 from langchain_ollama import ChatOllama
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser
-from src.denticheck_ai.pipelines.llm import prompts
+from denticheck_ai.pipelines.llm import prompts
 
 class LlmClient:
     """
@@ -40,6 +40,12 @@ class LlmClient:
         )
         # 응답 메시지에서 텍스트만 추출해주는 파서
         self.parser = StrOutputParser()
+
+    def warmup(self):
+        res = self.simple_chat("ping", system_prompt="You are a helpful assistant.")
+        if isinstance(res, str) and res.startswith("LLM 호출 중 오류 발생"):
+            raise RuntimeError(res)
+        return res
 
     def simple_chat(self, user_message: str, language: str = "ko", system_prompt: str = None) -> str:
         """

@@ -1,175 +1,194 @@
 services:
-  # ----------------------------------------
-  # Database (PostgreSQL)
-  # ----------------------------------------
-  postgres:
-    image: postgres:15-alpine
-    container_name: denticheck-postgres
-    platform: linux/amd64
-    environment:
-      POSTGRES_DB: denticheck
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin_password
-    ports:
-      - "5432:5432"
-    volumes:
-      - denticheck_pg_data:/var/lib/postgresql/data
-    networks:
-      - denticheck-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d denticheck"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    # ----------------------------------------
+    # Database (PostgreSQL)
+    # ----------------------------------------
+    postgres:
+        image: postgres:15-alpine
+        container_name: denticheck-postgres
+        platform: linux/amd64
+        environment:
+            POSTGRES_DB: denticheck
+            POSTGRES_USER: admin
+            POSTGRES_PASSWORD: admin_password
+        ports:
+            - "5432:5432"
+        volumes:
+            - denticheck_pg_data:/var/lib/postgresql/data
+        networks:
+            - denticheck-network
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U admin -d denticheck"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
 
-  # ----------------------------------------
-  # Vector DB (Milvus standalone)
-  # ----------------------------------------
-  etcd:
-    container_name: denticheck-etcd
-    image: quay.io/coreos/etcd:v3.5.5
-    platform: linux/amd64
-    environment:
-      - ETCD_NAME=etcd
-      - ETCD_AUTO_COMPACTION_RETENTION_RENDER_BY_HOUR=1
-      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
-      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
-      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
-      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd:2380
-      - ETCD_INITIAL_CLUSTER=etcd=http://etcd:2380
-      - ETCD_INITIAL_CLUSTER_STATE=new
-      - ETCD_INITIAL_CLUSTER_TOKEN=etcd-cluster-token
-      - ETCD_DATA_DIR=/etcd
-    volumes:
-      - denticheck_etcd_data:/etcd
-    networks:
-      - denticheck-network
-    healthcheck:
-      test: ["CMD", "etcdctl", "endpoint", "health"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
+    # ----------------------------------------
+    # Vector DB (Milvus standalone)
+    # ----------------------------------------
+    etcd:
+        container_name: denticheck-etcd
+        image: quay.io/coreos/etcd:v3.5.5
+        platform: linux/amd64
+        environment:
+            - ETCD_NAME=etcd
+            - ETCD_AUTO_COMPACTION_RETENTION_RENDER_BY_HOUR=1
+            - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+            - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+            - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+            - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd:2380
+            - ETCD_INITIAL_CLUSTER=etcd=http://etcd:2380
+            - ETCD_INITIAL_CLUSTER_STATE=new
+            - ETCD_INITIAL_CLUSTER_TOKEN=etcd-cluster-token
+            - ETCD_DATA_DIR=/etcd
+        volumes:
+            - denticheck_etcd_data:/etcd
+        networks:
+            - denticheck-network
+        healthcheck:
+            test: ["CMD", "etcdctl", "endpoint", "health"]
+            interval: 30s
+            timeout: 20s
+            retries: 3
 
-  minio:
-    container_name: denticheck-minio
-    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
-    platform: linux/amd64
-    environment:
-      - MINIO_ACCESS_KEY=minioadmin
-      - MINIO_SECRET_KEY=minioadmin
-    ports:
-      - "9001:9001"
-      - "9000:9000"
-    volumes:
-      - denticheck_minio_data:/export
-    command: minio server /export --console-address ":9001"
-    networks:
-      - denticheck-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
+    minio:
+        container_name: denticheck-minio
+        image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+        platform: linux/amd64
+        environment:
+            - MINIO_ACCESS_KEY=minioadmin
+            - MINIO_SECRET_KEY=minioadmin
+        ports:
+            - "9001:9001"
+            - "9000:9000"
+        volumes:
+            - denticheck_minio_data:/export
+        command: minio server /export --console-address ":9001"
+        networks:
+            - denticheck-network
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+            interval: 30s
+            timeout: 20s
+            retries: 3
 
-  milvus:
-    container_name: denticheck-milvus
-    image: milvusdb/milvus:v2.4.0
-    platform: linux/amd64
-    command: ["milvus", "run", "standalone"]
-    environment:
-      - ETCD_ENDPOINTS=etcd:2379
-      - MINIO_ADDRESS=minio:9000
-    volumes:
-      - denticheck_milvus_data:/var/lib/milvus
-    ports:
-      - "19530:19530"
-      - "9091:9091"
-    depends_on:
-      etcd:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-    networks:
-      - denticheck-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
+    milvus:
+        container_name: denticheck-milvus
+        image: milvusdb/milvus:v2.4.0
+        platform: linux/amd64
+        command: ["milvus", "run", "standalone"]
+        environment:
+            - ETCD_ENDPOINTS=etcd:2379
+            - MINIO_ADDRESS=minio:9000
+        volumes:
+            - denticheck_milvus_data:/var/lib/milvus
+        ports:
+            - "19530:19530"
+            - "9091:9091"
+        depends_on:
+            etcd:
+                condition: service_healthy
+            minio:
+                condition: service_healthy
+        networks:
+            - denticheck-network
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+            interval: 30s
+            timeout: 20s
+            retries: 3
 
-  # ----------------------------------------
-  # LLM (Ollama)
-  # ----------------------------------------
-  ollama:
-    container_name: denticheck-ollama
-    image: ollama/ollama:latest
-    platform: linux/amd64
-    ports:
-      - "11434:11434"
-    volumes:
-      - denticheck_ollama_data:/root/.ollama
-    networks:
-      - denticheck-network
+    # ----------------------------------------
+    # LLM (Ollama)
+    # ----------------------------------------
+    ollama:
+        container_name: denticheck-ollama
+        image: ollama/ollama:latest
+        platform: linux/amd64
+        ports:
+            - "11434:11434"
+        volumes:
+            - denticheck_ollama_data:/root/.ollama
+        environment:
+            - OLLAMA_HOST=0.0.0.0:11434
+            - OLLAMA_KEEP_ALIVE=-1
+        networks:
+            - denticheck-network
+    # ✅ 최초 1회 모델 다운로드용 (끝나면 종료됨)
+    ollama-init:
+        image: ollama/ollama:latest
+        platform: linux/amd64
+        depends_on:
+            ollama:
+                condition: service_started
+        environment:
+            - OLLAMA_HOST=ollama:11434
+        volumes:
+            - denticheck_ollama_data:/root/.ollama
+        networks:
+            - denticheck-network
+        entrypoint: ["/bin/sh", "-lc"]
+        command: "ollama pull llama3.1:latest"
+        restart: "no"
 
-  # ----------------------------------------
-  # Application Services
-  # ----------------------------------------
-  # denticheck-ai
-  ai:
-    container_name: denticheck-ai-service
-    platform: linux/amd64
-    build:
-      context: ./ai
-      dockerfile: docker/Dockerfile
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./ai:/app
-    environment:
-      - ENV=local
-      # 내부 통신용 (Docker network)
-      - MILVUS_URI=http://milvus:19530
-      - OLLAMA_BASE_URL=http://ollama:11434
-    networks:
-      - denticheck-network
-    depends_on:
-      milvus:
-        condition: service_healthy
-      ollama:
-        condition: service_started
+    # ----------------------------------------
+    # Application Services
+    # ----------------------------------------
+    # denticheck-ai
+    ai:
+        container_name: denticheck-ai-service
+        platform: linux/amd64
+        build:
+            context: ./ai
+            dockerfile: docker/Dockerfile
+        ports:
+            - "8000:8000"
+        volumes:
+            - ./ai:/app
+        environment:
+            - ENV=local
+            # 내부 통신용 (Docker network)
+            - MILVUS_URI=http://milvus:19530
+            - OLLAMA_BASE_URL=http://ollama:11434
+        networks:
+            - denticheck-network
+        depends_on:
+            milvus:
+                condition: service_healthy
+            ollama:
+                condition: service_started
 
-  # denticheck-api
-  api:
-    container_name: denticheck-api-service
-    platform: linux/amd64
-    build:
-      context: ./api
-      dockerfile: docker/Dockerfile
-    ports:
-      - "8080:8080"
-    environment:
-      - SPRING_PROFILES_ACTIVE=local
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=denticheck
-      - DB_USERNAME=admin
-      - DB_PASSWORD=admin_password
-      - AI_CLIENT_URL=http://ai:8000
-    networks:
-      - denticheck-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      ai:
-        condition: service_started
+    # denticheck-api
+    api:
+        container_name: denticheck-api-service
+        platform: linux/amd64
+        build:
+            context: ./api
+            dockerfile: docker/Dockerfile
+        ports:
+            - "8080:8080"
+        environment:
+            - SPRING_PROFILES_ACTIVE=local
+            - DB_HOST=postgres
+            - DB_PORT=5432
+            - DB_NAME=denticheck
+            - DB_USERNAME=admin
+            - DB_PASSWORD=admin_password
+            - AI_CLIENT_URL=http://ai:8000
+        networks:
+            - denticheck-network
+        depends_on:
+            postgres:
+                condition: service_healthy
+            ai:
+                condition: service_started
 
 networks:
-  denticheck-network:
-    driver: bridge
+    denticheck-network:
+        driver: bridge
 
 volumes:
-  denticheck_pg_data:
-  denticheck_etcd_data:
-  denticheck_minio_data:
-  denticheck_milvus_data:
-  denticheck_ollama_data:
+    denticheck_pg_data:
+    denticheck_etcd_data:
+    denticheck_minio_data:
+    denticheck_milvus_data:
+    denticheck_ollama_data:

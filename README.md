@@ -27,6 +27,22 @@ DentiCheck는 AI 기반의 구강 자가 진단 및 관리 앱입니다.
 docker-compose -f docker-compose.local.yml up -d postgres milvus ollama etcd minio
 ```
 
+**Ollama 모델 다운로드 ( llama3.1:latest )**
+
+(선택1) 컨테이너 실행 후 종료
+
+```bash
+docker compose -f .\docker-compose.local.yml up ollama-init
+```
+
+(선택2) 컨테이너 실행 후 삭제
+
+```bash
+docker compose -f .\docker-compose.local.yml rm -f ollama-init
+```
+
+> **볼륨은 유지**되니까 모델은 그대로 남음.
+
 - **PostgreSQL**: `localhost:5432`
 - **Milvus**: `localhost:19530`
 - **Ollama**: `localhost:11434`

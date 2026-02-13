@@ -13,15 +13,48 @@ uvicorn denticheck_ai.api.main:app --reload --port 8001
 4. 헬스체크 및 루트 엔드포인트 제공
 """
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from denticheck_ai.api.routers import chat, report, quality, detect
+from denticheck_ai.llm.client import LlmClient
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # =========================
+    # ✅ Startup 영역
+    # =========================
+    # 1) LlmClient 1회 생성해서 app.state에 보관 (싱글톤처럼 사용)
+    app.state.llm_client = LlmClient()
+
+    # 2) (선택) 워밍업: 모델 로딩 + keepalive 유지
+    #    - keep_alive=-1이면 runner 유지되지만, 최초 1회 로딩은 필요
+    #    - 워밍업 실패해도 서버는 살아있게(로그만 남김)
+    try:
+        app.state.llm_client.warmup()
+    except Exception as e:
+        # 워밍업 실패는 치명적이지 않게 로그만
+        print(f"[WARN] Ollama warmup 실패: {e}")
+
+    yield   # 🔥 여기부터 요청 처리 시작
+
+    # =========================
+    # ✅ Shutdown 영역
+    # =========================
+    # 지금 LlmClient가 닫을 리소스가 없으면 생략 가능
+    # (만약 http client/session 같은 걸 붙이면 여기서 close 해주면 됨)
+    # 예: await app.state.llm_client.close()
+    # del app.state.llm_client
+    # print("shutdown cleanup done")
 
 # FastAPI 앱 초기화
 app = FastAPI(
     title="DentiCheck AI Service", 
     description="치과 AI 분석 및 챗봇 서비스를 제공하는 API 서버",
-    version="0.1.0"
+    version="0.1.0",
+    lifespan=lifespan,
 )
 
 # CORS 설정: 프론트엔드 및 백엔드와의 원활한 통신을 위해 모든 오리진 허용

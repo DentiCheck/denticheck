@@ -5,8 +5,17 @@
 
 [실행 방법]
 프로젝트 루트에서 아래 명령어를 실행합니다.
+macOS / Linux (Bash, zsh)
 $ export PYTHONPATH=$PYTHONPATH:.
 $ python3 src/denticheck_ai/pipelines/rag/crawler/snudh_crawler.py
+
+Windows
+$env:PYTHONPATH="$env:PYTHONPATH;."; python src\denticheck_ai\pipelines\rag\crawler\snudh_crawler.py
+$env:PYTHONPATH="$env:PYTHONPATH;."; py -3 src\denticheck_ai\pipelines\rag\crawler\snudh_crawler.py
+
+※ bs4 없어서 실패하면 설치
+Windows
+=> docker exec -it [container_name] python -m pip install beautifulsoup4 lxml
 
 [동작 순서]
 1. `base_url`과 수집 대상 게시판 URL 패턴을 설정합니다.

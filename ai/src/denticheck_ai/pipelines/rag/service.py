@@ -18,8 +18,8 @@ from typing import List
 from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from src.denticheck_ai.pipelines.rag.retrieve import MilvusRetriever
-from src.denticheck_ai.pipelines.llm import prompts
+from denticheck_ai.pipelines.rag.retrieve import MilvusRetriever
+from denticheck_ai.pipelines.llm import prompts
 
 class RagService:
     """
@@ -110,7 +110,11 @@ If there is no direct answer in the [Retrieved Knowledge], answer with general o
             "question": content
         })
         
-        return response
+        
+        # response가 메시지 객체면 content를 꺼내고, 아니면 문자열로 변환
+        if hasattr(response, "content"):
+            return response.content
+        return str(response)
 
 
 if __name__ == "__main__":
