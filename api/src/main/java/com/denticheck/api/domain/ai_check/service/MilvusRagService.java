@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -36,8 +37,15 @@ public class MilvusRagService {
         private Double score;
     }
 
+    @Getter
+    @Builder
+    public static class RagSearchResult {
+        private List<RagContext> contexts;
+        private boolean usedFallback;
+        private int topK;
+    }
+
     private final ObjectMapper objectMapper;
-    private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${milvus.enabled:false}")
     private boolean milvusEnabled;
@@ -63,6 +71,12 @@ public class MilvusRagService {
     @Value("${ollama.embedding.model:nomic-embed-text}")
     private String embeddingModel;
 
+    @Value("${milvus.timeout-ms:3000}")
+    private int milvusTimeoutMs;
+
+    @Value("${ollama.embedding.timeout-ms:3000}")
+    private int embeddingTimeoutMs;
+
     public List<RagContext> retrieveContexts(List<AiCheckRunResponse.DetectionItem> detections) {
         List<String> labels = detections == null ? List.of() : detections.stream()
                 .map(AiCheckRunResponse.DetectionItem::getLabel)
@@ -72,28 +86,52 @@ public class MilvusRagService {
                 .toList();
 
         String query = buildQuery(labels, detections == null ? 0 : detections.size());
+        return search(query, topK, labels).getContexts();
+    }
+
+    public RagSearchResult search(String query, int requestedTopK) {
+        return search(query, requestedTopK, List.of());
+    }
+
+    private RagSearchResult search(String query, int requestedTopK, List<String> knownLabels) {
+        int safeTopK = requestedTopK > 0 ? requestedTopK : topK;
+        long startedAt = System.currentTimeMillis();
+
+        List<String> labels = knownLabels == null || knownLabels.isEmpty()
+                ? inferLabelsFromQuery(query)
+                : knownLabels;
 
         if (!milvusEnabled) {
-            return fallbackContexts(labels);
+            log.info("Milvus search skipped (disabled). Using fallback contexts");
+            return RagSearchResult.builder()
+                    .contexts(fallbackContexts(labels))
+                    .usedFallback(true)
+                    .topK(safeTopK)
+                    .build();
         }
 
         try {
             List<Double> embedding = createEmbedding(query);
             if (embedding.isEmpty()) {
-                return fallbackContexts(labels);
+                log.warn("Milvus search fallback: empty embedding generated");
+                return RagSearchResult.builder()
+                        .contexts(fallbackContexts(labels))
+                        .usedFallback(true)
+                        .topK(safeTopK)
+                        .build();
             }
 
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("collectionName", milvusCollection);
             body.put("data", List.of(embedding));
             body.put("annsField", milvusVectorField);
-            body.put("limit", topK);
+            body.put("limit", safeTopK);
             body.put("outputFields", parseOutputFields());
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            ResponseEntity<Map> response = restTemplate.postForEntity(
+            ResponseEntity<Map> response = milvusRestTemplate().postForEntity(
                     milvusSearchUrl,
                     new HttpEntity<>(body, headers),
                     Map.class
@@ -101,12 +139,28 @@ public class MilvusRagService {
 
             List<RagContext> contexts = parseMilvusResponse(response.getBody());
             if (contexts.isEmpty()) {
-                return fallbackContexts(labels);
+                log.warn("Milvus search returned empty contexts. Using fallback");
+                return RagSearchResult.builder()
+                        .contexts(fallbackContexts(labels))
+                        .usedFallback(true)
+                        .topK(safeTopK)
+                        .build();
             }
-            return contexts;
+            long elapsed = System.currentTimeMillis() - startedAt;
+            log.info("Milvus search success: {} contexts in {}ms", contexts.size(), elapsed);
+            return RagSearchResult.builder()
+                    .contexts(contexts)
+                    .usedFallback(false)
+                    .topK(safeTopK)
+                    .build();
         } catch (Exception e) {
-            log.warn("Milvus retrieval failed. Fallback contexts will be used", e);
-            return fallbackContexts(labels);
+            long elapsed = System.currentTimeMillis() - startedAt;
+            log.warn("Milvus search failed in {}ms. Fallback contexts will be used", elapsed, e);
+            return RagSearchResult.builder()
+                    .contexts(fallbackContexts(labels))
+                    .usedFallback(true)
+                    .topK(safeTopK)
+                    .build();
         }
     }
 
@@ -124,7 +178,7 @@ public class MilvusRagService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        ResponseEntity<Map> response = restTemplate.postForEntity(url, new HttpEntity<>(body, headers), Map.class);
+        ResponseEntity<Map> response = embeddingRestTemplate().postForEntity(url, new HttpEntity<>(body, headers), Map.class);
         Map<String, Object> responseBody = response.getBody();
         if (responseBody == null) {
             return List.of();
@@ -259,5 +313,32 @@ public class MilvusRagService {
         }
 
         return contexts;
+    }
+
+    private RestTemplate milvusRestTemplate() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(milvusTimeoutMs);
+        factory.setReadTimeout(milvusTimeoutMs);
+        return new RestTemplate(factory);
+    }
+
+    private RestTemplate embeddingRestTemplate() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(embeddingTimeoutMs);
+        factory.setReadTimeout(embeddingTimeoutMs);
+        return new RestTemplate(factory);
+    }
+
+    private List<String> inferLabelsFromQuery(String query) {
+        if (query == null || query.isBlank()) {
+            return List.of();
+        }
+        String lower = query.toLowerCase(Locale.ROOT);
+        List<String> labels = new ArrayList<>();
+        if (lower.contains("caries")) labels.add("caries");
+        if (lower.contains("tartar") || lower.contains("calculus") || lower.contains("plaque")) labels.add("tartar");
+        if (lower.contains("oral_cancer") || lower.contains("oral cancer")) labels.add("oral_cancer");
+        if (labels.isEmpty()) labels.add("normal");
+        return labels;
     }
 }

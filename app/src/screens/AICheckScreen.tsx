@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Alert,
   Image,
-  Linking,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -17,13 +16,31 @@ import { Button } from "../shared/components/ui/Button";
 import { useAuth } from "../shared/providers/AuthProvider";
 
 type BBox = { x: number; y: number; w: number; h: number };
-type Detection = { label: string; confidence: number; bbox: BBox };
+type Detection = { label: "caries" | "tartar" | "oral_cancer" | "normal"; confidence: number; bbox: BBox };
 
-type LlmResult = {
-  overall?: {
-    level?: "GREEN" | "YELLOW" | "RED";
-    badgeText?: string;
-    oneLineSummary?: string;
+type QuickResponse = {
+  sessionId: string;
+  status: "quality_failed" | "done" | "error";
+  detections: Detection[];
+};
+
+type AnalyzeRagSource = { source: string; score: number; snippet: string };
+type AnalyzeFinding = { title: string; detail: string; evidence: string[] };
+type AnalyzeResponse = {
+  sessionId: string;
+  status: string;
+  detections: Detection[];
+  rag: {
+    topK: number;
+    sources: AnalyzeRagSource[];
+    usedFallback: boolean;
+  };
+  llmResult: {
+    riskLevel: "GREEN" | "YELLOW" | "RED";
+    summary: string;
+    findings: AnalyzeFinding[];
+    careGuide: string[];
+    disclaimer: string[];
   };
 };
 
@@ -33,33 +50,23 @@ type SelectedImage = {
   mimeType: string;
 };
 
-type AiCheckResponse = {
-  sessionId: string;
-  status: "uploaded" | "quality_failed" | "analyzing" | "done" | "error";
-  storageKey: string;
-  imageUrl: string;
-  qualityPass: boolean;
-  qualityScore: number;
-  qualityReasons: string[];
-  detections: Detection[];
-  summary: Record<string, unknown>;
-  llmResult?: LlmResult;
-  pdfUrl?: string;
-};
-
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_SERVER_URL;
 const REQUEST_TIMEOUT_MS = 30_000;
 
 export default function AICheckScreen() {
   const { token } = useAuth();
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
-  const [uiState, setUiState] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [result, setResult] = useState<AiCheckResponse | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [quickState, setQuickState] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [analyzeState, setAnalyzeState] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [quickResult, setQuickResult] = useState<QuickResponse | null>(null);
+  const [analyzeResult, setAnalyzeResult] = useState<AnalyzeResponse | null>(null);
+  const [quickError, setQuickError] = useState("");
+  const [analyzeError, setAnalyzeError] = useState("");
 
-  const canAnalyze = useMemo(
-    () => !!selectedImage && uiState !== "loading",
-    [selectedImage, uiState],
+  const canRunQuick = useMemo(() => !!selectedImage && quickState !== "loading", [selectedImage, quickState]);
+  const canRunAnalyze = useMemo(
+    () => !!selectedImage && analyzeState !== "loading",
+    [selectedImage, analyzeState],
   );
 
   const pickImage = async (useCamera: boolean) => {
@@ -68,7 +75,7 @@ export default function AICheckScreen() {
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
-      Alert.alert("권한 필요", useCamera ? "카메라 권한이 필요합니다." : "갤러리 권한이 필요합니다.");
+      Alert.alert("권한 ?�요", useCamera ? "카메??권한???�요?�니??" : "갤러�?권한???�요?�니??");
       return;
     }
 
@@ -87,9 +94,8 @@ export default function AICheckScreen() {
     if (picked.canceled) return;
 
     const asset = picked.assets[0];
-    const uri = asset?.uri;
-    if (!uri) {
-      Alert.alert("오류", "이미지를 불러오지 못했습니다.");
+    if (!asset?.uri) {
+      Alert.alert("?�류", "?��?지�?불러?��? 못했?�니??");
       return;
     }
 
@@ -103,102 +109,126 @@ export default function AICheckScreen() {
           ? "image/webp"
           : "image/jpeg");
 
-    setSelectedImage({ uri, fileName, mimeType });
-    setResult(null);
-    setErrorMessage("");
-    setUiState("idle");
+    setSelectedImage({ uri: asset.uri, fileName, mimeType });
+    setQuickResult(null);
+    setAnalyzeResult(null);
+    setQuickError("");
+    setAnalyzeError("");
+    setQuickState("idle");
+    setAnalyzeState("idle");
   };
 
-  const analyzeImage = async () => {
-    if (!selectedImage) {
-      Alert.alert("이미지 필요", "먼저 이미지를 선택해 주세요.");
-      return;
-    }
-    if (!API_BASE_URL) {
-      Alert.alert("환경 변수 오류", "EXPO_PUBLIC_API_SERVER_URL 값이 없습니다.");
-      return;
-    }
+  const buildFormData = () => {
+    const formData = new FormData();
+    if (!selectedImage) return formData;
+    formData.append("file", {
+      uri: selectedImage.uri,
+      name: selectedImage.fileName,
+      type: selectedImage.mimeType,
+    } as never);
+    return formData;
+  };
 
-    setUiState("loading");
-    setResult(null);
-    setErrorMessage("");
+  const buildHeaders = () => {
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return headers;
+  };
+
+  const runQuick = async () => {
+    if (!selectedImage || !API_BASE_URL) return;
+    setQuickState("loading");
+    setQuickError("");
+    setQuickResult(null);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
     try {
-      const formData = new FormData();
-      formData.append("file", {
-        uri: selectedImage.uri,
-        name: selectedImage.fileName,
-        type: selectedImage.mimeType,
-      } as never);
-
-      const headers: Record<string, string> = {};
-      if (token) headers.Authorization = `Bearer ${token}`;
-
-      const url = `${API_BASE_URL}/api/ai-check/quick`;
-      console.log("POST", url);
-      console.log("file", selectedImage.uri);
-
-      const res = await fetch(url, {
+      const res = await fetch(`${API_BASE_URL}/api/ai-check/quick`, {
         method: "POST",
-        headers,
-        body: formData,
+        headers: buildHeaders(),
+        body: buildFormData(),
         signal: controller.signal,
       });
-
       const text = await res.text();
-      const parsed = text ? (JSON.parse(text) as AiCheckResponse) : null;
-
+      const parsed = text ? (JSON.parse(text) as QuickResponse) : null;
       if (!res.ok || !parsed) {
-        const msg = `요청 실패 (HTTP ${res.status})`;
-        setUiState("error");
-        setErrorMessage(msg);
+        setQuickState("error");
+        setQuickError(`?�청 ?�패 (HTTP ${res.status})`);
         return;
       }
-
-      setResult(parsed);
-      setUiState("success");
-
-      if (parsed.status === "quality_failed") {
-        Alert.alert("품질 검사 실패", parsed.qualityReasons?.join("\n") || "사진 품질을 확인해 주세요.");
-      }
-      if (parsed.status === "error") {
-        Alert.alert("분석 오류", "분석 중 서버 오류가 발생했습니다.");
-      }
+      setQuickResult(parsed);
+      setQuickState("success");
     } catch (e) {
-      const isAbortError =
-        (e instanceof Error && e.name === "AbortError") ||
-        (e instanceof Error && e.message.toLowerCase().includes("aborted"));
-      const message = isAbortError
-        ? `요청 타임아웃 (${REQUEST_TIMEOUT_MS / 1000}초)`
-        : e instanceof Error
-          ? e.message
-          : "네트워크 오류가 발생했습니다.";
-      setUiState("error");
-      setErrorMessage(message);
+      const message =
+        e instanceof Error && e.name === "AbortError"
+          ? "빠른 ?��? ?�간??길어??중단??
+          : e instanceof Error
+            ? e.message
+            : "?�트?�크 ?�류";
+      setQuickState("error");
+      setQuickError(message);
     } finally {
       clearTimeout(timeoutId);
     }
   };
 
-  const openPdf = async () => {
-    if (!result?.pdfUrl) return;
-    const canOpen = await Linking.canOpenURL(result.pdfUrl);
-    if (!canOpen) {
-      Alert.alert("열기 실패", "PDF 링크를 열 수 없습니다.");
-      return;
+  const runAnalyze = async () => {
+    if (!selectedImage || !API_BASE_URL) return;
+    setAnalyzeState("loading");
+    setAnalyzeError("");
+    setAnalyzeResult(null);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/ai-check/analyze`, {
+        method: "POST",
+        headers: buildHeaders(),
+        body: buildFormData(),
+        signal: controller.signal,
+      });
+      const text = await res.text();
+      const parsed = text ? (JSON.parse(text) as AnalyzeResponse) : null;
+      if (!res.ok || !parsed) {
+        setAnalyzeState("error");
+        setAnalyzeError(`?�청 ?�패 (HTTP ${res.status})`);
+        return;
+      }
+      setAnalyzeResult(parsed);
+      setAnalyzeState("success");
+    } catch (e) {
+      const message =
+        e instanceof Error && e.name === "AbortError"
+          ? "AI 분석 ?�간??길어??중단??
+          : e instanceof Error
+            ? e.message
+            : "?�트?�크 ?�류";
+      setAnalyzeState("error");
+      setAnalyzeError(message);
+    } finally {
+      clearTimeout(timeoutId);
     }
-    await Linking.openURL(result.pdfUrl);
   };
+
+  if (!API_BASE_URL) {
+    return (
+      <View className="flex-1 items-center justify-center bg-slate-50">
+        <Text className="text-red-700">EXPO_PUBLIC_API_SERVER_URL is not configured.</Text>
+      </View>
+    );
+  }
+
+  const detections = quickResult?.detections ?? analyzeResult?.detections ?? [];
 
   return (
     <View className="flex-1 bg-slate-50">
       <SafeAreaView className="flex-1">
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
           <Text className="text-2xl font-bold text-slate-800">Run AI</Text>
-          <Text className="text-sm text-slate-500 mt-2">이미지 업로드 후 AI 분석 결과를 확인하세요.</Text>
+          <Text className="text-sm text-slate-500 mt-2">?��?지�??�로?�하�?빠른 ?��? ??LLM 분석???�행?�니??</Text>
 
           <View className="flex-row gap-3 mt-6">
             <TouchableOpacity
@@ -207,7 +237,7 @@ export default function AICheckScreen() {
               activeOpacity={0.85}
             >
               <Camera size={24} color="#0ea5e9" />
-              <Text className="mt-2 font-semibold text-slate-700">카메라 촬영</Text>
+              <Text className="mt-2 font-semibold text-slate-700">카메??촬영</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -216,78 +246,92 @@ export default function AICheckScreen() {
               activeOpacity={0.85}
             >
               <ImagePlus size={24} color="#0ea5e9" />
-              <Text className="mt-2 font-semibold text-slate-700">갤러리 선택</Text>
+              <Text className="mt-2 font-semibold text-slate-700">갤러�??�택</Text>
             </TouchableOpacity>
           </View>
 
           {selectedImage && (
             <View className="mt-6 rounded-2xl overflow-hidden border border-slate-200 bg-black">
-              <Image
-                source={{ uri: selectedImage.uri }}
-                style={{ width: "100%", height: 280 }}
-                resizeMode="contain"
-              />
+              <Image source={{ uri: selectedImage.uri }} style={{ width: "100%", height: 280 }} resizeMode="contain" />
             </View>
           )}
 
-          <Button className="mt-6 rounded-xl" onPress={analyzeImage} disabled={!canAnalyze}>
-            <Text className="text-white font-semibold">
-              {uiState === "loading" ? "분석 중..." : "분석 실행"}
-            </Text>
-          </Button>
+          <View className="mt-6 gap-3">
+            <Button className="rounded-xl" onPress={runQuick} disabled={!canRunQuick}>
+              <Text className="text-white font-semibold">
+                {quickState === "loading" ? "빠른 ?��? �?.." : "빠른 ?��?"}
+              </Text>
+            </Button>
+            <Button className="rounded-xl" onPress={runAnalyze} disabled={!canRunAnalyze}>
+              <Text className="text-white font-semibold">
+                {analyzeState === "loading" ? "AI 분석 �?.." : "AI 분석(LLM)"}
+              </Text>
+            </Button>
+          </View>
 
-          {uiState === "loading" && (
+          {(quickState === "loading" || analyzeState === "loading") && (
             <View className="mt-6 bg-white border border-slate-200 rounded-2xl p-4 flex-row items-center gap-3">
               <ActivityIndicator />
-              <Text className="text-slate-700">분석 중...</Text>
+              <Text className="text-slate-700">처리 �?..</Text>
             </View>
           )}
 
-          {uiState === "error" && (
+          {quickState === "error" && (
             <View className="mt-6 bg-white border border-red-200 rounded-2xl p-4">
-              <Text className="text-red-700 font-semibold">분석 실패</Text>
-              <Text className="text-red-600 mt-2 text-sm">
-                {errorMessage || "요청 중 오류가 발생했습니다."}
-              </Text>
+              <Text className="text-red-700 font-semibold">빠른 ?��? ?�패</Text>
+              <Text className="text-red-600 mt-2 text-sm">{quickError}</Text>
             </View>
           )}
 
-          {uiState === "success" && result && (
+          {analyzeState === "error" && (
+            <View className="mt-6 bg-white border border-red-200 rounded-2xl p-4">
+              <Text className="text-red-700 font-semibold">AI 분석 ?�패</Text>
+              <Text className="text-red-600 mt-2 text-sm">{analyzeError}</Text>
+            </View>
+          )}
+
+          {(quickResult || analyzeResult) && (
             <View className="mt-6 gap-4">
               <View className="bg-white border border-slate-200 rounded-2xl p-4">
-                <Text className="text-lg font-bold text-slate-800">분석 결과</Text>
-                <Text className="text-sm text-slate-600 mt-2">Session ID: {result.sessionId}</Text>
-                <Text className="text-sm text-slate-600 mt-1">Status: {result.status}</Text>
-                <Text className="text-sm text-slate-600 mt-1">
-                  Detections: {result.detections?.length ?? 0}개
-                </Text>
-                <Text className="text-slate-700 mt-3">
-                  {result.llmResult?.overall?.oneLineSummary ?? "요약 정보가 없습니다."}
-                </Text>
-              </View>
-
-              <View className="bg-white border border-slate-200 rounded-2xl p-4">
-                <Text className="font-bold text-slate-800">탐지 목록 (최대 5개)</Text>
-                {(result.detections?.length ?? 0) === 0 && (
-                  <Text className="text-slate-600 mt-2">탐지 없음</Text>
+                <Text className="font-bold text-slate-800">?��? 목록</Text>
+                {(detections?.length ?? 0) === 0 && (
+                  <Text className="text-slate-600 mt-2">?��? ?�음</Text>
                 )}
-                {(result.detections ?? []).slice(0, 5).map((d, idx) => (
+                {(detections ?? []).slice(0, 10).map((d, idx) => (
                   <Text key={`det-${idx}`} className="text-slate-700 mt-2">
                     {idx + 1}. {d.label} ({d.confidence.toFixed(2)})
                   </Text>
                 ))}
               </View>
 
-              <View className="bg-white border border-slate-200 rounded-2xl p-4">
-                <Button className="rounded-xl" onPress={openPdf} disabled={!result.pdfUrl}>
-                  <Text className="text-white font-semibold">
-                    {result.pdfUrl ? "리포트 열기" : "리포트 없음"}
-                  </Text>
-                </Button>
-                {result.pdfUrl ? (
-                  <Text className="text-xs text-slate-500 mt-2">{result.pdfUrl}</Text>
-                ) : null}
-              </View>
+              {analyzeResult?.llmResult && (
+                <View className="bg-white border border-slate-200 rounded-2xl p-4 gap-2">
+                  <Text className="text-lg font-bold text-slate-800">LLM 분석</Text>
+                  <Text className="text-slate-700">���赵: {analyzeResult.llmResult.riskLevel}</Text>
+                  <Text className="text-slate-700">{analyzeResult.llmResult.summary}</Text>
+
+                  <Text className="font-semibold text-slate-800 mt-2">�Ұ�</Text>
+                  {(analyzeResult.llmResult.findings ?? []).map((f, idx) => (
+                    <View key={`finding-${idx}`} className="mt-1">
+                      <Text className="text-slate-800">{idx + 1}. {f.title}</Text>
+                      <Text className="text-slate-600 text-sm">{f.detail}</Text>
+                    </View>
+                  ))}
+
+                  <Text className="font-semibold text-slate-800 mt-2">���� ���̵�</Text>
+                  {(analyzeResult.llmResult.careGuide ?? []).map((line, idx) => (
+                    <Text key={`guide-${idx}`} className="text-slate-600 text-sm">{idx + 1}. {line}</Text>
+                  ))}
+
+                  <Text className="font-semibold text-slate-800 mt-2">근거 보기 (Top 3)</Text>
+                  {(analyzeResult.rag?.sources ?? []).slice(0, 3).map((s, idx) => (
+                    <View key={`rag-${idx}`} className="mt-1">
+                      <Text className="text-slate-800 text-sm">{idx + 1}. {s.source}</Text>
+                      <Text className="text-slate-500 text-xs">{s.snippet}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
           )}
         </ScrollView>

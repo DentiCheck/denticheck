@@ -24,16 +24,22 @@ ai:
   client:
     url: ${AI_SERVICE_URL:http://localhost:8000}
     timeout: 5000
+  analyze:
+    timeout-ms: ${AI_ANALYZE_TIMEOUT_MS:25000}
 
 ollama:
   enabled: ${OLLAMA_ENABLED:false}
   base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
   model: ${OLLAMA_MODEL:llama3:8b}
+  generate:
+    timeout-ms: ${OLLAMA_GENERATE_TIMEOUT_MS:18000}
   embedding:
+    timeout-ms: ${OLLAMA_EMBEDDING_TIMEOUT_MS:3000}
     model: ${OLLAMA_EMBEDDING_MODEL:nomic-embed-text}
 
 milvus:
   enabled: ${MILVUS_ENABLED:false}
+  timeout-ms: ${MILVUS_TIMEOUT_MS:3000}
   search:
     url: ${MILVUS_SEARCH_URL:http://localhost:9091/v2/vectordb/entities/search}
   collection: ${MILVUS_COLLECTION:dental_knowledge}

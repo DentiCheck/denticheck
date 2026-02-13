@@ -1,6 +1,7 @@
 package com.denticheck.api.domain.ai_check.service;
 
 import com.denticheck.api.domain.ai_check.dto.AiCheckRunResponse;
+import com.denticheck.api.domain.ai_check.dto.AnalyzeResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +26,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -36,9 +39,15 @@ public class AiCheckOrchestratorService {
     @Value("${ai.client.url}")
     private String aiBaseUrl;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    @Value("${ai.client.timeout:5000}")
+    private int aiClientTimeoutMs;
+
+    @Value("${ai.analyze.timeout-ms:25000}")
+    private int analyzeTimeoutMs;
+
     private final MilvusRagService milvusRagService;
     private final AiLlmResultService aiLlmResultService;
+    private final AiAnalyzeLlmService aiAnalyzeLlmService;
     private final PdfReportService pdfReportService;
     private final ReportStorageService reportStorageService;
 
@@ -162,6 +171,94 @@ public class AiCheckOrchestratorService {
         }
     }
 
+    public AnalyzeResponse runAnalyze(MultipartFile file, boolean generatePdf) {
+        String sessionId = UUID.randomUUID().toString();
+        if (file == null || file.isEmpty()) {
+            return analyzeErrorResponse(sessionId, "empty_file");
+        }
+        if (!isAllowedImage(file.getOriginalFilename())) {
+            return analyzeErrorResponse(sessionId, "unsupported_extension");
+        }
+
+        try {
+            CompletableFuture<AnalyzeResponse> future = CompletableFuture.supplyAsync(
+                    () -> runAnalyzeInternal(sessionId, file, generatePdf)
+            );
+            return future.get(analyzeTimeoutMs, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            log.warn("Analyze pipeline timed out or failed for session {}. Fallback response returned", sessionId, e);
+            return analyzeFallbackResponse(sessionId);
+        }
+    }
+
+    private AnalyzeResponse runAnalyzeInternal(String sessionId, MultipartFile file, boolean generatePdf) {
+        try {
+            Map<String, Object> quality = postMultipartToAi("/v1/quality", file);
+            boolean qualityPass = asBoolean(quality.getOrDefault("pass", quality.get("pass_")));
+
+            if (!qualityPass) {
+                MilvusRagService.RagSearchResult ragResult = milvusRagService.search(
+                        "Low quality dental image. Provide retry guidance and safe disclaimer.",
+                        8
+                );
+                List<AnalyzeResponse.RagSource> ragSources = toAnalyzeRagSources(ragResult.getContexts());
+                AnalyzeResponse.LlmResult llmResult = aiAnalyzeLlmService.generate(
+                        List.of(),
+                        Map.of("qualityPass", false),
+                        ragSources
+                );
+
+                if (generatePdf) {
+                    AiCheckRunResponse.LlmResult legacyLlm = aiLlmResultService.generate(List.of(), false, 0.0, ragResult.getContexts());
+                    createAndStorePdf(sessionId, legacyLlm, List.of());
+                }
+
+                return AnalyzeResponse.builder()
+                        .sessionId(sessionId)
+                        .status("done")
+                        .detections(List.of())
+                        .rag(AnalyzeResponse.RagSummary.builder()
+                                .topK(8)
+                                .sources(ragSources)
+                                .usedFallback(ragResult.isUsedFallback())
+                                .build())
+                        .llmResult(llmResult)
+                        .build();
+            }
+
+            Map<String, Object> detect = postMultipartToAi("/v1/detect", file);
+            List<AiCheckRunResponse.DetectionItem> detections = toDetections(detect.get("detections"));
+            Map<String, Object> summary = asMap(detect.get("summary"));
+
+            String query = buildQueryFromDetections(detections, summary);
+            MilvusRagService.RagSearchResult ragResult = milvusRagService.search(query, 8);
+            List<AnalyzeResponse.RagSource> ragSources = toAnalyzeRagSources(ragResult.getContexts());
+            List<AnalyzeResponse.DetectionItem> analyzeDetections = toAnalyzeDetections(detections);
+
+            AnalyzeResponse.LlmResult llmResult = aiAnalyzeLlmService.generate(analyzeDetections, summary, ragSources);
+
+            if (generatePdf) {
+                AiCheckRunResponse.LlmResult legacyLlm = aiLlmResultService.generate(detections, true, 1.0, ragResult.getContexts());
+                createAndStorePdf(sessionId, legacyLlm, detections);
+            }
+
+            return AnalyzeResponse.builder()
+                    .sessionId(sessionId)
+                    .status("done")
+                    .detections(analyzeDetections)
+                    .rag(AnalyzeResponse.RagSummary.builder()
+                            .topK(8)
+                            .sources(ragSources)
+                            .usedFallback(ragResult.isUsedFallback())
+                            .build())
+                    .llmResult(llmResult)
+                    .build();
+        } catch (Exception e) {
+            log.warn("Analyze pipeline failed for session {}. Returning fallback", sessionId, e);
+            return analyzeFallbackResponse(sessionId);
+        }
+    }
+
     private String createAndStorePdf(
             String sessionId,
             AiCheckRunResponse.LlmResult llmResult,
@@ -210,7 +307,7 @@ public class AiCheckOrchestratorService {
         body.add("file", new HttpEntity<>(resource, partHeaders));
 
         HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(body, headers);
-        ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+        ResponseEntity<Map> response = aiRestTemplate().postForEntity(url, entity, Map.class);
         return response.getBody() == null ? Collections.emptyMap() : response.getBody();
     }
 
@@ -334,5 +431,86 @@ public class AiCheckOrchestratorService {
                 .detections(Collections.emptyList())
                 .summary(Collections.emptyMap())
                 .build();
+    }
+
+    private AnalyzeResponse analyzeErrorResponse(String sessionId, String reason) {
+        AnalyzeResponse fallback = analyzeFallbackResponse(sessionId);
+        return AnalyzeResponse.builder()
+                .sessionId(sessionId)
+                .status("error:" + reason)
+                .detections(fallback.getDetections())
+                .rag(fallback.getRag())
+                .llmResult(fallback.getLlmResult())
+                .build();
+    }
+
+    private AnalyzeResponse analyzeFallbackResponse(String sessionId) {
+        MilvusRagService.RagSearchResult ragResult = milvusRagService.search("Dental screening fallback context", 8);
+        List<AnalyzeResponse.RagSource> ragSources = toAnalyzeRagSources(ragResult.getContexts());
+        AnalyzeResponse.LlmResult llmResult = aiAnalyzeLlmService.generate(List.of(), Map.of(), ragSources);
+
+        return AnalyzeResponse.builder()
+                .sessionId(sessionId)
+                .status("done")
+                .detections(List.of())
+                .rag(AnalyzeResponse.RagSummary.builder()
+                        .topK(8)
+                        .sources(ragSources)
+                        .usedFallback(true)
+                        .build())
+                .llmResult(llmResult)
+                .build();
+    }
+
+    private List<AnalyzeResponse.DetectionItem> toAnalyzeDetections(List<AiCheckRunResponse.DetectionItem> detections) {
+        return detections.stream()
+                .map(v -> AnalyzeResponse.DetectionItem.builder()
+                        .label(v.getLabel())
+                        .confidence(v.getConfidence())
+                        .bbox(AnalyzeResponse.BBox.builder()
+                                .x(v.getBbox() == null ? 0.0 : v.getBbox().getX())
+                                .y(v.getBbox() == null ? 0.0 : v.getBbox().getY())
+                                .w(v.getBbox() == null ? 0.0 : v.getBbox().getW())
+                                .h(v.getBbox() == null ? 0.0 : v.getBbox().getH())
+                                .build())
+                        .build())
+                .toList();
+    }
+
+    private List<AnalyzeResponse.RagSource> toAnalyzeRagSources(List<MilvusRagService.RagContext> contexts) {
+        return contexts.stream()
+                .map(v -> AnalyzeResponse.RagSource.builder()
+                        .source(v.getSource())
+                        .score(v.getScore())
+                        .snippet(trimSnippet(v.getText()))
+                        .build())
+                .toList();
+    }
+
+    private String trimSnippet(String text) {
+        if (text == null) {
+            return "";
+        }
+        String flat = text.replace('\n', ' ').trim();
+        return flat.length() <= 200 ? flat : flat.substring(0, 200);
+    }
+
+    private String buildQueryFromDetections(List<AiCheckRunResponse.DetectionItem> detections, Map<String, Object> summary) {
+        Map<String, Integer> grouped = new LinkedHashMap<>();
+        for (AiCheckRunResponse.DetectionItem d : detections) {
+            String label = d.getLabel() == null ? "normal" : d.getLabel();
+            grouped.put(label, grouped.getOrDefault(label, 0) + 1);
+        }
+        String summaryText = summary == null || summary.isEmpty() ? "{}" : summary.toString();
+        return "Detected findings: " + grouped + ". Detection summary: " + summaryText
+                + ". Provide clinical explanation, risk level, care guide, and evidence-based citations.";
+    }
+
+    private RestTemplate aiRestTemplate() {
+        org.springframework.http.client.SimpleClientHttpRequestFactory factory =
+                new org.springframework.http.client.SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(aiClientTimeoutMs);
+        factory.setReadTimeout(aiClientTimeoutMs);
+        return new RestTemplate(factory);
     }
 }
