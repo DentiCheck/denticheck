@@ -10,11 +10,12 @@ import com.denticheck.api.domain.chatbot.dto.ChatAppResponse;
 import com.denticheck.api.domain.chatbot.entity.ChatMessageType;
 import com.denticheck.api.domain.user.entity.UserEntity;
 import com.denticheck.api.domain.user.repository.UserRepository;
+import com.denticheck.api.infrastructure.external.ai.AiClient;
+import com.denticheck.api.infrastructure.external.ai.dto.AiChatAskRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.denticheck.api.domain.chatbot.entity.ChatRole;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,11 +31,7 @@ public class ChatServiceImpl implements ChatService {
     private final ChatSessionRepository chatSessionRepository;
     private final AiChatMessageRepository aiChatMessageRepository;
     private final UserRepository userRepository;
-    // private final AiReportRepository aiReportRepository; // Removed unused
-    // dependency
-
-    @Value("${ai.client.url}")
-    private String AI_SERVICE_URL;
+    private final AiClient aiClient;
 
     @Override
     @Transactional
@@ -91,11 +88,26 @@ public class ChatServiceImpl implements ChatService {
         // Update Session Metadata
         session.touchLastMessage(preview(content));
 
-        // 2. Call AI Server (MOCK for now)
-        // String aiResponseJson = callAiServer(session.getId(), content, "ko");
+        // 2. Call AI Server
+        String aiContent;
+        try {
+            String rawResponse = aiClient.askChat(AiChatAskRequest.builder()
+                    .content(content)
+                    .language("ko")
+                    .build());
 
-        // Mock AI Response
-        String aiContent = "안녕하세요! [" + content + "]라고 말씀하셨군요. \n현재 AI 연결 테스트 중입니다. \n(Mock Response)";
+            // Null 또는 빈 문자열인 경우 기본 메시지 할당
+            if (rawResponse == null || rawResponse.trim().isEmpty()) {
+                log.warn("AI 서버로부터 빈 응답을 받았습니다. sessionId: {}", session.getId());
+                aiContent = "AI가 답변을 생성하지 못했습니다. 질문을 조금 더 구체적으로 말씀해 주시겠어요?";
+            } else {
+                aiContent = rawResponse;
+            }
+        } catch (Exception e) {
+            log.error("AI 서버 호출 중 오류가 발생했습니다: {}", e.getMessage());
+            aiContent = "죄송합니다. 현재 AI 서비스를 이용할 수 없습니다. 잠시 후 다시 시도해 주세요.";
+        }
+
         ChatMessageType aiMessageType = ChatMessageType.TEXT;
         Map<String, Object> aiPayload = null;
 
