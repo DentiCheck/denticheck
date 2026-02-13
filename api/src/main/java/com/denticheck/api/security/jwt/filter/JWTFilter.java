@@ -6,9 +6,10 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -16,8 +17,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Component
 public class JWTFilter extends OncePerRequestFilter {
@@ -29,7 +30,9 @@ public class JWTFilter extends OncePerRequestFilter {
         String contextPath = request.getContextPath() == null ? "" : request.getContextPath();
         String requestUri = request.getRequestURI() == null ? "" : request.getRequestURI();
         String path = requestUri.startsWith(contextPath) ? requestUri.substring(contextPath.length()) : requestUri;
-        return path.equals("/api/ai-check") || path.startsWith("/api/ai-check/");
+        // TODO: 위 3개는 삭제 예정
+        String pathCHU = request.getServletPath();
+        return path.equals("/api/ai-check") || path.startsWith("/api/ai-check/") || pathCHU.startsWith("/docs/");
     }
 
     @Override
@@ -46,16 +49,19 @@ public class JWTFilter extends OncePerRequestFilter {
         }
 
         if (!authorization.startsWith("Bearer ")) {
-            throw new ServletException("Invalid JWT token");
+            // throw new ServletException("유효하지 않은 JWT 토큰 형식입니다.");
+            // 잘못된 헤더로 public 리소스까지 죽지 않게 패스
+            filterChain.doFilter(request, response);
+            return;
         }
 
         // 토큰 파싱
-        String accessToken = authorization.split(" ")[1];
+        String accessToken = authorization.substring("Bearer ".length());
 
         // TODO: 임시 토큰 처리 (테스트용)
         if ("temp_access_token_for_test".equals(accessToken)) {
             Authentication auth = new UsernamePasswordAuthenticationToken(
-                    "temp-user",
+                    "TestUser",
                     null,
                     Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
             SecurityContextHolder.getContext().setAuthentication(auth);
@@ -67,22 +73,23 @@ public class JWTFilter extends OncePerRequestFilter {
             String username = jwtUtil.getUsername(accessToken);
             String role = jwtUtil.getRole(accessToken);
 
-            List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(role));
-
             Authentication auth = new UsernamePasswordAuthenticationToken(
                     username,
                     null,
-                    authorities);
+                    Collections.singletonList(new SimpleGrantedAuthority(role)));
             SecurityContextHolder.getContext().setAuthentication(auth);
 
             filterChain.doFilter(request, response);
 
         } else {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"error\":\"토큰 만료 또는 유효하지 않은 토큰\"}");
+            // response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            // response.setContentType("application/json;charset=UTF-8");
+            // response.getWriter().write("{\"error\":\"토큰 만료 또는 유효하지 않은 토큰\"}");
+            // ❗ 여기서 401을 직접 내려버리면 permitAll 문서도 같이 막힐 수 있음
+            SecurityContextHolder.clearContext();
         }
 
+        filterChain.doFilter(request, response);
     }
 
 }

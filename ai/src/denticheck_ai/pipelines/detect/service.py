@@ -1,4 +1,9 @@
-﻿import os
+﻿"""
+[파일 역할]
+YOLOv8 모델을 사용하여 치과 질환(치석, 충치, 병변)을 탐지하는 핵심 서비스 클래스입니다.
+이미지 다운로드, 전처리, 추론, 결과 가공의 전체 파이프라인을 관리합니다.
+"""
+import os
 import httpx
 import tempfile
 from pathlib import Path
@@ -9,27 +14,43 @@ from loguru import logger
 
 
 class DetectionService:
+    """
+    YOLOv8 기반 질환 탐지 서비스 클래스입니다.
+    """
     def __init__(self):
+        """
+        서비스 초기화 및 YOLO 모델 로드
+        - 설정된 경로에서 모델 가중치(.pt) 파일을 불러옵니다.
+        - 모델 파일이 없을 경우 기본 모델(yolov8n.pt)을 사용합니다.
+        """
         configured_path = settings.YOLO_MODEL_PATH
         model_path = configured_path if os.path.isabs(configured_path) else os.path.join(os.getcwd(), configured_path)
         if not os.path.exists(model_path):
-            logger.warning(f"Model not found at {model_path}, using default yolov8n.pt")
+            logger.warning(f"모델을 찾을 수 없습니다: {model_path}, 기본 모델(yolov8n.pt)을 로드합니다.")
             self.model = YOLO("yolov8n.pt")
         else:
             self.model = YOLO(model_path)
-        logger.info(f"Loaded YOLO model from {model_path}")
+        logger.info(f"YOLO 모델 로드 완료: {model_path}")
 
     async def _download_image(self, storage_key: str, image_url: str = None) -> Path:
+        """
+        이미지 다운로드 및 임시 저장
+        - 우선순위 1: 전달된 직접 URL(image_url) 사용
+        - 우선순위 2: storage_key(MinIO)를 기반으로 내부 URL 생성
+        - 다운로드된 파일은 작업 완료 후 삭제될 수 있도록 임시 경로에 저장합니다.
+        """
         target_url = image_url
         if not target_url:
+            # MinIO 프로토콜 및 URL 구성
             protocol = "https" if settings.MINIO_SECURE else "http"
             target_url = f"{protocol}://{settings.MINIO_ENDPOINT}/{settings.MINIO_BUCKET}/{storage_key}"
 
         tmp_dir = tempfile.gettempdir()
+        # 파일명 내 안전하지 않은 문자 처리
         safe_name = storage_key.replace("/", "_")
         tmp_path = Path(tmp_dir) / f"detect_{safe_name}"
 
-        logger.info(f"Downloading image from {target_url} to {tmp_path}")
+        logger.info(f"이미지 다운로드 시작: {target_url} to {tmp_path}")
 
         async with httpx.AsyncClient() as client:
             resp = await client.get(target_url, timeout=30.0)

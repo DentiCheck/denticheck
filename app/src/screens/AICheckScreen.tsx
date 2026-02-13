@@ -75,7 +75,7 @@ export default function AICheckScreen() {
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
-      Alert.alert("권한 ?�요", useCamera ? "카메??권한???�요?�니??" : "갤러�?권한???�요?�니??");
+      Alert.alert("권한 필요", useCamera ? "카메라 권한이 필요합니다." : "갤러리 권한이 필요합니다.");
       return;
     }
 
@@ -95,7 +95,7 @@ export default function AICheckScreen() {
 
     const asset = picked.assets[0];
     if (!asset?.uri) {
-      Alert.alert("?�류", "?��?지�?불러?��? 못했?�니??");
+      Alert.alert("오류", "이미지를 불러오지 못했습니다.");
       return;
     }
 
@@ -155,7 +155,7 @@ export default function AICheckScreen() {
       const parsed = text ? (JSON.parse(text) as QuickResponse) : null;
       if (!res.ok || !parsed) {
         setQuickState("error");
-        setQuickError(`?�청 ?�패 (HTTP ${res.status})`);
+        setQuickError(`요청 실패 (HTTP ${res.status})`);
         return;
       }
       setQuickResult(parsed);
@@ -163,10 +163,10 @@ export default function AICheckScreen() {
     } catch (e) {
       const message =
         e instanceof Error && e.name === "AbortError"
-          ? "빠른 ?��? ?�간??길어??중단??
+          ? "빠른 ?��? ?�간??길어??중단??
           : e instanceof Error
             ? e.message
-            : "?�트?�크 ?�류";
+            : "?�트?�크 ?�류";
       setQuickState("error");
       setQuickError(message);
     } finally {
@@ -194,7 +194,7 @@ export default function AICheckScreen() {
       const parsed = text ? (JSON.parse(text) as AnalyzeResponse) : null;
       if (!res.ok || !parsed) {
         setAnalyzeState("error");
-        setAnalyzeError(`?�청 ?�패 (HTTP ${res.status})`);
+        setAnalyzeError(`?�청 ?�패 (HTTP ${res.status})`);
         return;
       }
       setAnalyzeResult(parsed);
@@ -202,10 +202,10 @@ export default function AICheckScreen() {
     } catch (e) {
       const message =
         e instanceof Error && e.name === "AbortError"
-          ? "AI 분석 ?�간??길어??중단??
+          ? "AI 분석 ?�간??길어??중단??
           : e instanceof Error
             ? e.message
-            : "?�트?�크 ?�류";
+            : "?�트?�크 ?�류";
       setAnalyzeState("error");
       setAnalyzeError(message);
     } finally {
@@ -228,7 +228,7 @@ export default function AICheckScreen() {
       <SafeAreaView className="flex-1">
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
           <Text className="text-2xl font-bold text-slate-800">Run AI</Text>
-          <Text className="text-sm text-slate-500 mt-2">?��?지�??�로?�하�?빠른 ?��? ??LLM 분석???�행?�니??</Text>
+          <Text className="text-sm text-slate-500 mt-2">이미지 업로드 후 AI 분석 결과를 확인하세요.</Text>
 
           <View className="flex-row gap-3 mt-6">
             <TouchableOpacity
@@ -237,7 +237,7 @@ export default function AICheckScreen() {
               activeOpacity={0.85}
             >
               <Camera size={24} color="#0ea5e9" />
-              <Text className="mt-2 font-semibold text-slate-700">카메??촬영</Text>
+              <Text className="mt-2 font-semibold text-slate-700">카메라 촬영</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -246,7 +246,7 @@ export default function AICheckScreen() {
               activeOpacity={0.85}
             >
               <ImagePlus size={24} color="#0ea5e9" />
-              <Text className="mt-2 font-semibold text-slate-700">갤러�??�택</Text>
+              <Text className="mt-2 font-semibold text-slate-700">갤러리 선택</Text>
             </TouchableOpacity>
           </View>
 
@@ -259,12 +259,12 @@ export default function AICheckScreen() {
           <View className="mt-6 gap-3">
             <Button className="rounded-xl" onPress={runQuick} disabled={!canRunQuick}>
               <Text className="text-white font-semibold">
-                {quickState === "loading" ? "빠른 ?��? �?.." : "빠른 ?��?"}
+                {quickState === "loading" ? "빠른 ?��? �?.." : "빠른 ?��?"}
               </Text>
             </Button>
             <Button className="rounded-xl" onPress={runAnalyze} disabled={!canRunAnalyze}>
               <Text className="text-white font-semibold">
-                {analyzeState === "loading" ? "AI 분석 �?.." : "AI 분석(LLM)"}
+                {analyzeState === "loading" ? "AI 분석 �?.." : "AI 분석(LLM)"}
               </Text>
             </Button>
           </View>
@@ -272,20 +272,20 @@ export default function AICheckScreen() {
           {(quickState === "loading" || analyzeState === "loading") && (
             <View className="mt-6 bg-white border border-slate-200 rounded-2xl p-4 flex-row items-center gap-3">
               <ActivityIndicator />
-              <Text className="text-slate-700">처리 �?..</Text>
+              <Text className="text-slate-700">처리 �?..</Text>
             </View>
           )}
 
           {quickState === "error" && (
             <View className="mt-6 bg-white border border-red-200 rounded-2xl p-4">
-              <Text className="text-red-700 font-semibold">빠른 ?��? ?�패</Text>
+              <Text className="text-red-700 font-semibold">빠른 ?��? ?�패</Text>
               <Text className="text-red-600 mt-2 text-sm">{quickError}</Text>
             </View>
           )}
 
           {analyzeState === "error" && (
             <View className="mt-6 bg-white border border-red-200 rounded-2xl p-4">
-              <Text className="text-red-700 font-semibold">AI 분석 ?�패</Text>
+              <Text className="text-red-700 font-semibold">AI 분석 ?�패</Text>
               <Text className="text-red-600 mt-2 text-sm">{analyzeError}</Text>
             </View>
           )}
@@ -293,9 +293,9 @@ export default function AICheckScreen() {
           {(quickResult || analyzeResult) && (
             <View className="mt-6 gap-4">
               <View className="bg-white border border-slate-200 rounded-2xl p-4">
-                <Text className="font-bold text-slate-800">?��? 목록</Text>
+                <Text className="font-bold text-slate-800">?��? 목록</Text>
                 {(detections?.length ?? 0) === 0 && (
-                  <Text className="text-slate-600 mt-2">?��? ?�음</Text>
+                  <Text className="text-slate-600 mt-2">?��? ?�음</Text>
                 )}
                 {(detections ?? []).slice(0, 10).map((d, idx) => (
                   <Text key={`det-${idx}`} className="text-slate-700 mt-2">
@@ -307,10 +307,10 @@ export default function AICheckScreen() {
               {analyzeResult?.llmResult && (
                 <View className="bg-white border border-slate-200 rounded-2xl p-4 gap-2">
                   <Text className="text-lg font-bold text-slate-800">LLM 분석</Text>
-                  <Text className="text-slate-700">���赵: {analyzeResult.llmResult.riskLevel}</Text>
+                  <Text className="text-slate-700">���赵: {analyzeResult.llmResult.riskLevel}</Text>
                   <Text className="text-slate-700">{analyzeResult.llmResult.summary}</Text>
 
-                  <Text className="font-semibold text-slate-800 mt-2">�Ұ�</Text>
+                  <Text className="font-semibold text-slate-800 mt-2">�Ұ�</Text>
                   {(analyzeResult.llmResult.findings ?? []).map((f, idx) => (
                     <View key={`finding-${idx}`} className="mt-1">
                       <Text className="text-slate-800">{idx + 1}. {f.title}</Text>
@@ -318,7 +318,7 @@ export default function AICheckScreen() {
                     </View>
                   ))}
 
-                  <Text className="font-semibold text-slate-800 mt-2">���� ���̵�</Text>
+                  <Text className="font-semibold text-slate-800 mt-2">���� ���̵�</Text>
                   {(analyzeResult.llmResult.careGuide ?? []).map((line, idx) => (
                     <Text key={`guide-${idx}`} className="text-slate-600 text-sm">{idx + 1}. {line}</Text>
                   ))}
