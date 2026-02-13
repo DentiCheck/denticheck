@@ -26,8 +26,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.apache.pdfbox:pdfbox:2.0.33'
-    implementation 'io.minio:minio:8.5.12'
+    implementation 'org.apache.pdfbox:pdfbox:3.0.3'
+    implementation 'io.minio:minio:8.6.0'
 
     // GraphQL Scalars
     implementation 'com.graphql-java:graphql-java-extended-scalars:24.0'

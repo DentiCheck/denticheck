@@ -75,8 +75,7 @@ public class AiAnalyzeLlmService {
     public AnalyzeResponse.LlmResult generate(
             List<AnalyzeResponse.DetectionItem> detections,
             Map<String, Object> summary,
-            List<AnalyzeResponse.RagSource> ragSources
-    ) {
+            List<AnalyzeResponse.RagSource> ragSources) {
         List<AnalyzeResponse.DetectionItem> safeDetections = detections == null ? List.of() : detections;
         List<AnalyzeResponse.RagSource> safeRagSources = ragSources == null ? List.of() : ragSources;
         Map<String, Object> safeSummary = summary == null ? Map.of() : summary;
@@ -108,8 +107,7 @@ public class AiAnalyzeLlmService {
     private AnalyzeResponse.LlmResult callOllama(
             List<AnalyzeResponse.DetectionItem> detections,
             Map<String, Object> summary,
-            List<AnalyzeResponse.RagSource> ragSources
-    ) throws Exception {
+            List<AnalyzeResponse.RagSource> ragSources) throws Exception {
         String detectionsJson = objectMapper.writeValueAsString(detections);
         String summaryJson = objectMapper.writeValueAsString(summary);
         String ragJson = objectMapper.writeValueAsString(ragSources);
@@ -127,7 +125,8 @@ public class AiAnalyzeLlmService {
 
         String url = ollamaBaseUrl + "/api/generate";
         long requestStart = System.currentTimeMillis();
-        ResponseEntity<Map> response = ollamaRestTemplate().postForEntity(url, new HttpEntity<>(body, headers), Map.class);
+        ResponseEntity<Map> response = ollamaRestTemplate().postForEntity(url, new HttpEntity<>(body, headers),
+                Map.class);
         long elapsed = System.currentTimeMillis() - requestStart;
         log.info("Ollama generate request completed in {}ms", elapsed);
 
@@ -161,7 +160,8 @@ public class AiAnalyzeLlmService {
             findings = findings.stream().limit(3).map(v -> AnalyzeResponse.Finding.builder()
                     .title(hasText(v.getTitle()) ? v.getTitle() : "소견")
                     .detail(hasText(v.getDetail()) ? v.getDetail() : "치과 진료를 통해 확인이 필요합니다.")
-                    .evidence((v.getEvidence() == null || v.getEvidence().isEmpty()) ? List.of("rag:0") : v.getEvidence())
+                    .evidence(
+                            (v.getEvidence() == null || v.getEvidence().isEmpty()) ? List.of("rag:0") : v.getEvidence())
                     .build()).toList();
         }
 
@@ -183,8 +183,7 @@ public class AiAnalyzeLlmService {
 
     private AnalyzeResponse.LlmResult buildRuleBasedFallback(
             List<AnalyzeResponse.DetectionItem> detections,
-            List<AnalyzeResponse.RagSource> ragSources
-    ) {
+            List<AnalyzeResponse.RagSource> ragSources) {
         String riskLevel = computeRiskLevel(detections);
         String summary = switch (riskLevel) {
             case "RED" -> "고위험 의심 소견이 감지되었습니다. 가능한 빠르게 치과 또는 구강내과 진료를 권장합니다.";
@@ -202,19 +201,16 @@ public class AiAnalyzeLlmService {
                         "불소 치약으로 하루 2~3회 양치하세요.",
                         "하루 1회 치실 또는 치간칫솔을 사용하세요.",
                         "당분 섭취를 줄이고 흡연은 피하세요.",
-                        "증상이 지속되면 치과 진료를 예약하세요."
-                ))
+                        "증상이 지속되면 치과 진료를 예약하세요."))
                 .disclaimer(List.of(
                         "이 결과는 AI 보조 스크리닝 참고 정보이며 의학적 진단이 아닙니다.",
-                        "통증, 출혈, 궤양, 부종 또는 증상 악화가 지속되면 전문 진료를 받으세요."
-                ))
+                        "통증, 출혈, 궤양, 부종 또는 증상 악화가 지속되면 전문 진료를 받으세요."))
                 .build();
     }
 
     private List<AnalyzeResponse.Finding> buildFindings(
             List<AnalyzeResponse.DetectionItem> detections,
-            List<AnalyzeResponse.RagSource> ragSources
-    ) {
+            List<AnalyzeResponse.RagSource> ragSources) {
         if (detections == null || detections.isEmpty()) {
             return List.of(AnalyzeResponse.Finding.builder()
                     .title("뚜렷한 병변 신호 없음")

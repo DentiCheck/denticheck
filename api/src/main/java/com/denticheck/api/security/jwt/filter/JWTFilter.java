@@ -80,7 +80,7 @@ public class JWTFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(auth);
 
             filterChain.doFilter(request, response);
-
+            return;
         } else {
             // response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             // response.setContentType("application/json;charset=UTF-8");

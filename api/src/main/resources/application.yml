@@ -19,7 +19,7 @@ logging:
         com.denticheck.api: DEBUG
         # org.hibernate.SQL: DEBUG
     pattern:
-        console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5p %pid --- [%t] %logger{36} : %m%n"
+        console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level ${PID:-} --- [%thread] %logger{36} : %msg%n"
 
 springdoc:
     api-docs:

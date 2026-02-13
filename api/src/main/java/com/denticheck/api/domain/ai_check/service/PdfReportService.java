@@ -7,6 +7,7 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -21,8 +22,7 @@ public class PdfReportService {
     public byte[] generate(
             String sessionId,
             AiCheckRunResponse.LlmResult llmResult,
-            List<AiCheckRunResponse.DetectionItem> detections
-    ) {
+            List<AiCheckRunResponse.DetectionItem> detections) {
         try (PDDocument document = new PDDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             PDPage page = new PDPage(PDRectangle.A4);
             document.addPage(page);
@@ -33,14 +33,15 @@ public class PdfReportService {
                 float leading = 18;
 
                 content.beginText();
-                content.setFont(PDType1Font.HELVETICA_BOLD, 16);
+                content.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 16);
                 content.newLineAtOffset(x, y);
                 content.showText("DentiCheck AI Screening Report");
                 content.endText();
 
                 y -= leading * 2;
                 y = writeLine(content, x, y, "Session ID: " + sessionId, true);
-                y = writeLine(content, x, y, "Generated At: " + OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME), false);
+                y = writeLine(content, x, y,
+                        "Generated At: " + OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME), false);
                 y = writeLine(content, x, y, "", false);
 
                 if (llmResult != null && llmResult.getOverall() != null) {
@@ -54,7 +55,8 @@ public class PdfReportService {
 
                 if (llmResult != null && llmResult.getFindings() != null && !llmResult.getFindings().isEmpty()) {
                     for (AiCheckRunResponse.Finding finding : llmResult.getFindings()) {
-                        y = writeLine(content, x, y, "- " + finding.getTitle() + " / " + finding.getSeverity() + " / " + finding.getLocationText(), false);
+                        y = writeLine(content, x, y, "- " + finding.getTitle() + " / " + finding.getSeverity() + " / "
+                                + finding.getLocationText(), false);
                     }
                 } else {
                     y = writeLine(content, x, y, "- No findings", false);
@@ -64,7 +66,10 @@ public class PdfReportService {
                 y = writeLine(content, x, y, "Detections:", true);
                 if (detections != null && !detections.isEmpty()) {
                     for (AiCheckRunResponse.DetectionItem d : detections) {
-                        y = writeLine(content, x, y, "- " + d.getLabel() + " conf=" + String.format("%.3f", d.getConfidence() == null ? 0.0 : d.getConfidence()), false);
+                        y = writeLine(content, x, y,
+                                "- " + d.getLabel() + " conf="
+                                        + String.format("%.3f", d.getConfidence() == null ? 0.0 : d.getConfidence()),
+                                false);
                     }
                 } else {
                     y = writeLine(content, x, y, "- No detections", false);
@@ -80,7 +85,8 @@ public class PdfReportService {
 
                 y = writeLine(content, x, y - 8, "", false);
                 y = writeLine(content, x, y, "Disclaimer:", true);
-                y = writeLine(content, x, y, "- This report is AI screening reference only, not a medical diagnosis.", false);
+                y = writeLine(content, x, y, "- This report is AI screening reference only, not a medical diagnosis.",
+                        false);
                 y = writeLine(content, x, y, "- Visit a dentist for clinical confirmation.", false);
             }
 
@@ -94,7 +100,9 @@ public class PdfReportService {
 
     private float writeLine(PDPageContentStream content, float x, float y, String text, boolean bold) throws Exception {
         content.beginText();
-        content.setFont(bold ? PDType1Font.HELVETICA_BOLD : PDType1Font.HELVETICA, 11);
+        content.setFont(
+                new PDType1Font(bold ? Standard14Fonts.FontName.HELVETICA_BOLD : Standard14Fonts.FontName.HELVETICA),
+                11);
         content.newLineAtOffset(x, y);
         content.showText(safeAscii(text));
         content.endText();

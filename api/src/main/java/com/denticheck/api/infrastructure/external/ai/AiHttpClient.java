@@ -2,11 +2,13 @@ package com.denticheck.api.infrastructure.external.ai;
 
 import com.denticheck.api.infrastructure.external.ai.dto.AiChatAskRequest;
 import com.denticheck.api.infrastructure.external.ai.dto.AiChatAskResponse;
+// import com.denticheck.api.infrastructure.external.ai.dto.AiChatAskResponse;
 import com.denticheck.api.infrastructure.external.ai.dto.AiQualityRequest;
 import com.denticheck.api.infrastructure.external.ai.dto.AiQualityResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -34,16 +36,19 @@ public class AiHttpClient implements AiClient {
     @Override
     public String askChat(AiChatAskRequest request) {
         log.info("AI 서비스의 askChat를 호출합니다. content: {}", request.getContent());
-        AiChatAskResponse response = restClient.post()
+        ResponseEntity<AiChatAskResponse> entity = restClient.post()
                 .uri("/v1/chat/ask")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .body(request)
                 .retrieve()
-                .body(AiChatAskResponse.class);
+                .toEntity(AiChatAskResponse.class); // ✅ raw로 받기
 
-        log.debug("AI 응답: {}", response);
+        log.info("AI status={}", entity.getStatusCode());
+        log.info("AI content-type={}", entity.getHeaders().getContentType());
+        log.info("AI raw body={}", entity.getBody().toString());
 
-        return response != null ? response.getAnswer() : null;
+        // 일단은 raw를 그대로 반환하거나, 다음 단계에서 파싱
+        return entity.getBody() != null ? entity.getBody().getAnswer() : null;
     }
 }

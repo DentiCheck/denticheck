@@ -1,63 +1,63 @@
 spring:
-  config:
-    activate:
-      on-profile: local
-  flyway:
-    clean-disabled: false
-  datasource:
-    url: jdbc:postgresql://localhost:5432/denticheck
-    username: admin
-    password: admin_password
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: false
+    config:
+        activate:
+            on-profile: local
+    flyway:
+        clean-disabled: false
+    datasource:
+        url: jdbc:postgresql://localhost:5432/denticheck
+        username: admin
+        password: admin_password
+        driver-class-name: org.postgresql.Driver
+    jpa:
+        hibernate:
+            ddl-auto: validate
+        show-sql: true
+        properties:
+            hibernate:
+                format_sql: false
 
 # AI Service Connection (Localhost access)
 # If running API in Docker, this should be http://ai:8000 (handled by env var override in docker-compose)
 # If running API in IDE, this connects to localhost:8000 (where AI service is exposed)
 ai:
-  client:
-    url: ${AI_SERVICE_URL:http://localhost:8000}
-    timeout: 5000
-  analyze:
-    timeout-ms: ${AI_ANALYZE_TIMEOUT_MS:25000}
+    client:
+        url: ${AI_SERVICE_URL:http://localhost:8000}
+        timeout: 5000
+    analyze:
+        timeout-ms: ${AI_ANALYZE_TIMEOUT_MS:25000}
 
 ollama:
-  enabled: ${OLLAMA_ENABLED:false}
-  base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
-  model: ${OLLAMA_MODEL:llama3:8b}
-  generate:
-    timeout-ms: ${OLLAMA_GENERATE_TIMEOUT_MS:18000}
-  embedding:
-    timeout-ms: ${OLLAMA_EMBEDDING_TIMEOUT_MS:3000}
-    model: ${OLLAMA_EMBEDDING_MODEL:nomic-embed-text}
+    enabled: ${OLLAMA_ENABLED:false}
+    base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+    model: ${OLLAMA_MODEL:llama3:8b}
+    generate:
+        timeout-ms: ${OLLAMA_GENERATE_TIMEOUT_MS:18000}
+    embedding:
+        timeout-ms: ${OLLAMA_EMBEDDING_TIMEOUT_MS:3000}
+        model: ${OLLAMA_EMBEDDING_MODEL:nomic-embed-text}
 
 milvus:
-  enabled: ${MILVUS_ENABLED:false}
-  timeout-ms: ${MILVUS_TIMEOUT_MS:3000}
-  search:
-    url: ${MILVUS_SEARCH_URL:http://localhost:9091/v2/vectordb/entities/search}
-  collection: ${MILVUS_COLLECTION:dental_knowledge}
-  vector:
-    field: ${MILVUS_VECTOR_FIELD:embedding}
-  output:
-    fields: ${MILVUS_OUTPUT_FIELDS:text,source,tags}
-  top-k: ${MILVUS_TOP_K:8}
+    enabled: ${MILVUS_ENABLED:false}
+    timeout-ms: ${MILVUS_TIMEOUT_MS:3000}
+    search:
+        url: ${MILVUS_SEARCH_URL:http://localhost:9091/v2/vectordb/entities/search}
+    collection: ${MILVUS_COLLECTION:dental_knowledge}
+    vector:
+        field: ${MILVUS_VECTOR_FIELD:embedding}
+    output:
+        fields: ${MILVUS_OUTPUT_FIELDS:text,source,tags}
+    top-k: ${MILVUS_TOP_K:8}
 
 report:
-  storage:
-    type: ${REPORT_STORAGE_TYPE:local}
-    local-dir: ${REPORT_LOCAL_DIR:./reports}
-    base-url: ${REPORT_BASE_URL:http://localhost:19091/reports}
+    storage:
+        type: ${REPORT_STORAGE_TYPE:local}
+        local-dir: ${REPORT_LOCAL_DIR:./reports}
+        base-url: ${REPORT_BASE_URL:http://localhost:19091/reports}
 
 minio:
-  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
-  access-key: ${MINIO_ACCESS_KEY:minioadmin}
-  secret-key: ${MINIO_SECRET_KEY:minioadmin}
-  bucket: ${MINIO_BUCKET:denticheck}
-  report-prefix: ${MINIO_REPORT_PREFIX:reports}
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    access-key: ${MINIO_ACCESS_KEY:minioadmin}
+    secret-key: ${MINIO_SECRET_KEY:minioadmin}
+    bucket: ${MINIO_BUCKET:denticheck}
+    report-prefix: ${MINIO_REPORT_PREFIX:reports}
