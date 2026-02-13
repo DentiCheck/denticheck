@@ -1,6 +1,5 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { NavigationContainer } from "@react-navigation/native";
 
 import { BottomTabs } from "./BottomTabs";
 import LoginScreen from "../screens/LoginScreen";
@@ -52,55 +51,44 @@ export function RootNavigator() {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {user ? (
-          <>
-            <Stack.Screen name="Main" component={BottomTabs} />
-            <Stack.Screen name="Survey" component={SurveyScreen} />
-            <Stack.Screen
-              name="ThemeSelector"
-              component={ThemeSelectorScreen}
-            />
-            <Stack.Screen name="HospitalMap" component={HospitalMapScreen} />
-            <Stack.Screen
-              name="RecommendedProducts"
-              component={RecommendedProductsScreen}
-            />
-            <Stack.Screen
-              name="InsuranceProducts"
-              component={InsuranceProductsScreen}
-            />
-            <Stack.Screen
-              name="HospitalDetail"
-              component={HospitalDetailScreen}
-            />
-            <Stack.Screen
-              name="ProductDetail"
-              component={ProductDetailScreen}
-            />
-            <Stack.Screen name="Cart" component={CartScreen} />
-            <Stack.Screen name="CommentList" component={CommentListScreen} />
-            <Stack.Screen
-              name="NotificationSettings"
-              component={NotificationSettingsScreen}
-            />
-            <Stack.Screen
-              name="CustomerService"
-              component={CustomerServiceScreen}
-            />
-            <Stack.Screen
-              name="TermsPolicies"
-              component={TermsPoliciesScreen}
-            />
-          </>
-        ) : (
-          <>
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Signup" component={SignupScreen} />
-          </>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {user ? (
+        <>
+          <Stack.Screen name="Main" component={BottomTabs} />
+          <Stack.Screen name="Survey" component={SurveyScreen} />
+          <Stack.Screen name="ThemeSelector" component={ThemeSelectorScreen} />
+          <Stack.Screen name="HospitalMap" component={HospitalMapScreen} />
+          <Stack.Screen
+            name="RecommendedProducts"
+            component={RecommendedProductsScreen}
+          />
+          <Stack.Screen
+            name="InsuranceProducts"
+            component={InsuranceProductsScreen}
+          />
+          <Stack.Screen
+            name="HospitalDetail"
+            component={HospitalDetailScreen}
+          />
+          <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+          <Stack.Screen name="Cart" component={CartScreen} />
+          <Stack.Screen name="CommentList" component={CommentListScreen} />
+          <Stack.Screen
+            name="NotificationSettings"
+            component={NotificationSettingsScreen}
+          />
+          <Stack.Screen
+            name="CustomerService"
+            component={CustomerServiceScreen}
+          />
+          <Stack.Screen name="TermsPolicies" component={TermsPoliciesScreen} />
+        </>
+      ) : (
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Signup" component={SignupScreen} />
+        </>
+      )}
+    </Stack.Navigator>
   );
 }

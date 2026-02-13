@@ -30,7 +30,7 @@ public class MobileIdTokenVerifierService {
         List<String> aud = jwt.getAudience();
         boolean ok = aud != null && aud.stream().anyMatch(allowedAudiences::contains);
         if (!ok) {
-            throw new IllegalArgumentException("Invalid Google idToken audience");
+            throw new IllegalArgumentException("지원되지 않는 Google idToken audience(클라이언트 ID)입니다.");
         }
 
         return jwt;

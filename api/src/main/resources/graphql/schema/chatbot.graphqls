@@ -1,14 +1,11 @@
 extend type Mutation {
   startChatSession(channel: String!): ChatSession
-  sendChatMessage(
-    sessionId: ID!
-    content: String!
-    language: String
-  ): AiChatMessage
+  sendChatMessage(channel: String!, request: ChatAppRequest!): ChatAppResponse
+  endChatSession(channel: String!): Boolean
 }
 
 extend type Query {
-  getChatHistory(sessionId: ID!): [AiChatMessage]
+  getChatHistory(sessionId: ID!): [ChatResponse]
 }
 
 type ChatSession {
@@ -18,12 +15,38 @@ type ChatSession {
   updatedDate: String
 }
 
-type AiChatMessage {
+input ChatRequest {
+  sessionId: ID!
+  content: String!
+  messageType: String
+  payload: String
+  language: String
+}
+
+type ChatResponse {
   id: ID!
+  sessionId: ID!
   role: String!
   content: String!
+  messageType: String!
+  payload: String
   language: String!
   citation: String
   createdDate: String
   updatedDate: String
+}
+
+input ChatAppRequest {
+  content: String!
+  messageType: String
+  payload: String
+}
+
+type ChatAppResponse {
+  sessionId: ID!
+  userMessageId: ID!
+  assistantMessageId: ID!
+  assistantContent: String!
+  messageType: String!
+  payload: String
 }

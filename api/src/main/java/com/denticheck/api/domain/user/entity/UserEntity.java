@@ -53,12 +53,16 @@ public class UserEntity extends com.denticheck.api.common.entity.BaseTimeEntity 
     @Column(name = "phone", length = 20)
     private String phone;
 
+    @Column(name = "profile_image")
+    private String profileImage;
+
     @Column(name = "withdrawn_at")
     private LocalDateTime withdrawnAt;
 
     public void updateUser(UserRequestDTO dto) {
         this.email = dto.getEmail();
         this.nickname = dto.getNickname();
+        this.profileImage = dto.getProfileImage();
     }
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

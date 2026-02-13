@@ -20,5 +20,6 @@ public interface UserService {
 
     Boolean existsUser(String username);
 
-    UserEntity getOrCreateUser(SocialProviderType providerType, String providerId, String email, String nickname);
+    UserEntity getOrCreateUser(SocialProviderType providerType, String providerId, String email, String nickname,
+            String profileImage);
 }

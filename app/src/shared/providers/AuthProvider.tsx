@@ -24,9 +24,11 @@ if (!GOOGLE_WEB_CLIENT_ID)
 const isExpoGo = Constants.executionEnvironment === "storeClient";
 
 export interface AuthUser {
+  id?: string;
   email?: string;
   name?: string;
   picture?: string;
+  provider?: "google" | "dev";
 }
 
 type AuthContextValue = {
@@ -56,21 +58,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     u?: AuthUser,
   ) => {
     setToken(accessToken);
-    if (u) setUser(u);
-
     await SecureStore.setItemAsync("accessToken", accessToken);
-
     if (refreshToken) {
       await SecureStore.setItemAsync("refreshToken", refreshToken);
-    } else {
-      await SecureStore.deleteItemAsync("refreshToken");
     }
-
     if (u) {
+      setUser(u); // State update
       await SecureStore.setItemAsync("user", JSON.stringify(u));
-    } else {
-      await SecureStore.deleteItemAsync("user");
     }
+    // u가 없으면 기존 User 유지 (토큰만 갱신하는 경우를 위해 삭제 로직 제거)
   };
 
   const clearSession = async () => {
@@ -89,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (storedToken) setToken(storedToken);
       if (storedUser) setUser(JSON.parse(storedUser));
     } catch (e) {
-      console.error("Failed to load auth storage:", e);
+      console.error("Failed to load auth auth storage:", e);
     } finally {
       setIsLoading(false);
     }
@@ -104,14 +100,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const jwtRes = await axios.post(`${API_SERVER_URL}/auth/mobile/google`, {
       idToken,
     });
-    console.log("JWT RES DATA:", jwtRes.data);
-    const { accessToken, refreshToken } = jwtRes.data ?? {};
+
+    const { accessToken, refreshToken, user: serverUser } = jwtRes.data ?? {};
 
     if (!accessToken) throw new Error("Server did not return accessToken");
-    console.log("serverUser : ", user);
 
     // 서버가 user를 같이 주면 그걸 쓰고, 아니면 최소 provider만 저장
-    const mergedUser: AuthUser = user;
+    const mergedUser: AuthUser = serverUser
+      ? {
+          email: serverUser.email,
+          name: serverUser.nickname,
+          picture: serverUser.profileImage,
+          provider: "google",
+        }
+      : { ...user, provider: "google" };
 
     await saveSession(accessToken, refreshToken, mergedUser);
   };
@@ -181,6 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: "dev@denticheck.com",
         name: "Dev User",
         picture: "https://via.placeholder.com/150",
+        provider: "dev",
       };
       const mockAccessToken = "dev-access-token";
       const mockRefreshToken = "dev-refresh-token";
@@ -195,15 +198,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     setIsLoading(true);
     try {
-      // Dev Build에서만 Google 로그아웃 시도
+      const refreshToken = await SecureStore.getItemAsync("refreshToken");
+
+      // 1. 서버 로그아웃 호출 (DB 토큰 무효화)
+      if (refreshToken) {
+        try {
+          // Spring Security LogoutHandler는 기본적으로 /logout POST 요청을 처리함
+          await axios.post(`${API_SERVER_URL}/logout`, { refreshToken });
+        } catch (serverError) {
+          console.log(
+            "Server logout failed, but proceeding with local logout",
+            serverError,
+          );
+        }
+      }
+
+      // 2. 구글 모듈 로그아웃 (Dev Build 전용)
       if (!isExpoGo) {
         try {
           const mod = await import("@react-native-google-signin/google-signin");
           await mod.GoogleSignin.signOut();
         } catch {
-          // 구글 모듈 로그아웃 실패는 무시하고 세션만 정리
+          // 구글 모듈 로그아웃 실패는 무시
         }
       }
+
+      // 3. 로컬 세션 클리어
       await clearSession();
     } finally {
       setIsLoading(false);
@@ -221,9 +241,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    const interceptor = axios.interceptors.request.use(
+    const requestInterceptor = axios.interceptors.request.use(
       (config) => {
-        if (token) {
+        // Refresh 요청에는 Authorization 헤더를 붙이지 않음 (JWTFilter에서 만료된 토큰 거부 방지)
+        if (token && !config.url?.includes("/jwt/refresh")) {
           config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
@@ -231,10 +252,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       (error) => Promise.reject(error),
     );
 
+    const responseInterceptor = axios.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
+
+        // 401 에러이고, 재시도한 요청이 아닐 경우
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+
+          try {
+            const refreshToken = await SecureStore.getItemAsync("refreshToken");
+            if (!refreshToken) {
+              // 리프레시 토큰 없으면 로그아웃
+              await clearSession();
+              return Promise.reject(error);
+            }
+
+            // 토큰 갱신 요청
+            // 주의: requestInterceptor에서 Authorization 헤더 제외됨
+            const { data } = await axios.post(`${API_SERVER_URL}/jwt/refresh`, {
+              refreshToken,
+            });
+
+            const {
+              accessToken: newAccessToken,
+              refreshToken: newRefreshToken,
+            } = data;
+
+            if (newAccessToken) {
+              // 새 토큰 저장. API가 user를 안 주면 기존 user 상태를 유지하기 위해 인자로 넘김
+              // saveSession 로직이 (u) ? set : delete 이므로,
+              // 갱신 시에는 반드시 user 객체를 넘겨야 함.
+              await saveSession(
+                newAccessToken,
+                newRefreshToken,
+                user || undefined,
+              );
+
+              // 실패했던 요청에 새 토큰 적용 후 재시도
+              originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+              return axios(originalRequest);
+            }
+          } catch (refreshError) {
+            console.log("Token refresh failed:", refreshError);
+            await clearSession();
+            return Promise.reject(refreshError);
+          }
+        }
+
+        return Promise.reject(error);
+      },
+    );
+
     return () => {
-      axios.interceptors.request.eject(interceptor);
+      axios.interceptors.request.eject(requestInterceptor);
+      axios.interceptors.response.eject(responseInterceptor);
     };
-  }, [token]);
+  }, [token, user]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

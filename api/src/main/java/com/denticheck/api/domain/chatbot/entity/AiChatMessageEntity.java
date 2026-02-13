@@ -25,8 +25,9 @@ public class AiChatMessageEntity extends BaseTimeEntity {
     @JoinColumn(name = "session_id", nullable = false)
     private ChatSessionEntity session;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)
-    private String role; // 'user' or 'assistant'
+    private ChatRole role; // 'USER' or 'ASSISTANT'
 
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
@@ -37,5 +38,14 @@ public class AiChatMessageEntity extends BaseTimeEntity {
 
     @Column(name = "citation", columnDefinition = "jsonb")
     @JdbcTypeCode(SqlTypes.JSON)
-    private String citation;
+    private java.util.Map<String, Object> citation;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "message_type", nullable = false, length = 20)
+    @Builder.Default
+    private ChatMessageType messageType = ChatMessageType.TEXT;
+
+    @Column(name = "payload", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private java.util.Map<String, Object> payload;
 }

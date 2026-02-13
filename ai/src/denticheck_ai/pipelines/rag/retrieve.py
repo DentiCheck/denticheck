@@ -30,65 +30,54 @@ class MilvusRetriever:
     
     def __init__(self):
         """
-        초기화 메서드입니다.
-        Milvus 및 임베딩 모델 연결 설정을 수행합니다.
+        검색기 초기화: 내부적으로 임베딩 모델과 DB 연결 설정을 로드합니다.
         """
-        self.collection_name = os.getenv("COLLECTION_NAME", "dental_knowledge")
-        
-        # 로컬 임베딩 모델 설정
+        # 1. 임베딩 모델 설정 (Ingest 단계와 반드시 동일한 모델 사용)
         self.embeddings = HuggingFaceEmbeddings(
             model_name="jhgan/ko-sroberta-multitask",
             model_kwargs={'device': 'cpu'},
             encode_kwargs={'normalize_embeddings': True}
         )
         
-        # Milvus 연결 URI 설정 (Standalone URL 또는 Lite 파일 경로)
+        # 2. Milvus 연결 정보 설정
         self.milvus_uri = os.getenv("MILVUS_URI", "./data/milvus_dental.db")
+        self.collection_name = os.getenv("COLLECTION_NAME", "dental_knowledge")
         
-        self.vector_db = None
-        try:
-            self.vector_db = Milvus(
-                embedding_function=self.embeddings,
-                connection_args={
-                    "uri": self.milvus_uri,
-                },
-                collection_name=self.collection_name
-            )
-            print(f"MilvusRetriever 초기화 완료 (URI: {self.milvus_uri})")
-        except Exception as e:
-            print(f"MilvusRetriever 연결 실패: {e}")
+        # 3. VectorStore 객체 생성 (기존 생성된 컬렉션에 연결)
+        self.vector_db = Milvus(
+            self.embeddings,
+            connection_args={"uri": self.milvus_uri},
+            collection_name=self.collection_name,
+        )
 
     def retrieve_context(self, query: str, top_k: int = 3) -> List[str]:
         """
-        사용자 질문과 관련된 문서 내용을 검색하여 반환합니다.
-
+        질문과 가장 유사한 상위 k개의 지식 문장을 검색하여 반환합니다.
+        
         Args:
-            query (str): 사용자의 질문
-            top_k (int): 검색할 관련 문서의 개수
-
+            query (str): 사용자 질문 (예: "치석은 어떻게 생겨요?")
+            top_k (int): 검색할 문서 개수
+            
         Returns:
-            List[str]: 검색된 문서 내용들의 리스트
+            List[str]: 검색된 지식 문장 리스트 (출처 및 신뢰도 포함)
         """
-        if not self.vector_db:
-            return ["지식 베이스 연결에 실패하여 기본 답변만 제공 가능합니다."]
-
-        print(f"검색어: {query} 로 실제 벡터 DB 검색을 시작합니다...")
+        print(f"지식 검색 중... (질문: {query})")
         
         try:
-            # 유사도 검색 수행 (점수 포함)
-            # score는 거리값이므로 낮을수록 유사도가 높음 (L2 거리 기준)
+            # 유사도 검색 수행 (거리 점수 포함)
+            # Milvus 기본값인 L2 거리를 기준으로 결과가 반환됩니다.
             docs_with_scores = self.vector_db.similarity_search_with_score(query, k=top_k)
             
-            # 검색 결과 가공
             results = []
             for doc, score in docs_with_scores:
                 content = doc.page_content
-                # Milvus의 L2 거리를 코사인 유사도(Cosine Similarity)로 변환 (정규화된 벡터 기준)
-                # 공식: CosineSimilarity = 1 - (score^2 / 2)
+                # L2 거리를 활용해 직관적인 신뢰도(%)로 변환 (값의 범위에 따라 조정 가능)
+                # 여기서는 간단히 코사인 유사도 근사치를 사용
                 cosine_sim = 1 - (score**2 / 2)
                 confidence = max(0, cosine_sim * 100)
                 
-                source_info = f"[출처: {doc.metadata.get('title', '상세정보')}] (신뢰도: {confidence:.1f}%)"
+                # 출처 정보와 내용을 결합
+                source_info = f"[출처: {doc.metadata.get('title', '치과지식')}] (신뢰도: {confidence:.1f}%)"
                 results.append(f"{source_info}\n{content}")
             
             return results
@@ -96,10 +85,31 @@ class MilvusRetriever:
             print(f"검색 중 오류 발생: {e}")
             return [f"검색 오류가 발생했습니다: {e}"]
 
+    def retrieve_with_score(self, query: str, top_k: int = 3) -> List[dict]:
+        """유사도 점수를 상세히 포함하여 검색 결과를 반환합니다."""
+        results = self.vector_db.similarity_search_with_score(query, k=top_k)
+        
+        formatted_results = []
+        for doc, score in results:
+            formatted_results.append({
+                "content": doc.page_content,
+                "metadata": doc.metadata,
+                "score": float(score)
+            })
+        return formatted_results
+
+    def get_raw_retriever(self):
+        """LangChain의 기본 Retriever 인터페이스를 반환합니다."""
+        return self.vector_db.as_retriever(search_kwargs={"k": 3})
+
 if __name__ == "__main__":
-    # 간단한 테스트 실행
+    # 라이브러리 직접 실행 시 간단한 검색 테스트 진행
     retriever = MilvusRetriever()
     test_query = "임플란트 수술 후 주의사항이 뭐야?"
     contexts = retriever.retrieve_context(test_query)
+    
+    print("\n" + "="*50)
+    print(f"질문: {test_query}")
     for i, ctx in enumerate(contexts):
-        print(f"\n--- 결과 {i+1} ---\n{ctx}")
+        print(f"\n[결과 {i+1}]\n{ctx}")
+    print("="*50)

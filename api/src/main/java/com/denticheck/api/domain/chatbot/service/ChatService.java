@@ -2,10 +2,12 @@ package com.denticheck.api.domain.chatbot.service;
 
 import com.denticheck.api.domain.chatbot.entity.AiChatMessageEntity;
 import com.denticheck.api.domain.chatbot.entity.ChatSessionEntity;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 import java.util.UUID;
+
+import com.denticheck.api.domain.chatbot.dto.ChatAppRequest;
+import com.denticheck.api.domain.chatbot.dto.ChatAppResponse;
 
 public interface ChatService {
 
@@ -13,7 +15,7 @@ public interface ChatService {
 
     List<AiChatMessageEntity> getChatHistory(UUID sessionId);
 
-    SseEmitter subscribe(UUID sessionId);
+    ChatAppResponse processMessage(ChatAppRequest request, UUID userId, String channel);
 
-    AiChatMessageEntity processMessage(UUID sessionId, String content, String language);
+    void endSession(UUID userId, String channel);
 }

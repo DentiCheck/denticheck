@@ -1,0 +1,33 @@
+
+C:\dev\DentiCheck\api\src\main\java\com\denticheck\api\domain\user\service\impl\CustomOAuth2UserServiceImpl.java:61: error: method getOrCreateUser in class UserServiceImpl cannot be applied to given types;
+        UserEntity user = userServiceImpl.getOrCreateUser(providerType, providerId, email, nickname);
+> Task :compileJava
+                                         ^
+  required: SocialProviderType,String,String,String,String
+  found:    SocialProviderType,String,String,String
+  reason: actual and formal argument lists differ in length
+1 error
+
+> Task :compileJava FAILED
+
+[Incubating] Problems report is available at: file:///C:/dev/DentiCheck/api/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava'.
+> Compilation failed; see the compiler output below.
+  C:\dev\DentiCheck\api\src\main\java\com\denticheck\api\domain\user\service\impl\CustomOAuth2UserServiceImpl.java:61: error: method getOrCreateUser in class UserServiceImpl cannot be applied to given types;
+          UserEntity user = userServiceImpl.getOrCreateUser(providerType, providerId, email, nickname);
+                                           ^
+    required: SocialProviderType,String,String,String,String
+    found:    SocialProviderType,String,String,String
+    reason: actual and formal argument lists differ in length
+  1 error
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to generate a Build Scan (powered by Develocity).
+
+BUILD FAILED in 5s
+1 actionable task: 1 executed

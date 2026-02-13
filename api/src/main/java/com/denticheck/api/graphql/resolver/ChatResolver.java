@@ -1,6 +1,9 @@
 package com.denticheck.api.graphql.resolver;
 
-import com.denticheck.api.domain.chatbot.entity.AiChatMessageEntity;
+import com.denticheck.api.domain.chatbot.dto.ChatAppRequest;
+import com.denticheck.api.domain.chatbot.dto.ChatAppResponse;
+import com.denticheck.api.domain.chatbot.dto.ChatSessionResponse;
+import com.denticheck.api.domain.chatbot.dto.ChatResponse;
 import com.denticheck.api.domain.chatbot.entity.ChatSessionEntity;
 import com.denticheck.api.domain.chatbot.service.ChatService;
 import com.denticheck.api.domain.user.repository.UserRepository;
@@ -15,39 +18,71 @@ import org.springframework.stereotype.Controller;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
 public class ChatResolver {
 
-    private final ChatService chatService;
+        private final ChatService chatService;
+        private final UserRepository userRepository;
 
-    private final UserRepository userRepository;
+        @MutationMapping
+        @PreAuthorize("hasRole('USER')")
+        public ChatSessionResponse startChatSession(@Argument("channel") String channel) {
+                String username = SecurityContextHolder.getContext().getAuthentication().getName();
+                com.denticheck.api.domain.user.entity.UserEntity user = userRepository.findByUsername(username)
+                                .orElseThrow(() -> new RuntimeException("해당 사용자를 찾을 수 없습니다: " + username));
 
-    @MutationMapping
-    @PreAuthorize("hasRole('USER')")
-    public ChatSessionEntity startChatSession(@Argument("channel") String channel) {
-        // ... (existing code)
-        // ...
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        // ...
-        com.denticheck.api.domain.user.entity.UserEntity user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+                ChatSessionEntity session = chatService.startSession(user.getId(), channel);
+                return ChatSessionResponse.builder()
+                                .id(session.getId())
+                                .channel(session.getChannel())
+                                .createdDate(session.getCreatedAt())
+                                .updatedDate(session.getUpdatedAt())
+                                .build();
+        }
 
-        return chatService.startSession(user.getId(), channel);
-    }
+        @QueryMapping
+        @PreAuthorize("hasRole('USER')")
+        public List<ChatResponse> getChatHistory(@Argument("sessionId") UUID sessionId) {
+                return chatService.getChatHistory(sessionId).stream()
+                                .map(entity -> ChatResponse.builder()
+                                                .id(entity.getId())
+                                                .sessionId(entity.getSession().getId())
+                                                .role(entity.getRole())
+                                                .content(entity.getContent())
+                                                .messageType(entity.getMessageType())
+                                                .payload(entity.getPayload())
+                                                .language(entity.getLanguage())
+                                                .citation(entity.getCitation())
+                                                .createdDate(entity.getCreatedAt())
+                                                .updatedDate(entity.getUpdatedAt())
+                                                .build())
+                                .collect(Collectors.toList());
+        }
 
-    @QueryMapping
-    @PreAuthorize("hasRole('USER')")
-    public List<AiChatMessageEntity> getChatHistory(@Argument("sessionId") UUID sessionId) {
-        return chatService.getChatHistory(sessionId);
-    }
+        @MutationMapping
+        @PreAuthorize("hasRole('USER')")
+        public ChatAppResponse sendChatMessage(
+                        @Argument("request") ChatAppRequest request,
+                        @Argument("channel") String channel) {
 
-    @MutationMapping
-    @PreAuthorize("hasRole('USER')")
-    public AiChatMessageEntity sendChatMessage(@Argument("sessionId") UUID sessionId,
-            @Argument("content") String content,
-            @Argument("language") String language) {
-        return chatService.processMessage(sessionId, content, language);
-    }
+                String username = SecurityContextHolder.getContext().getAuthentication().getName();
+                com.denticheck.api.domain.user.entity.UserEntity user = userRepository.findByUsername(username)
+                                .orElseThrow(() -> new RuntimeException("해당 사용자를 찾을 수 없습니다: " + username));
+
+                return chatService.processMessage(request, user.getId(), channel);
+        }
+
+        @MutationMapping
+        @PreAuthorize("hasRole('USER')")
+        public Boolean endChatSession(@Argument("channel") String channel) {
+                String username = SecurityContextHolder.getContext().getAuthentication().getName();
+                com.denticheck.api.domain.user.entity.UserEntity user = userRepository.findByUsername(username)
+                                .orElseThrow(() -> new RuntimeException("해당 사용자를 찾을 수 없습니다: " + username));
+
+                chatService.endSession(user.getId(), channel);
+                return true;
+        }
 }

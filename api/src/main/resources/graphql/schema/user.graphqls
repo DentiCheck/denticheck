@@ -1,16 +1,9 @@
 extend type Query {
   me: User!
-  user(username: String!): User
 }
 
 type User {
-  id: ID!
-  username: String!
-  roleType: String!
   nickname: String
   email: String
-  signupProvider: String
-  status: String!
-  createdDate: String
-  updatedDate: String
+  profileImage: String
 }

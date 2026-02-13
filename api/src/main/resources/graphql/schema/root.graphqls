@@ -1,9 +1,7 @@
 type Query {
-  # Health check or dummy field to initialize type
-  ping: String
+  _dummy: String
 }
 
 type Mutation {
-  # Health check or dummy field to initialize type
-  ping: String
+  _dummy: String
 }

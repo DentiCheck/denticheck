@@ -27,6 +27,22 @@ DentiCheck는 AI 기반의 구강 자가 진단 및 관리 앱입니다.
 docker-compose -f docker-compose.local.yml up -d postgres milvus ollama etcd minio
 ```
 
+**Ollama 모델 다운로드 ( llama3.1:latest )**
+
+(선택1) 컨테이너 실행 후 종료
+
+```bash
+docker compose -f .\docker-compose.local.yml up ollama-init
+```
+
+(선택2) 컨테이너 실행 후 삭제
+
+```bash
+docker compose -f .\docker-compose.local.yml rm -f ollama-init
+```
+
+> **볼륨은 유지**되니까 모델은 그대로 남음.
+
 - **PostgreSQL**: `localhost:5432`
 - **Milvus**: `localhost:19530`
 - **Ollama**: `localhost:11434`
@@ -63,19 +79,14 @@ AI 서비스가 준비되면 API 서버를 실행합니다.
 
 ```powershell
 cd api
-# Windows (CMD/PowerShell)
-./gradlew bootRun --args='--spring.profiles.active=local'
 
-# Mac/Linux
+# 서버 실행 (Windows/Mac 공통)
 ./gradlew bootRun --args='--spring.profiles.active=local'
-
-Expo Go로 실행 (에뮬레이터/Android Studio 없이 가능)
-npx expo start --tunnel
 ```
 
 - API 서버: `http://localhost:8080`
-- Swagger UI: `http://localhost:8080/swagger-ui.html`
-- GraphiQL: `http://localhost:8080/graphiql`
+- Swagger UI (REST API 문서): `http://localhost:8080/docs/swagger-ui`
+- MAGIDOC (GraphQL 문서) : `http://localhost:8080/docs/graphql`
 
 ### 4단계: 프론트엔드 (Frontend)
 
@@ -93,22 +104,19 @@ npm run dev
 
 ```bash
 cd app
-# DentiCheck\app 폴더에서 실행
+# 1. 안드로이드 시뮬레이터 실행 (Windows 전용 스크립트)
 ./scripts/start-emulator.ps1
-```
 
-- 안드로이드 시뮬레이터 실행
+# 2. 의존성 설치 (최초 1회)
+npm install
 
-```bash
-cd app
-# DentiCheck\app 폴더에서 실행
-npm install # 최초 1회 실행
+# 3. 앱 실행 (Development Build 방식 - 추천)
 npx expo run:android
-```
-```bash
-- Expo QR코드를 스캔하여 실행
+
+# 4. Expo Go 방식 (에뮬레이터 없이 실제 폰 테스트 시)
 npx expo start --tunnel
 ```
+
 ---
 
 ## ⚠️ 트러블슈팅
@@ -119,4 +127,12 @@ npx expo start --tunnel
 
 **Q. AI 서비스 연결이 안 돼요.**
 
-- `api/src/main/resources/application-local.yml`에서 `ai.client.url`이 실행 중인 AI 서비스 포트(8000 또는 8001)와 일치하는지 확인하세요.
+- `api/src/main/resources/application-local.yml`에서 `ai.client.url`이 실행 중인 AI 서비스 포트와 일치하는지 확인하세요. (기본값: `8000`)
+
+**Q. 로그인 후 앱을 껐다 켜면 로그인이 풀려요.**
+
+- 최근 `AuthProvider.tsx` 업데이트를 통해 `SecureStore`에 토큰을 저장하도록 수정되었습니다. 최신 코드를 pull 받은 후 다시 테스트해 보세요.
+
+**Q. "Couldn't find a navigation context" 에러와 함께 앱이 꺼졌어요.**
+
+- NativeWind의 `shadow` 클래스 관련 버그가 수정되었습니다. `TouchableOpacity` 등에 인라인 `style` 속성을 대신 사용하여 해결했으니, 수정된 컴포넌트 패턴을 따라주세요.

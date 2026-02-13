@@ -10,12 +10,14 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class JwtServiceImpl implements JwtService {
 
     private final RefreshRepository refreshRepository;
@@ -26,6 +28,9 @@ public class JwtServiceImpl implements JwtService {
 
     @Value("${admin.web.refresh-cookie-secure}")
     boolean refreshCookieSecure;
+
+    @Value("${admin.web.refresh-cookie-httponly}")
+    boolean refreshCookieHttpOnly;
 
     // 소셜 로그인 성공 후 쿠키(Refresh) -> 헤더 방식으로 응답
     @Transactional
@@ -78,13 +83,13 @@ public class JwtServiceImpl implements JwtService {
 
         // 기존 쿠키 제거
         Cookie refreshCookie = new Cookie("refreshToken", null);
-        refreshCookie.setHttpOnly(true);
+        refreshCookie.setHttpOnly(refreshCookieHttpOnly);
         refreshCookie.setSecure(refreshCookieSecure);
         refreshCookie.setPath("/");
         refreshCookie.setMaxAge(refreshCookieMaxAgeSeconds);
         response.addCookie(refreshCookie);
 
-        return new JWTResponseDTO(newAccessToken, newRefreshToken);
+        return new JWTResponseDTO(newAccessToken, newRefreshToken, null);
     }
 
     // Refresh 토큰으로 Access 토큰 재발급 로직 (Rotate 포함)
@@ -118,13 +123,16 @@ public class JwtServiceImpl implements JwtService {
                 .refresh(newRefreshToken)
                 .build());
 
-        return new JWTResponseDTO(newAccessToken, newRefreshToken);
+        return new JWTResponseDTO(newAccessToken, newRefreshToken, null);
     }
 
     // JWT Refresh 토큰 발급 후 저장 메소드
     @Transactional
     @Override
     public void addRefresh(String username, String refreshToken) {
+        // 단일 세션(계정당 기기 1개) 허용을 위해 기존 토큰 모두 삭제
+        removeRefreshUser(username);
+
         refreshRepository.save(RefreshEntity.builder()
                 .username(username)
                 .refresh(refreshToken)
@@ -144,7 +152,7 @@ public class JwtServiceImpl implements JwtService {
     public void removeRefresh(String refreshToken) {
         int deleted = refreshRepository.deleteByRefresh(refreshToken);
         if (deleted == 0) {
-            throw new RuntimeException("refreshToken이 DB에 없습니다. 재사용/탈취 가능성");
+            log.warn("DB에 존재하지 않는 refreshToken 삭제 시도. 이미 삭제되었거나 DB가 초기화되었을 가능성이 있습니다.");
         }
     }
 

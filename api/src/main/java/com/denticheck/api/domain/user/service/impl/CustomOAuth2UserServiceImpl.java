@@ -4,6 +4,8 @@ import com.denticheck.api.domain.user.dto.CustomOAuth2User;
 import com.denticheck.api.domain.user.entity.SocialProviderType;
 import com.denticheck.api.domain.user.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CustomOAuth2UserServiceImpl extends DefaultOAuth2UserService {
@@ -34,6 +37,7 @@ public class CustomOAuth2UserServiceImpl extends DefaultOAuth2UserService {
         String providerId;
         String email;
         String nickname;
+        String profileImage;
         SocialProviderType providerType;
 
         // provider 제공자별 데이터 획득
@@ -45,6 +49,7 @@ public class CustomOAuth2UserServiceImpl extends DefaultOAuth2UserService {
             providerId = attributes.get("id").toString();
             email = attributes.get("email").toString();
             nickname = attributes.get("nickname").toString();
+            profileImage = attributes.get("profile_image").toString();
 
         } else if (registrationId.equals(SocialProviderType.GOOGLE.name())) {
             providerType = SocialProviderType.GOOGLE;
@@ -52,13 +57,14 @@ public class CustomOAuth2UserServiceImpl extends DefaultOAuth2UserService {
             providerId = attributes.get("sub").toString();
             email = attributes.get("email").toString();
             nickname = attributes.get("name").toString();
+            profileImage = attributes.get("picture").toString();
 
         } else {
             throw new OAuth2AuthenticationException("지원하지 않는 소셜 로그인입니다.");
         }
 
         // 공통 로직으로 유저 생성/조회 (Admin 권한 부여 포함)
-        UserEntity user = userServiceImpl.getOrCreateUser(providerType, providerId, email, nickname);
+        UserEntity user = userServiceImpl.getOrCreateUser(providerType, providerId, email, nickname, profileImage);
 
         String roleName = user.getRole() != null ? user.getRole().getName() : "USER";
         String role = "ROLE_" + roleName;

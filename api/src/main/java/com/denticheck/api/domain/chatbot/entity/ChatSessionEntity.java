@@ -29,10 +29,28 @@ public class ChatSessionEntity extends BaseTimeEntity {
     @Builder.Default
     private String channel = "oral_faq";
 
+    @Column(name = "title")
+    private String title;
+
+    @Column(name = "last_message_at")
+    private LocalDateTime lastMessageAt;
+
+    @Column(name = "last_message_preview")
+    private String lastMessagePreview;
+
     @Column(name = "ended_at")
     private LocalDateTime endedAt;
 
+    public boolean isActive() {
+        return endedAt == null;
+    }
+
     public void endSession() {
         this.endedAt = LocalDateTime.now();
+    }
+
+    public void touchLastMessage(String preview) {
+        this.lastMessageAt = LocalDateTime.now();
+        this.lastMessagePreview = preview;
     }
 }
