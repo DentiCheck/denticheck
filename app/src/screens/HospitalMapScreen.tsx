@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
+import { useQuery } from '@apollo/client/react';
+import { GET_HOSPITALS } from '../graphql/queries';
 import MapView, { Marker } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -11,41 +13,24 @@ import { useColorTheme } from '../shared/providers/ColorThemeProvider';
 const { width, height } = Dimensions.get('window');
 
 // Mock Data (Same as HospitalsScreen for consistency)
-const hospitals = [
-    {
-        id: '1',
-        name: '스마일 치과의원',
-        latitude: 37.500000,
-        longitude: 127.035000, // Near Yeoksam/Gangnam
-        address: '서울특별시 강남구 테헤란로 123',
-    },
-    {
-        id: '2',
-        name: '밝은미소 치과',
-        latitude: 37.502000,
-        longitude: 127.038000,
-        address: '서울특별시 강남구 역삼동 456',
-    },
-    {
-        id: '3',
-        name: '건강한치과',
-        latitude: 37.508000,
-        longitude: 127.060000,
-        address: '서울특별시 강남구 삼성동 789',
-    },
-    {
-        id: '4',
-        name: '프리미엄 치과의원',
-        latitude: 37.512000,
-        longitude: 127.030000,
-        address: '서울특별시 강남구논현동 321',
-    },
-];
+
 
 export default function HospitalMapScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const { theme } = useColorTheme();
     const [selectedHospital, setSelectedHospital] = useState<string | null>(null);
+
+    const { data, loading, error } = useQuery<any>(GET_HOSPITALS);
+
+    // Filter out hospitals with missing coordinates
+    const hospitals = data?.hospitals?.filter((h: any) => h.latitude != null && h.longitude != null).map((h: any) => ({
+        id: h.id,
+        name: h.name,
+        latitude: h.latitude,
+        longitude: h.longitude,
+        address: h.address || '주소 정보 없음',
+        // Add other fields if needed for detail navigation
+    })) || [];
 
     // Default region: Gangnam, Seoul
     const [region, setRegion] = useState({
@@ -54,6 +39,22 @@ export default function HospitalMapScreen() {
         latitudeDelta: 0.04,
         longitudeDelta: 0.04,
     });
+
+    if (loading) {
+        return (
+            <View className="flex-1 items-center justify-center bg-background">
+                <ActivityIndicator size="large" color={theme.primary} />
+            </View>
+        );
+    }
+
+    if (error) {
+        return (
+            <View className="flex-1 items-center justify-center bg-background">
+                <Text className="text-red-500">Error loading hospitals: {error.message}</Text>
+            </View>
+        );
+    }
 
     return (
         <View className="flex-1 bg-white">
@@ -72,7 +73,7 @@ export default function HospitalMapScreen() {
                 showsUserLocation={true}
                 showsMyLocationButton={true}
             >
-                {hospitals.map((hospital) => (
+                {hospitals.map((hospital: any) => (
                     <Marker
                         key={hospital.id}
                         coordinate={{ latitude: hospital.latitude, longitude: hospital.longitude }}
@@ -87,15 +88,15 @@ export default function HospitalMapScreen() {
             {selectedHospital && (
                 <View className="absolute bottom-10 left-4 right-4 bg-white p-4 rounded-2xl shadow-lg">
                     <Text className="font-bold text-lg text-slate-800">
-                        {hospitals.find(h => h.id === selectedHospital)?.name}
+                        {hospitals.find((h: any) => h.id === selectedHospital)?.name}
                     </Text>
                     <Text className="text-slate-500 text-sm mt-1">
-                        {hospitals.find(h => h.id === selectedHospital)?.address}
+                        {hospitals.find((h: any) => h.id === selectedHospital)?.address}
                     </Text>
                     <TouchableOpacity
                         className="mt-4 bg-blue-600 py-3 rounded-xl items-center"
                         onPress={() => {
-                            const hospital = hospitals.find(h => h.id === selectedHospital);
+                            const hospital = hospitals.find((h: any) => h.id === selectedHospital);
                             if (hospital) {
                                 navigation.navigate('HospitalDetail', { hospital: { ...hospital, rating: 4.5, reviewCount: 100, phone: '02-000-0000', isOpen: true, openTime: '09:00 - 18:00', features: ['주차가능'] } }); // Mock extra data
                             }

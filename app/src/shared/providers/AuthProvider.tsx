@@ -108,11 +108,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 서버가 user를 같이 주면 그걸 쓰고, 아니면 최소 provider만 저장
     const mergedUser: AuthUser = serverUser
       ? {
-          email: serverUser.email,
-          name: serverUser.nickname,
-          picture: serverUser.profileImage,
-          provider: "google",
-        }
+        email: serverUser.email,
+        name: serverUser.nickname,
+        picture: serverUser.profileImage,
+        provider: "google",
+      }
       : { ...user, provider: "google" };
 
     await saveSession(accessToken, refreshToken, mergedUser);
@@ -143,15 +143,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userInfo = await GoogleSignin.signIn();
       const user: AuthUser = {
         email: userInfo.data?.user.email,
-        name: userInfo.data?.user.name,
-        picture: userInfo.data?.user.photo,
+        name: userInfo.data?.user.name || undefined,
+        picture: userInfo.data?.user.photo || undefined,
       };
 
       // ✅ 이걸로 idToken 다시 요청 가능(가끔 signIn 결과에 없을 때가 있음)
       const tokens = await GoogleSignin.getTokens().catch(() => null);
 
       const idToken =
-        userInfo?.idToken ||
+        (userInfo as any)?.idToken ||
         (tokens as any)?.idToken || // 버전에 따라 형태가 다를 수 있음
         null;
 
@@ -166,7 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (e?.code === statusCodes.IN_PROGRESS) return; // ✅ 진행 중이면 무시
         if (e?.code === statusCodes.SIGN_IN_CANCELLED) return;
-      } catch {}
+      } catch { }
 
       setError(e?.message ?? String(e));
       console.log("Google Sign-In failed:", e);

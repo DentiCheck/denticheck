@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, Linking, ActivityIndicator } from 'react-native';
+import { useQuery } from '@apollo/client/react';
+import { GET_HOSPITALS } from '../graphql/queries';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
@@ -44,58 +46,37 @@ export default function HospitalsScreen() {
         }
     }, [tab]);
 
-    const hospitals: Hospital[] = [
-        {
-            id: '1',
-            name: '스마일 치과의원',
-            address: '서울특별시 강남구 테헤란로 123',
-            distance: '0.3km',
-            rating: 4.8,
-            reviewCount: 248,
-            phone: '02-1234-5678',
-            isOpen: true,
-            openTime: '09:00 - 18:00',
-            features: ['야간진료', '주차가능', '임플란트'],
-            isAd: true,
-        },
-        {
-            id: '2',
-            name: '밝은미소 치과',
-            address: '서울특별시 강남구 역삼동 456',
-            distance: '0.5km',
-            rating: 4.6,
-            reviewCount: 182,
-            phone: '02-2345-6789',
-            isOpen: true,
-            openTime: '10:00 - 19:00',
-            features: ['토요진료', '교정전문'],
-        },
-        {
-            id: '3',
-            name: '건강한치과',
-            address: '서울특별시 강남구 삼성동 789',
-            distance: '0.8km',
-            rating: 4.7,
-            reviewCount: 315,
-            phone: '02-3456-7890',
-            isOpen: false,
-            openTime: '09:00 - 18:00 (일요일 휴무)',
-            features: ['보험적용', '발치전문'],
-        },
-        {
-            id: '4',
-            name: '프리미엄 치과의원',
-            address: '서울특별시 강남구 논현동 321',
-            distance: '1.2km',
-            rating: 4.9,
-            reviewCount: 421,
-            phone: '02-4567-8901',
-            isOpen: true,
-            openTime: '09:00 - 20:00',
-            features: ['야간진료', '주차가능', '임플란트', '라미네이트'],
-            isAd: true,
-        },
-    ];
+    const { data, loading, error } = useQuery<any>(GET_HOSPITALS);
+
+    const hospitals: Hospital[] = data?.hospitals?.map((h: any) => ({
+        id: h.id,
+        name: h.name,
+        address: h.address || '주소 정보 없음',
+        distance: '0.0km', // TODO: Calculate distance
+        rating: 0.0, // Mock
+        reviewCount: 0, // Mock
+        phone: h.phone || '',
+        isOpen: true, // Mock
+        openTime: '09:00 - 18:00', // Mock
+        features: [], // Mock
+        isAd: false,
+    })) || [];
+
+    if (loading) {
+        return (
+            <View className="flex-1 items-center justify-center bg-background">
+                <ActivityIndicator size="large" color={theme.primary} />
+            </View>
+        );
+    }
+
+    if (error) {
+        return (
+            <View className="flex-1 items-center justify-center bg-background">
+                <Text className="text-red-500">Error loading hospitals: {error.message}</Text>
+            </View>
+        );
+    }
 
     const toggleFavorite = (id: string) => {
         setFavorites((prev) =>

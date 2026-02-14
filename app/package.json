@@ -12,6 +12,7 @@
     "clean:start": "powershell -ExecutionPolicy Bypass -File ./scripts/restart-clean.ps1"
   },
   "dependencies": {
+    "@apollo/client": "^4.1.4",
     "@expo/metro-runtime": "~6.1.2",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-google-signin/google-signin": "^16.1.1",
@@ -33,6 +34,7 @@
     "expo-status-bar": "~3.0.9",
     "expo-system-ui": "~6.0.9",
     "expo-web-browser": "~15.0.10",
+    "graphql": "^16.12.0",
     "lucide-react-native": "^0.563.0",
     "nativewind": "^4.2.0",
     "react": "19.1.0",

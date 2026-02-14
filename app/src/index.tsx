@@ -11,6 +11,9 @@ import { enableScreens } from "react-native-screens";
 
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { ApolloProvider } from "@apollo/client/react";
+import client from "./graphql/client";
+
 enableScreens();
 
 function App() {
@@ -20,7 +23,9 @@ function App() {
         <NavigationContainer>
           <ColorThemeProvider>
             <AuthProvider>
-              <RootNavigator />
+              <ApolloProvider client={client}>
+                <RootNavigator />
+              </ApolloProvider>
             </AuthProvider>
           </ColorThemeProvider>
         </NavigationContainer>
