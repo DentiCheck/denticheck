@@ -24,7 +24,7 @@ class ChatRequest(BaseModel):
         language (str, optional): 답변을 받을 언어 (기본값: "ko")
     """
     content: str
-    language: Optional[str] = "ko" # "ko" 또는 "en"
+    language: str # "ko" 또는 "en" (필수)
 
 class AskResponse(BaseModel):
     answer: str
