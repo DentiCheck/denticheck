@@ -1,3 +1,73 @@
+
+# ----------------------------
+# General
+# ----------------------------
+
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+*.log
+tmp/
+
+# ----------------------------
+# API (Java/Spring Boot)
+# ----------------------------
+
+api/.gradle/
+api/build/
+api/out/
+api/bin/
+api/target/
+api/.env
+
+# ----------------------------
+# App (React Native/Expo)
+# ----------------------------
+
+# Node / JS (app)
+app/node_modules/
+app/npm-debug.log*
+app/yarn-debug.log*
+app/yarn-error.log*
+app/pnpm-debug.log*
+app/.eslintcache
+# ----------------------------
+# General
+# ----------------------------
+
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+*.log
+tmp/
+
+# ----------------------------
+# API (Java/Spring Boot)
+# ----------------------------
+
+api/.gradle/
+api/build/
+api/out/
+api/bin/
+api/target/
+api/.env
+
+# ----------------------------
+# App (React Native/Expo)
+# ----------------------------
+
+# Node / JS (app)
+app/node_modules/
+app/npm-debug.log*
+app/yarn-debug.log*
+app/yarn-error.log*
+app/pnpm-debug.log*
+app/.eslintcache
+PS C:\dev\DentiCheck> git show feature/api-service:.gitignore
 # ---------------------------------------------------------
 # General / OS / IDE
 # ---------------------------------------------------------
@@ -32,89 +102,3 @@ ENV/
 api/.gradle/
 api/build/
 api/out/
-api/bin/
-api/target/
-api/.settings/
-api/.classpath
-api/.project
-api/.gradletasknamecache
-api/gradle-app.setting
-api/atlassian-ide-plugin.xml
-api/docker/pg_data/
-api/.agent/
-api/.env
-api/hs_err_pid*
-api/replay_pid*
-api/*.hprof
-
-# API Exceptions
-!api/gradle/wrapper/gradle-wrapper.jar
-!api/**/src/main/resources/application.yml
-!api/**/src/main/resources/application-*.yml
-
-# ---------------------------------------------------------
-# App (React Native/Expo)
-# ---------------------------------------------------------
-app/node_modules/
-app/.expo/
-app/.expo-shared/
-app/dist/
-app/web-build/
-app/expo-env.d.ts
-app/.metro/
-app/.metro-health
-app/*.tsbuildinfo
-app/.eslintcache
-
-# App Native Build / Configs
-app/android/
-app/ios/
-app/android/.gradle/
-app/android/local.properties
-app/android/**/build/
-app/ios/build/
-app/ios/Pods/
-app/ios/Podfile.lock
-app/*.xcworkspace
-app/*.xcuserstate
-
-# App Secrets / Artifacts
-app/.env
-app/.env.*
-!app/.env.example
-app/android/app/google-services.json
-app/ios/GoogleService-Info.plist
-app/**/*.keystore
-app/**/*.jks
-app/**/*.p12
-app/**/*.p8
-app/**/*.key
-app/**/*.mobileprovision
-app/**/*.pem
-app/**/*.apk
-app/**/*.aab
-
-# ---------------------------------------------------------
-# AI (Python)
-# ---------------------------------------------------------
-ai/__pycache__/
-ai/*.py[cod]
-ai/*$py.class
-ai/.env
-ai/.pytest_cache/
-ai/models/
-ai/data/*.db
-ai/data/*.sqlite
-ai/yolo/train/
-ai/yolo/val/
-ai/yolo/test/
-
-# ---------------------------------------------------------
-# Console (React/Vite)
-# ---------------------------------------------------------
-console/node_modules/
-console/dist/
-console/dist-ssr/
-console/.env
-console/.env.*.local
-console/*.local

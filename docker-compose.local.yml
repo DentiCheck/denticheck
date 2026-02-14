@@ -144,8 +144,10 @@ services:
             - "8000:8000"
         volumes:
             - ./ai:/app
+            - ./ai/models/yolo/weights/best.pt:/app/models/yolo/weights/best.pt:ro
         environment:
             - ENV=local
+            - YOLO_MODEL_PATH=/app/models/yolo/weights/best.pt
             # 내부 통신용 (Docker network)
             - MILVUS_URI=http://milvus:19530
             - OLLAMA_BASE_URL=http://ollama:11434
@@ -168,12 +170,26 @@ services:
             - "8080:8080"
         environment:
             - SPRING_PROFILES_ACTIVE=local
+            - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/denticheck
+            - SPRING_DATASOURCE_USERNAME=admin
+            - SPRING_DATASOURCE_PASSWORD=admin_password
             - DB_HOST=postgres
             - DB_PORT=5432
             - DB_NAME=denticheck
             - DB_USERNAME=admin
             - DB_PASSWORD=admin_password
-            - AI_CLIENT_URL=http://ai:8000
+            - AI_SERVICE_URL=http://ai:8000
+            - OLLAMA_ENABLED=true
+            - OLLAMA_BASE_URL=http://ollama:11434
+            - OLLAMA_MODEL=llama3:8b
+            - OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+            - MILVUS_ENABLED=true
+            - MILVUS_SEARCH_URL=http://milvus:9091/v2/vectordb/entities/search
+            - MILVUS_COLLECTION=dental_knowledge
+            - MILVUS_TOP_K=8
+            - REPORT_STORAGE_TYPE=local
+            - REPORT_LOCAL_DIR=/tmp/denticheck-reports
+            - REPORT_BASE_URL=http://localhost:8080/reports
         networks:
             - denticheck-network
         depends_on:

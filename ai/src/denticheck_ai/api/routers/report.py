@@ -1,7 +1,13 @@
 """
 [파일 역할]
-탐지된 질환 데이터와 전문 의학 지식을 결합하여 AI 소견서(Report)를 생성하는 API 라우터입니다.
-YOLO 결과 + RAG 지식 → LLM → 최종 소견서 순으로 흐름이 이어집니다.
+이 파일은 사용자의 구강 검진 데이터(YOLO 탐지 결과, 문진 내용 등)를 바탕으로 
+AI 소견서(Report) 생성을 요청하는 '비즈니스 로직 진입점(API Router)'입니다.
+
+[데이터 흐름]
+1. 분석 제어: 탐지된 질환(예: 치석)을 키워드로 `MilvusRetriever`에서 관련 의학 지식을 검색합니다.
+2. 병합 조립: 검색된 지식(Context)과 사용자의 문진/탐지 데이터를 하나의 큰 맥락으로 결합합니다.
+3. 소견 생성: `LlmClient`를 통해 최종적으로 구조화된(SUMMARY/DETAILS/DISCLAIMER) 소견서를 생성합니다.
+4. 결과 반환: 생성된 텍스트와 필요한 부가 정보(언어, PDF URL 등)를 클라이언트에 응답합니다.
 """
 
 from fastapi import APIRouter, HTTPException
@@ -44,7 +50,7 @@ class ReportRequest(BaseModel):
     history: Dict[str, Any]             # 사용자 과거 이력
     overall: OverallInfo                # 종합 분석 결과
     disclaimer_version: str = "v1.0"   # 면책조항 버전
-    language: Optional[str] = "ko"      # 소견서 생성 언어
+    language: str                      # 소견서 생성 언어 (필수)
 
 class ReportResponse(BaseModel):
     """생성된 소견서 응답 모델"""
@@ -72,8 +78,8 @@ async def generate_report(req: ReportRequest):
                 query_parts.append(label)
         
         search_query = ", ".join(query_parts) if query_parts else "구강 건강 관리"
-        contexts = retriever.retrieve_context(search_query, top_k=2)
-        context_text = "\n\n".join(contexts)
+        contexts = retriever.retrieve_context(search_query, top_k=10)
+        context_text = "\n\n---\n\n".join(contexts)
  
         # [RAG 연동 2단계: 소견서 생성 호출]
         # 검색된 지식(context_text)과 함께 모든 분석 데이터를 LLM에 전달합니다.

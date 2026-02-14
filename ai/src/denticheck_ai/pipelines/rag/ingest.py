@@ -1,7 +1,8 @@
 """
 [파일 역할]
-수집된 치과 지식 데이터(JSON)를 로컬 벡터 데이터베이스(Milvus Lite)에 적재하는 스크립트입니다.
-RAG 시스템이 지식을 검색할 수 있도록 '학습 데이터'를 DB에 밀어넣는 전처리 단계에 해당합니다.
+이 파일은 '지식 기반 데이터 적재(Ingest)'를 담당합니다. 
+수집된 치과 지식 데이터(JSON)를 읽어와서, AI가 이해할 수 있는 벡터(Vector) 형태로 변환한 뒤 
+Milvus 벡터 데이터베이스에 저장하는 역할을 합니다. 
 
 [실행 방법]
 프로젝트 루트에서 아래 명령어를 실행합니다.
@@ -26,27 +27,13 @@ Windows
 import json
 import os
 from dotenv import load_dotenv
-from langchain_milvus import Milvus
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_core.documents import Document
-
-# 환경 변수 로드
-load_dotenv()
-
-"""
-[파일 역할]
-JSON 형식의 치과 의학 지식을 벡터 데이터베이스(Milvus)에 적재(Ingest)하는 스크립트입니다.
-텍스트 데이터를 임베딩 모델을 통해 벡터로 변환하여 검색 가능한 상태로 만듭니다.
-
-[실행 방법]
-python -m src.denticheck_ai.pipelines.rag.ingest
-"""
-
-import json
-import os
 from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_milvus import Milvus
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+# .env 파일에 정의된 환경 변수(DB 경로 등)를 로드합니다.
+load_dotenv()
 
 def ingest_data():
     """
@@ -63,8 +50,8 @@ def ingest_data():
     with open(json_path, "r", encoding="utf-8") as f:
         knowledge_base = json.load(f)
 
-    # 2. LangChain Document 객체로 변환 (메타데이터 포함)
-    documents = []
+    # 2. LangChain Document 객체로 변환 및 문서 분할 (Chunking)
+    raw_documents = []
     for item in knowledge_base:
         if not item['content']: continue
         
@@ -76,12 +63,14 @@ def ingest_data():
                 "url": item['url']
             }
         )
-        documents.append(doc)
+        raw_documents.append(doc)
 
-    print(f"총 {len(documents)}건의 문서를 준비했습니다.")
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap=100)
+    documents = text_splitter.split_documents(raw_documents)
+
+    print(f"원문 {len(raw_documents)}건을 {len(documents)}개의 조각으로 분리하여 준비했습니다.")
 
     # 3. 로컬 임베딩 모델 설정
-    # 한국어 성능이 검증된 'jhgan/ko-sroberta-multitask' 모델을 사용하여 텍스트를 벡터로 수치화합니다.
     print("로컬 임베딩 모델 로드 중 (최초 실행 시 다운로드 진행)...")
     embeddings = HuggingFaceEmbeddings(
         model_name="jhgan/ko-sroberta-multitask",
@@ -90,7 +79,6 @@ def ingest_data():
     )
 
     # 4. Milvus 연결 및 데이터 저장
-    # Milvus Lite(로컬 파일 방식) 또는 독립 실행형 서버에 연결합니다.
     milvus_uri = os.getenv("MILVUS_URI", "./data/milvus_dental.db")
     collection_name = os.getenv("COLLECTION_NAME", "dental_knowledge")
 

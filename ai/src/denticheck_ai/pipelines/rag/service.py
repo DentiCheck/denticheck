@@ -1,16 +1,18 @@
 """
 [파일 역할]
-RAG(Retrieval-Augmented Generation) 검색 결과와 Ollama(로컬 LLM)를 하나로 묶어 최종 답변을 생성하는 상위 서비스 레이어입니다.
-검색된 지식 조각들을 바탕으로 AI가 자연스러운 문장으로 답변을 구성합니다.
+이 파일은 RAG(검색 증강 생성) 시스템의 '오케스트레이터(Orchestrator)'인 `RagService`를 정의합니다.
+`MilvusRetriever`를 통해 찾아온 지식(Context)과 사용자의 질문(Question)을 결합하여, 
+Ollama LLM이 전문적인 답변을 생성할 수 있도록 전체 흐름을 관리합니다.
 
 [실행 방법]
-1. 로컬에 Ollama가 설치되어 있고 `llama3.1` 모델이 다운로드되어 있어야 합니다.
-2. `RagService` 클래스를 인스턴스화하여 `ask(질문)` 메서드를 호출합니다.
+단독 실행하여 질문-답변 파이프라인 전체를 테스트할 수 있습니다.
+$env:PYTHONPATH="src"; python src/denticheck_ai/pipelines/rag/service.py
 
-[동작 순서]
-1. `MilvusRetriever`를 통해 질문과 관련된 치과 지식을 검색합니다.
-2. 검색된 지식과 사용자 질문을 결합하여 전용 프롬프트를 구성합니다.
-3. Ollama 모델에 프롬프트를 전달하여 최종 답변 문장을 생성합니다.
+[작동 원리]
+1. 지식 검색: `MilvusRetriever`를 사용해 관련 지식 조각들을 10개(Top-10) 가져옵니다.
+2. 프롬프트 구성: 검색된 지식과 질문을 미리 정의된 시스템 페르소나와 결합합니다.
+3. LLM 호출: 로컬에서 가동 중인 Ollama(Llama 3.1) 모델에 최종 요청을 보냅니다.
+4. 결과 반환: 생성된 텍스트를 파싱하여 사용자에게 전달합니다.
 """
 
 import os
@@ -59,9 +61,14 @@ class RagService:
             language (str): 답변 언어 ('ko' 또는 'en')
         """
         # 한국어 기본 시스템 프롬프트 (페르소나 정의)
+        # 검색된 지식(Context)에서 상위 3개를 골라 답변에 활용하고 출처를 밝히도록 지시합니다.
         system_prompt = f"""당신은 친절하고 전문적인 치과 의사 '덴티체크 점검봇'입니다.
-아래 제공된 [검색된 지식]만을 근거로 사용자의 질문에 답변하세요.
-만약 [검색된 지식]에 질문에 대한 직접적인 답이 없다면, 아는 범위 내에서 구강 건강 상식으로 답변하되 전문적인 진료는 치과 방문이 필요함을 반드시 안내하세요.
+아래 제공된 [검색된 지식]을 바탕으로 사용자의 질문에 답변하세요.
+
+[답변 가이드라인]
+1. 제공된 조각들 중 가장 관련성이 높은 '상위 3개'의 지식을 선별하여 답변을 구성하세요.
+2. 답변 마지막에 반드시 '참고한 지식의 출처(제목 및 URL)'를 명시하세요.
+3. 만약 지식에 직접적인 답이 없다면 상식 선에서 답변하되, 반드시 치과 방문을 권고하세요.
 
 [검색된 지식]
 {{context}}
@@ -71,8 +78,12 @@ class RagService:
         # 영어일 경우 시스템 프롬프트 번역본 적용
         if language == "en":
             system_prompt = f"""You are a friendly and professional dentist 'DentiCheck Bot'.
-Answer the user's question based ONLY on the [Retrieved Knowledge] provided below.
-If there is no direct answer in the [Retrieved Knowledge], answer with general oral health knowledge but ALWAYS state that a dental visit is required for a professional diagnosis.
+Answer the user's question based on the [Retrieved Knowledge] provided below.
+
+[Response Guidelines]
+1. Select the 'Top 3' most relevant pieces of knowledge from the provided context to answer.
+2. Always mention the 'Sources (Titles & URLs)' used at the end of your response.
+3. If no direct answer is found, provide general advice and strongly recommend visiting a dentist.
 
 [Retrieved Knowledge]
 {{context}}
@@ -99,9 +110,9 @@ If there is no direct answer in the [Retrieved Knowledge], answer with general o
         Returns:
             str: AI가 생성한 최종 답변 전문
         """
-        # 1. 관련 의학 지식 검색 (Milvus에서 Top 3 추출)
-        contexts = self.retriever.retrieve_context(content, top_k=3)
-        context_text = "\n\n".join(contexts)
+        # 1. 관련 의학 지식 검색 (Milvus에서 넉넉히 10개 추출)
+        contexts = self.retriever.retrieve_context(content, top_k=10)
+        context_text = "\n\n---\n\n".join(contexts)
         
         # 2. 언어별 체인 획득 및 모델 호출
         chain = self._get_chain(language=language)

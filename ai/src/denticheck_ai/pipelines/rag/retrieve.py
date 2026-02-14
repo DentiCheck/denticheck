@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 from langchain_milvus import Milvus
 from langchain_community.embeddings import HuggingFaceEmbeddings
 
-# 환경 변수 로드
+# 환경 설정 및 DB 연결 정보를 로드합니다.
 load_dotenv()
 
 class MilvusRetriever:

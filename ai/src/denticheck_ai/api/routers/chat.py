@@ -24,9 +24,13 @@ class ChatRequest(BaseModel):
         language (str, optional): 답변을 받을 언어 (기본값: "ko")
     """
     content: str
-    language: Optional[str] = "ko" # "ko" 또는 "en"
+    language: str # "ko" 또는 "en" (필수)
 
-@router.post("/ask", summary="치과 지식 질문하기")
+class AskResponse(BaseModel):
+    answer: str
+    language: str = "ko"
+
+@router.post("/ask", response_model=AskResponse, summary="치과 지식 질문하기")
 async def ask_question(req: ChatRequest):
     """
     사용자의 질문에 대해 전문 지식을 바탕으로 AI 답변을 생성합니다.
@@ -41,7 +45,4 @@ async def ask_question(req: ChatRequest):
     # RAG 파이프라인 호출하여 답변 생성
     answer = rag_service.ask(req.content, language=req.language)
     
-    return {
-        "answer": answer, 
-        "language": req.language
-    }
+    return AskResponse(answer=answer, language=req.language)
