@@ -35,16 +35,19 @@ graph LR
 ## 🛠️ 기술 스택 (Tech Stack)
 
 ### Backend & AI
-- **Runtime**: Java 17 (Spring Boot 3.4), Python 3.11 (FastAPI)
+
+- **Runtime**: Java 17 (Spring Boot 3.5.8), Python 3.11 (FastAPI)
 - **AI/ML**: Ultralytics (YOLOv8), PyTorch
 - **LLM Engine**: Ollama (Llama 3.2 3B)
 - **Database**: PostgreSQL (Relational), Milvus (Vector Search)
 
 ### Frontend
-- **App**: React Native (Expo SDK 52)
+
+- **App**: React Native (Expo SDK 54)
 - **Web**: React 19 (Vite 기반 Admin Console)
 
 ### DevOps
+
 - **Container**: Docker, Docker Compose
 - **Search Logic**: LangChain, RAG Pipeline
 
@@ -62,6 +65,7 @@ docker-compose -f docker-compose.local.yml up -d postgres milvus ollama etcd min
 ```
 
 **모델 초기 설정 (Llama 3.2 3B)**
+
 ```bash
 # 모델 다운로드 및 초기화
 docker compose -f .\docker-compose.local.yml up ollama-init
