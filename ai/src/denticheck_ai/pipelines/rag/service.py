@@ -5,6 +5,9 @@
 Ollama LLM이 전문적인 답변을 생성할 수 있도록 전체 흐름을 관리합니다.
 
 [실행 방법]
+1. 로컬에 Ollama가 설치되어 있고 `llama3.2:3b` 모델이 다운로드되어 있어야 합니다.
+2. `RagService` 클래스를 인스턴스화하여 `ask(질문)` 메서드를 호출합니다.
+
 단독 실행하여 질문-답변 파이프라인 전체를 테스트할 수 있습니다.
 $env:PYTHONPATH="src"; python src/denticheck_ai/pipelines/rag/service.py
 
@@ -25,16 +28,16 @@ from denticheck_ai.pipelines.llm import prompts
 
 class RagService:
     """
-    RAG 검색 결과와 Ollama(Llama 3.1)를 결합하여 최종 지식 답변을 생성하는 통합 서비스 클래스입니다.
+    RAG 검색 결과와 Ollama(Llama 3.2 3B)를 결합하여 최종 지식 답변을 생성하는 통합 서비스 클래스입니다.
     비용 0원으로 로컬에서 작동하는 지능형 치과 상담 엔진입니다.
     """
     
-    def __init__(self, model_name: str = "llama3.1:latest"):
+    def __init__(self, model_name: str = "llama3.2:3b"):
         """
         서비스 초기화: 검색기(Milvus)와 생성기(Ollama) 커넥션 설정
         
         Args:
-            model_name (str): 사용할 Ollama 모델명. 기본값은 'llama3.1:latest'.
+            model_name (str): 사용할 Ollama 모델명. 기본값은 'llama3.2:3b'.
         """
         # 1. 문서 검색기(Vector DB 연결) 초기화
         self.retriever = MilvusRetriever()
