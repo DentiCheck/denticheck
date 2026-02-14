@@ -41,6 +41,21 @@ public class DentalResolver {
         return dentalService.getAllDentals();
     }
 
+    @org.springframework.graphql.data.method.annotation.SchemaMapping(typeName = "Hospital", field = "reviews")
+    public List<com.denticheck.api.domain.dental.entity.DentalReviewEntity> reviews(DentalEntity dental) {
+        return dentalService.getReviews(dental.getId());
+    }
+
+    @org.springframework.graphql.data.method.annotation.MutationMapping
+    public com.denticheck.api.domain.dental.entity.DentalReviewEntity createReview(@Argument java.util.UUID dentalId,
+            @Argument int rating,
+            @Argument String content,
+            @Argument List<String> tags) {
+        String username = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getName();
+        return dentalService.createReview(dentalId, username, rating, content, tags);
+    }
+
     @QueryMapping
     @PreAuthorize("hasRole('USER')")
     public List<DentalEntity> myFavoriteHospitals() {

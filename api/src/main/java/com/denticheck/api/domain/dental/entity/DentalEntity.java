@@ -76,4 +76,15 @@ public class DentalEntity {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt;
+
+    public void updateRating(int newRating, int oldRatingCount, java.math.BigDecimal oldRatingAvg) {
+        // Calculate new average
+        // (oldAvg * oldCount + newRating) / (oldCount + 1)
+        java.math.BigDecimal total = oldRatingAvg.multiply(java.math.BigDecimal.valueOf(oldRatingCount));
+        total = total.add(java.math.BigDecimal.valueOf(newRating));
+
+        int newCount = oldRatingCount + 1;
+        this.ratingCount = newCount;
+        this.ratingAvg = total.divide(java.math.BigDecimal.valueOf(newCount), 2, java.math.RoundingMode.HALF_UP);
+    }
 }

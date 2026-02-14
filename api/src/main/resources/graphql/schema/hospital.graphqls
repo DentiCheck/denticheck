@@ -20,3 +20,26 @@ extend type Query {
   ): [Hospital]
   myFavoriteHospitals: [Hospital]
 }
+
+type Review {
+    id: ID!
+    rating: Int!
+    title: String
+    content: String!
+    isAnonymous: Boolean
+    createdAt: String
+    updatedAt: String
+}
+
+extend type Hospital {
+    reviews: [Review]
+}
+
+extend type Mutation {
+    createReview(
+        dentalId: ID!
+        rating: Int!
+        content: String!
+        tags: [String]
+    ): Review
+}
