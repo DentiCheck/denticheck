@@ -21,7 +21,7 @@ class LlmClient:
     Ollama 엔진을 기반으로 다양한 언어 모델 작업을 수행하는 클라이언트 클래스입니다.
     """
 
-    def __init__(self, model_name: str = "llama3.1:latest"):
+    def __init__(self, model_name: str = "llama3.2:3b"):
         """
         클라이언트 초기화: Ollama 주소 및 모델 설정
         

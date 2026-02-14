@@ -16,7 +16,7 @@ class BBox(BaseModel):
 
 class DetectionResult(BaseModel):
     """개별 질환 탐지 결과"""
-    label: str # 질환명 (tartar/caries/lesion)
+    label: str  # 질환명 (caries|tartar|oral_cancer|normal)
     confidence: float # 확신도
     bbox: BBox        # 위치 정보
 

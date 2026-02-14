@@ -27,8 +27,12 @@ public class JWTFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
-        return path.startsWith("/docs/");
+        String contextPath = request.getContextPath() == null ? "" : request.getContextPath();
+        String requestUri = request.getRequestURI() == null ? "" : request.getRequestURI();
+        String path = requestUri.startsWith(contextPath) ? requestUri.substring(contextPath.length()) : requestUri;
+        // TODO: 위 3개는 삭제 예정
+        String pathCHU = request.getServletPath();
+        return path.equals("/api/ai-check") || path.startsWith("/api/ai-check/") || pathCHU.startsWith("/docs/");
     }
 
     @Override
@@ -36,6 +40,7 @@ public class JWTFilter extends OncePerRequestFilter {
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
+
         String authorization = request.getHeader("Authorization");
 
         if (authorization == null) {
@@ -73,6 +78,9 @@ public class JWTFilter extends OncePerRequestFilter {
                     null,
                     Collections.singletonList(new SimpleGrantedAuthority(role)));
             SecurityContextHolder.getContext().setAuthentication(auth);
+
+            filterChain.doFilter(request, response);
+            return;
         } else {
             // response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             // response.setContentType("application/json;charset=UTF-8");

@@ -19,7 +19,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from denticheck_ai.api.routers import chat, report, quality, detect
-from denticheck_ai.llm.client import LlmClient
+from denticheck_ai.pipelines.llm.client import LlmClient
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

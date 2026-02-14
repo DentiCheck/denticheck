@@ -49,7 +49,7 @@ graph TD
         
         SERVICE --> CLIENT["client.py<br/>(Ollama Driver)"]
         PROMPT["prompts.py<br/>(Persona Script)"] -.->|Rules| CLIENT
-        CLIENT -->|Request| OLLAMA[("Ollama<br/>(Llama 3.1)")]
+        CLIENT -->|Request| OLLAMA[("Ollama<br/>(Llama 3.2 3B)")]
         OLLAMA -->|Streaming Answer| CLIENT
         CLIENT -->|Final Response| SERVICE
     end
@@ -253,7 +253,7 @@ docker-compose -f docker/docker-compose.local.yml up -d
 컨테이너 내의 Ollama에 접속하여 검색 상담에 필요한 모델을 다운로드합니다.
 ```bash
 # 컨테이너 내에서 모델 다운로드
-docker exec -it ollama ollama pull llama3.1
+docker exec -it ollama ollama pull llama3.2:3b
 ```
 
 ### 7-4. 환경 변수 설정
