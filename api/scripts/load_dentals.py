@@ -22,7 +22,16 @@ DB_CONFIG = {
 
 def get_db_connection():
     try:
+        print(f"Connecting to {DB_CONFIG['dbname']} at {DB_CONFIG['host']}...")
         conn = psycopg2.connect(**DB_CONFIG)
+        
+        # Debug connection info
+        cur = conn.cursor()
+        cur.execute("SELECT current_database(), current_user, inet_server_addr(), inet_server_port();")
+        info = cur.fetchone()
+        print(f"Connected to: DB={info[0]}, User={info[1]}, IP={info[2]}, Port={info[3]}")
+        cur.close()
+        
         return conn
     except Exception as e:
         print(f"Error connecting to database: {e}")
@@ -37,32 +46,33 @@ def fetch_data(api_key, page_no=1, num_of_rows=100):
         "_type": "json"
     }
     
-    try:
-        # Note: serviceKey is usually already encoded, so we might need to pass it as string if requests encodes it again.
-        # But requests usually handles it. If the key is decoded, requests encodes it. 
-        # Public Data Portal keys are often tricky. 
-        # Best practice: simple get with params.
-        response = requests.get(API_BASE_URL, params=params)
-        response.raise_for_status()
-        
-        # Check if response is valid JSON
+    for attempt in range(3):
         try:
-            data = response.json()
-        except ValueError:
-            print(f"Response is not JSON: {response.text[:200]}")
-            return None
-
-        # Handle API error responses (which might be JSON but indicate error)
-        if "response" in data and "header" in data["response"]:
-            result_code = data["response"]["header"]["resultCode"]
-            if result_code != "00":
-                print(f"API Error: {data['response']['header']['resultMsg']}")
+            # Note: serviceKey is usually already encoded
+            response = requests.get(API_BASE_URL, params=params, timeout=30)
+            response.raise_for_status()
+            
+            # Check if response is valid JSON
+            try:
+                data = response.json()
+            except ValueError:
+                print(f"Response is not JSON: {response.text[:200]}")
                 return None
-                
-        return data
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching data: {e}")
-        return None
+    
+            # Handle API error responses
+            if "response" in data and "header" in data["response"]:
+                result_code = data["response"]["header"]["resultCode"]
+                if result_code != "00":
+                    print(f"API Error: {data['response']['header']['resultMsg']}")
+                    return None
+                    
+            return data
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching data (attempt {attempt+1}/3): {e}")
+            if attempt == 2:
+                return None
+            import time
+            time.sleep(2)
 
 def parse_and_insert(conn, items):
     cursor = conn.cursor()
@@ -206,6 +216,10 @@ def main():
             break
             
         page_no += 1
+        
+        if total_count >= 10000:
+            print("Reached limit of 10000 records.")
+            break
         
     conn.close()
     print(f"Done. Total {total_count} records processed.")
