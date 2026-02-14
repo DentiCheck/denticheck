@@ -35,7 +35,7 @@ class MilvusRetriever:
         # 1. 임베딩 모델 설정 (Ingest 단계와 반드시 동일한 모델 사용)
         self.embeddings = HuggingFaceEmbeddings(
             model_name="jhgan/ko-sroberta-multitask",
-            model_kwargs={'device': 'cpu'},
+            model_kwargs={'device': 'cuda'}, # GPU 활용을 위해 'cuda'로 변경됨
             encode_kwargs={'normalize_embeddings': True}
         )
         

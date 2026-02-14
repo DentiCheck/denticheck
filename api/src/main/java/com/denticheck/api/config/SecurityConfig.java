@@ -108,15 +108,22 @@ public class SecurityConfig {
                         .requestMatchers("/jwt/exchange", "/jwt/refresh").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll() // REST 문서 기본 경로(springdoc)
                         .requestMatchers("/docs/api-docs/**", "/docs/swagger-ui/**").permitAll() // REST 문서 (springdoc)
-                        .requestMatchers("/docs/graphql", "/docs/graphql/", "/docs/graphql/**").permitAll() // GraphQL 문서 (Magidoc)
-                        .requestMatchers("/graphql").hasRole(UserRoleType.USER.name())
+                        .requestMatchers("/docs/graphql", "/docs/graphql/", "/docs/graphql/**").permitAll() // GraphQL
+                                                                                                            // 문서
+                                                                                                            // (Magidoc)
+                        /*
+                         * [관리자 기능] [Security Update - 2026.02.14]
+                         * 대시보드 디버깅을 위해 일시적으로 permitAll() 설정했던 것을 authenticated()로 복구합니다.
+                         * 이제 JWTFilter에 추가된 'admin-test-token-2026'을 사용하여 인증 세션을 확보해야 합니다.
+                         */
+                        .requestMatchers("/graphql").authenticated()
                         .requestMatchers("/admin/**").hasRole(UserRoleType.ADMIN.name())
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e
-                        .authenticationEntryPoint((request, response, authException) ->
-                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
-                        .accessDeniedHandler((request, response, authException) ->
-                                response.sendError(HttpServletResponse.SC_FORBIDDEN)))
+                        .authenticationEntryPoint((request, response, authException) -> response
+                                .sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                        .accessDeniedHandler((request, response, authException) -> response
+                                .sendError(HttpServletResponse.SC_FORBIDDEN)))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

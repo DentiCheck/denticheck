@@ -1,13 +1,18 @@
 import { cn } from '@/shared/lib/utils'
 
-const inquiries = [
-    { id: 1, user: '김민수', dentist: '서울치과', title: '상품 문의', date: '2026-02-10', status: '대기' },
-    { id: 2, user: '이지은', dentist: '강남치과', title: '보험 문의', date: '2026-02-10', status: '처리중' },
-    { id: 3, user: '박철수', dentist: '부산치과', title: '결제 문의', date: '2026-02-09', status: '완료' },
-    { id: 4, user: '정수현', dentist: '대구치과', title: '일반 문의', date: '2026-02-09', status: '대기' },
-]
+interface RecentInquiriesTableProps {
+    data?: {
+        id: string;
+        userName: string;
+        title: string;
+        date: string;
+        status: string;
+    }[];
+}
 
-export function RecentInquiriesTable() {
+export function RecentInquiriesTable({ data }: RecentInquiriesTableProps) {
+    const inquiries = data || [];
+
     return (
         <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
             <div className="p-6 border-b border-slate-100">
@@ -19,32 +24,37 @@ export function RecentInquiriesTable() {
                         <tr>
                             <th className="px-6 py-3 font-medium">ID</th>
                             <th className="px-6 py-3 font-medium">사용자</th>
-                            <th className="px-6 py-3 font-medium">치과</th>
                             <th className="px-6 py-3 font-medium">제목</th>
                             <th className="px-6 py-3 font-medium">날짜</th>
                             <th className="px-6 py-3 font-medium">상태</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {inquiries.map((inquiry) => (
-                            <tr key={inquiry.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                                <td className="px-6 py-4 font-medium text-slate-900">{inquiry.id}</td>
-                                <td className="px-6 py-4 text-slate-600">{inquiry.user}</td>
-                                <td className="px-6 py-4 text-slate-600">{inquiry.dentist}</td>
-                                <td className="px-6 py-4 text-slate-600">{inquiry.title}</td>
-                                <td className="px-6 py-4 text-slate-500">{inquiry.date}</td>
-                                <td className="px-6 py-4">
-                                    <span className={cn(
-                                        "px-2.5 py-0.5 rounded-full text-xs font-medium border",
-                                        inquiry.status === '대기' && "bg-yellow-50 text-yellow-600 border-yellow-200",
-                                        inquiry.status === '처리중' && "bg-blue-50 text-blue-600 border-blue-200",
-                                        inquiry.status === '완료' && "bg-green-50 text-green-600 border-green-200"
-                                    )}>
-                                        {inquiry.status}
-                                    </span>
-                                </td>
+                        {inquiries.length > 0 ? (
+                            inquiries.map((inquiry) => (
+                                <tr key={inquiry.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                    <td className="px-6 py-4 font-medium text-slate-900">{inquiry.id}</td>
+                                    <td className="px-6 py-4 text-slate-600">{inquiry.userName}</td>
+                                    <td className="px-6 py-4 text-slate-600">{inquiry.title}</td>
+                                    <td className="px-6 py-4 text-slate-500">{inquiry.date}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={cn(
+                                            "px-2.5 py-0.5 rounded-full text-xs font-medium border",
+                                            inquiry.status === 'PENDING' && "bg-yellow-50 text-yellow-600 border-yellow-200",
+                                            inquiry.status === 'OPEN' && "bg-yellow-50 text-yellow-600 border-yellow-200",
+                                            inquiry.status === 'ANSWERED' && "bg-green-50 text-green-600 border-green-200",
+                                            inquiry.status === '완료' && "bg-green-50 text-green-600 border-green-200"
+                                        )}>
+                                            {inquiry.status}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan={5} className="px-6 py-8 text-center text-slate-400">최근 문의 내역이 없습니다.</td>
                             </tr>
-                        ))}
+                        )}
                     </tbody>
                 </table>
             </div>
