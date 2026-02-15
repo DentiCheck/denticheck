@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -43,13 +44,18 @@ public class AdminStatsScheduler {
 
         // 실제 데이터 집계
         int newInquiries = (int) inquiryRepository.countByCreatedAtAfter(startOfYesterday);
-        int weeklyUsage = (int) chatSessionRepository.countByStartedAtAfter(sevenDaysAgo);
+        int weeklyUsage = (int) chatSessionRepository.countByCreatedAtAfter(sevenDaysAgo);
 
         // 2. 트렌드 계산 (전일 대비 증가율)
-        double userTrend = 0.0;
+        BigDecimal userTrend = BigDecimal.ZERO;
         AdminDailyStats prevStats = statsRepository.findByStatsDate(yesterday.minusDays(1)).orElse(null);
         if (prevStats != null && prevStats.getTotalUsers() > 0) {
-            userTrend = ((double) (totalUsers - prevStats.getTotalUsers()) / prevStats.getTotalUsers()) * 100;
+            BigDecimal diff = BigDecimal.valueOf(totalUsers - prevStats.getTotalUsers());
+            BigDecimal prev = BigDecimal.valueOf(prevStats.getTotalUsers());
+            // (diff / prev) * 100
+            userTrend = diff.divide(prev, 4, java.math.RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100))
+                    .setScale(2, java.math.RoundingMode.HALF_UP);
         }
 
         // 3. 데이터 저장

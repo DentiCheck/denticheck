@@ -3,6 +3,7 @@ package com.denticheck.api.domain.admin.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -34,7 +35,7 @@ public class AdminDailyStats {
     private int weeklyUsage;
 
     @Column(name = "user_trend")
-    private double userTrend;
+    private BigDecimal userTrend;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

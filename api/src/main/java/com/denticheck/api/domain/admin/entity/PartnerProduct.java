@@ -28,6 +28,13 @@ public class PartnerProduct {
 
     private String manufacturer;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
+    @Column(name = "is_partner", nullable = false)
+    @Builder.Default
+    private boolean isPartner = true;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -43,5 +50,17 @@ public class PartnerProduct {
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void update(String category, String name, int price, String manufacturer, String imageUrl) {
+        this.category = category;
+        this.name = name;
+        this.price = price;
+        this.manufacturer = manufacturer;
+        this.imageUrl = imageUrl;
+    }
+
+    public void updatePartnerStatus(boolean isPartner) {
+        this.isPartner = isPartner;
     }
 }

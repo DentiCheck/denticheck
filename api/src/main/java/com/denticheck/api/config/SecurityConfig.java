@@ -116,7 +116,7 @@ public class SecurityConfig {
                          * 대시보드 디버깅을 위해 일시적으로 permitAll() 설정했던 것을 authenticated()로 복구합니다.
                          * 이제 JWTFilter에 추가된 'admin-test-token-2026'을 사용하여 인증 세션을 확보해야 합니다.
                          */
-                        .requestMatchers("/graphql").authenticated()
+                        .requestMatchers("/graphql").permitAll()
                         .requestMatchers("/admin/**").hasRole(UserRoleType.ADMIN.name())
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e

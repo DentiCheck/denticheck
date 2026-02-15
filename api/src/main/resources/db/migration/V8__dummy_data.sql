@@ -1,6 +1,8 @@
 -- 🧪 V8__dummy_data.sql
 -- 관리자 테스트를 위한 시스템 전반의 더미 데이터 삽입
 
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
 -- 1. 사용자 데이터 (UUID 부여)
 -- ADMIN: admin_test
 INSERT INTO users (id, username, status, nickname, email, created_at, role_id)
@@ -62,4 +64,19 @@ VALUES
 ('이순신', 'user2@example.com', '임플란트 제휴 할인이 궁금합니다.', '제휴 치과에서 임플란트 시술 시 할인이 적용되나요?', 'OPEN', NOW() - INTERVAL '5 hours'),
 ('강감찬', 'user3@example.com', '어플 오류 제보합니다.', '진단 결과 화면에서 이미지가 깨져 보입니다.', 'ANSWERED', NOW() - INTERVAL '1 days'),
 ('유관순', 'user4@example.com', '비밀번호를 잊어버렸어요.', '이메일 인증이 안와서 문의 드립니다.', 'PENDING', NOW() - INTERVAL '1 days'),
-('김유신', 'user5@example.com', '보험 가입 상담 요청', '어떤 보험이 가장 저렴한가요?', 'OPEN', NOW() - INTERVAL '2 days');
+('김유신', 'user5@example.com', '보험 가입 상담 요청', '어떤 보험이 가장 저렴한가요?', 'OPEN', NOW() - INTERVAL '2 days'),
+('jiwon88', 'jiwon@example.com', '앱 사용 중 오류가 발생합니다', '사진 업로드가 안 되네요.', 'PENDING', NOW() - INTERVAL '1 hour'),
+('dentist_lee', 'lee@hospital.com', '제휴 문의 드립니다', '서울 강남구 치과입니다.', 'RESOLVED', NOW() - INTERVAL '1 day');
+
+-- 7. 추가 제휴 상품 데이터 (Merged from seed)
+INSERT INTO partner_products (category, name, price, manufacturer)
+VALUES
+('칫솔류', '프리미엄 미세모 칫솔', 4500, '덴티케어'),
+('치약 및 세정제', '프로폴리스 치약', 12000, '내추럴허브'),
+('특수케어', '구강 유산균 타블렛', 35000, '바이오덴트');
+
+-- 8. 추가 제휴 보험 데이터 (Merged from seed)
+INSERT INTO insurance_products (category, name, price, company)
+VALUES
+('치아보험', '든든한 치아안심 보험', 25000, '대한생명'),
+('종합보험', '우리가족 구강케어 보험', 40000, '미래화재');

@@ -20,6 +20,7 @@ CREATE TABLE partner_products (
     name VARCHAR(255) NOT NULL,               -- 제품명
     price INTEGER NOT NULL,                   -- 가격
     manufacturer VARCHAR(255),                -- 제조회사
+    image_url TEXT,                           -- 상품 이미지 URL
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
 );
@@ -52,4 +53,3 @@ CREATE TABLE admin_inquiries (
 );
 
 CREATE INDEX idx_admin_inquiry_created ON admin_inquiries(created_at);
-

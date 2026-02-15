@@ -3,12 +3,13 @@ package com.denticheck.api.domain.admin.dto;
 
 import lombok.Builder;
 import lombok.Getter;
+import java.math.BigDecimal;
 
 @Getter
 @Builder
 public class AdminDashboardStatsDTO {
     private int totalUsers;
-    private double userTrend;
+    private BigDecimal userTrend;
     private int totalDentists;
     private int dentistTrend;
     private int newInquiries;

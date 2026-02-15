@@ -12,7 +12,7 @@ extend type Query {
   adminUsers(keyword: String): [AdminUser!]! # 검색 포함 목록
 
   # 3. 제휴 관리
-  adminDentists(keyword: String): [AdminDentist!]!
+  adminDentists(keyword: String, filter: String): [AdminDentist!]!
   adminProducts(category: String, keyword: String): [AdminProduct!]!
   adminInsuranceProducts(category: String, keyword: String): [AdminInsurance!]!
 }
@@ -35,6 +35,11 @@ extend type Mutation {
   createInsurance(input: InsuranceInput!): AdminInsurance!
   updateInsurance(id: ID!, input: InsuranceInput!): AdminInsurance!
   deleteInsurance(id: ID!): Boolean!
+
+  # 제휴 상태 관리
+  updateHospitalPartnerStatus(id: ID!, isPartner: Boolean!): AdminDentist!
+  updateProductPartnerStatus(id: ID!, isPartner: Boolean!): AdminProduct!
+  updateInsurancePartnerStatus(id: ID!, isPartner: Boolean!): AdminInsurance!
 }
 
 type AdminDashboardStats {
@@ -85,6 +90,8 @@ type AdminProduct {
   name: String!
   price: Int!
   manufacturer: String
+  imageUrl: String
+  isPartner: Boolean
 }
 
 type AdminInsurance {
@@ -94,6 +101,7 @@ type AdminInsurance {
   name: String!
   price: Int!
   company: String
+  isPartner: Boolean
 }
 
 type AdminInquiry {
@@ -121,6 +129,7 @@ input ProductInput {
   name: String!
   price: Int!
   manufacturer: String
+  imageUrl: String
 }
 
 input InsuranceInput {

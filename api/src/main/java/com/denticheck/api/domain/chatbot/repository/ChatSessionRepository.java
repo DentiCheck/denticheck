@@ -10,5 +10,5 @@ import java.util.Optional;
 public interface ChatSessionRepository extends JpaRepository<ChatSessionEntity, UUID> {
     Optional<ChatSessionEntity> findByUserIdAndChannelAndEndedAtIsNull(UUID userId, String channel);
 
-    long countByStartedAtAfter(java.time.LocalDateTime start);
+    long countByCreatedAtAfter(java.time.LocalDateTime start);
 }

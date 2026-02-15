@@ -20,4 +20,8 @@ public interface HospitalRepository extends JpaRepository<HospitalEntity, UUID> 
                         @Param("longitude") double longitude, @Param("radius") double radius);
 
         List<HospitalEntity> findByNameContaining(String name);
+
+        List<HospitalEntity> findByAddressContaining(String address);
+
+        List<HospitalEntity> findByNameContainingOrAddressContaining(String name, String address);
 }

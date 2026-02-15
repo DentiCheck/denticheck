@@ -28,6 +28,10 @@ public class InsuranceProduct {
 
     private String company;
 
+    @Column(name = "is_partner", nullable = false)
+    @Builder.Default
+    private boolean isPartner = true;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -43,5 +47,16 @@ public class InsuranceProduct {
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void update(String category, String name, int price, String company) {
+        this.category = category;
+        this.name = name;
+        this.price = price;
+        this.company = company;
+    }
+
+    public void updatePartnerStatus(boolean isPartner) {
+        this.isPartner = isPartner;
     }
 }
