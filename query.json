@@ -1,0 +1,3 @@
+{
+    "query": "{ adminUsers { id nickname email role status } }"
+}

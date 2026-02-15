@@ -85,7 +85,7 @@ def ingest_data():
     print("로컬 임베딩 모델 로드 중 (최초 실행 시 다운로드 진행)...")
     embeddings = HuggingFaceEmbeddings(
         model_name="jhgan/ko-sroberta-multitask",
-        model_kwargs={'device': 'cpu'}, # GPU 활용 시 'cuda'로 변경 권장
+        model_kwargs={'device': 'cuda'}, # GPU 활용을 위해 'cuda'로 변경됨
         encode_kwargs={'normalize_embeddings': True}
     )
 

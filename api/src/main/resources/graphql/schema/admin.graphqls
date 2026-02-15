@@ -1,0 +1,140 @@
+# Backend File: Admin GraphQL Schema Definition
+# Path: api/src/main/resources/graphql/schema/admin.graphqls
+
+extend type Query {
+  # 1. 대시보드
+  adminDashboardStats: AdminDashboardStats!
+  adminDailyUsage: [AdminDailyUsage!]! # 일별 이용 현황 (Mon-Sun)
+  adminWeeklyUsage: [AdminWeeklyUsage!]! # 주간 이용 현황 (1-4주)
+  adminRecentInquiries: [AdminInquiry!]! # 최근 문의 목록
+
+  # 2. 회원 관리
+  adminUsers(keyword: String): [AdminUser!]! # 검색 포함 목록
+
+  # 3. 제휴 관리
+  adminDentists(keyword: String, filter: String): [AdminDentist!]!
+  adminProducts(category: String, keyword: String): [AdminProduct!]!
+  adminInsuranceProducts(category: String, keyword: String): [AdminInsurance!]!
+}
+
+extend type Mutation {
+  # 회원 상태 변경 (SUSPENDED 등)
+  updateUserStatus(userId: ID!, status: String!): AdminUser!
+
+  # 제휴 병원 관리
+  createHospital(input: HospitalInput!): AdminDentist!
+  updateHospital(id: ID!, input: HospitalInput!): AdminDentist!
+  deleteHospital(id: ID!): Boolean!
+
+  # 제휴 상품 관리
+  createProduct(input: ProductInput!): AdminProduct!
+  updateProduct(id: ID!, input: ProductInput!): AdminProduct!
+  deleteProduct(id: ID!): Boolean!
+
+  # 제휴 보험 관리
+  createInsurance(input: InsuranceInput!): AdminInsurance!
+  updateInsurance(id: ID!, input: InsuranceInput!): AdminInsurance!
+  deleteInsurance(id: ID!): Boolean!
+
+  # 제휴 상태 관리
+  updateHospitalPartnerStatus(id: ID!, isPartner: Boolean!): AdminDentist!
+  updateProductPartnerStatus(id: ID!, isPartner: Boolean!): AdminProduct!
+  updateInsurancePartnerStatus(id: ID!, isPartner: Boolean!): AdminInsurance!
+}
+
+type AdminDashboardStats {
+  totalUsers: Int!
+  userTrend: Float! # 전날 대비 %
+  totalDentists: Int!
+  dentistTrend: Int! # 전날 대비 +n
+  newInquiries: Int!
+  inquiryTrend: Int! # 전날 대비 +n
+  weeklyUsage: Int!
+  weeklyTrend: Int! # 전날 대비 +n
+}
+
+type AdminDailyUsage {
+  label: String! # 월, 화 등
+  date: String!
+  count: Int!
+}
+
+type AdminWeeklyUsage {
+  label: String! # 1주, 2주 등
+  count: Int!
+}
+
+type AdminUser {
+  id: ID!
+  displayId: Int! # 1부터 시작하는 표시용 ID
+  nickname: String
+  email: String
+  role: String
+  status: String # ACTIVE, SUSPENDED 등
+  createdAt: String
+}
+
+type AdminDentist {
+  id: ID!
+  displayId: Int!
+  name: String!
+  address: String
+  phone: String
+  isPartner: Boolean
+}
+
+type AdminProduct {
+  id: ID!
+  displayId: Int!
+  category: String!
+  name: String!
+  price: Int!
+  manufacturer: String
+  imageUrl: String
+  isPartner: Boolean
+}
+
+type AdminInsurance {
+  id: ID!
+  displayId: Int!
+  category: String!
+  name: String!
+  price: Int!
+  company: String
+  isPartner: Boolean
+}
+
+type AdminInquiry {
+  id: ID!
+  displayId: Int!
+  userName: String
+  dentistName: String
+  title: String!
+  date: String!
+  status: String!
+}
+
+input HospitalInput {
+  name: String!
+  address: String
+  phone: String
+  description: String
+  latitude: Float
+  longitude: Float
+  homepageUrl: String
+}
+
+input ProductInput {
+  category: String!
+  name: String!
+  price: Int!
+  manufacturer: String
+  imageUrl: String
+}
+
+input InsuranceInput {
+  category: String!
+  name: String!
+  price: Int!
+  company: String
+}

@@ -58,22 +58,28 @@ public class JWTFilter extends OncePerRequestFilter {
         // 토큰 파싱
         String accessToken = authorization.substring("Bearer ".length());
 
-        // TODO: 임시 토큰 처리 (테스트 유저용)
-        if ("access_token_for_user_test".equals(accessToken)) {
-            Authentication auth = new UsernamePasswordAuthenticationToken(
-                    "TestUser",
-                    null,
-                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
-            SecurityContextHolder.getContext().setAuthentication(auth);
-            filterChain.doFilter(request, response);
-            return;
-        }
-        // TODO: 임시 토큰 처리 (테스트 관리자용)
-        if ("access_token_for_admin_test".equals(accessToken)) {
+        // ✅ [관리자 기능] 테스트를 위한 개발용 임시 토큰 처리
+        // 프론트엔드 또는 Postman 등에서 'Authorization: Bearer admin-test-token-2026' 헤더 사용 시
+        // ADMIN 권한 부여
+        if ("temp_access_token_for_test".equals(accessToken) ||
+                "admin-test-token-2026".equals(accessToken) ||
+                "access_token_for_admin_test".equals(accessToken)) {
+            log.info("Temporary Test Admin Token detected. Granting ROLE_ADMIN.");
             Authentication auth = new UsernamePasswordAuthenticationToken(
                     "TestAdmin",
                     null,
                     Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN")));
+            SecurityContextHolder.getContext().setAuthentication(auth);
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if ("access_token_for_user_test".equals(accessToken)) {
+            log.info("Temporary Test User Token detected. Granting ROLE_USER.");
+            Authentication auth = new UsernamePasswordAuthenticationToken(
+                    "TestUser",
+                    null,
+                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
             SecurityContextHolder.getContext().setAuthentication(auth);
             filterChain.doFilter(request, response);
             return;

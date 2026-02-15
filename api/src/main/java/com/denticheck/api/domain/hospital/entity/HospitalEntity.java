@@ -39,4 +39,23 @@ public class HospitalEntity extends BaseTimeEntity {
 
     @Column(name = "homepage_url", length = 500)
     private String homepageUrl;
+
+    @Column(name = "is_partner", nullable = false)
+    @Builder.Default
+    private boolean isPartner = true;
+
+    public void update(String name, String address, String phone, String description, Double latitude, Double longitude,
+            String homepageUrl) {
+        this.name = name;
+        this.address = address;
+        this.phone = phone;
+        this.description = description;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.homepageUrl = homepageUrl;
+    }
+
+    public void updatePartnerStatus(boolean isPartner) {
+        this.isPartner = isPartner;
+    }
 }

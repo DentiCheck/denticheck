@@ -1,0 +1,3 @@
+{
+    "query": "{ adminDentists(keyword: \"Gangnam\", filter: \"address\") { id name address } }"
+}
