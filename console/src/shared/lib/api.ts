@@ -8,21 +8,24 @@
 
 export const apiClient = {
     get: async (url: string) => {
-        console.log(`GET ${url}`)
-        return Promise.resolve({})
+        console.log(`GET ${url}`);
+        return Promise.resolve({});
     },
     post: async (url: string, data: unknown) => {
-        console.log(`POST ${url}`, data)
-        return Promise.resolve({})
-    }
-}
+        console.log(`POST ${url}`, data);
+        return Promise.resolve({});
+    },
+};
+
+import { fetchWithAuth } from "./authApi";
+
+const BACKEND_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 export async function graphqlRequest(query: string, variables = {}) {
-    const res = await fetch('http://localhost:8080/graphql', {
-        method: 'POST',
+    const res = await fetchWithAuth(`${BACKEND_API_BASE_URL}/graphql`, {
+        method: "POST",
         headers: {
-            'Content-Type': 'application/json',
-            // 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` // 필요 시 활성화
+            "Content-Type": "application/json",
         },
         body: JSON.stringify({ query, variables }),
     });
@@ -61,7 +64,7 @@ export const ADMIN_DASHBOARD_QUERIES = {
                 status
             }
         }
-    `
+    `,
 };
 
 export const ADMIN_MANAGEMENT_QUERIES = {
@@ -111,5 +114,17 @@ export const ADMIN_MANAGEMENT_QUERIES = {
                 company
             }
         }
-    `
+    `,
 };
+
+export const GET_ADMIN_ME = `
+  query adminMe {
+    adminMe {
+      nickname
+    }
+  }
+`;
+
+export async function fetchAdminMe() {
+    return graphqlRequest(GET_ADMIN_ME);
+}

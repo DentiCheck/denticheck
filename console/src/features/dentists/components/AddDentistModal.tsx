@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Modal } from '@/shared/components/Modal';
-import { graphqlRequest } from '@/shared/lib/api';
-import { useLanguage } from '@/features/dashboard/context/LanguageContext';
+import React, { useState } from "react";
+import { Modal } from "@/shared/components/Modal";
+import { graphqlRequest } from "@/shared/lib/api";
+import { useLanguage } from "@/features/dashboard/context/LanguageContext";
+import { useAlert } from "@/shared/context/AlertContext";
 
 interface AddDentistModalProps {
     isOpen: boolean;
@@ -20,12 +21,13 @@ const CREATE_DENTIST_MUTATION = `
 
 export function AddDentistModal({ isOpen, onClose, onSuccess }: AddDentistModalProps) {
     const { t } = useLanguage();
+    const { showAlert } = useAlert();
     const [formData, setFormData] = useState({
-        name: '',
-        address: '',
-        phone: '',
-        description: '',
-        homepageUrl: ''
+        name: "",
+        address: "",
+        phone: "",
+        description: "",
+        homepageUrl: "",
     });
     const [loading, setLoading] = useState(false);
 
@@ -36,45 +38,44 @@ export function AddDentistModal({ isOpen, onClose, onSuccess }: AddDentistModalP
             await graphqlRequest(CREATE_DENTIST_MUTATION, { input: formData });
             onSuccess();
             onClose();
-            setFormData({ name: '', address: '', phone: '', description: '', homepageUrl: '' }); // Reset
-            // AddDentistModal.tsx
+            setFormData({ name: "", address: "", phone: "", description: "", homepageUrl: "" }); // Reset
         } catch (error) {
             console.error(error);
-            alert(t('msg_save_fail'));
+            showAlert(t("msg_save_fail"), { title: "오류" });
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={t('modal_add_dentist')}>
+        <Modal isOpen={isOpen} onClose={onClose} title={t("modal_add_dentist")}>
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('label_hospital_name')}</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t("label_hospital_name")}</label>
                     <input
                         type="text"
                         required
                         className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         value={formData.name}
-                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('label_address')}</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t("label_address")}</label>
                     <input
                         type="text"
                         className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         value={formData.address}
-                        onChange={e => setFormData({ ...formData, address: e.target.value })}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('label_phone')}</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t("label_phone")}</label>
                     <input
                         type="text"
                         className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         value={formData.phone}
-                        onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     />
                 </div>
 
@@ -84,14 +85,14 @@ export function AddDentistModal({ isOpen, onClose, onSuccess }: AddDentistModalP
                         onClick={onClose}
                         className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
                     >
-                        {t('btn_cancel')}
+                        {t("btn_cancel")}
                     </button>
                     <button
                         type="submit"
                         disabled={loading}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
                     >
-                        {loading ? t('btn_saving') : t('btn_save')}
+                        {loading ? t("btn_saving") : t("btn_save")}
                     </button>
                 </div>
             </form>

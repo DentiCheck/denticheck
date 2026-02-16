@@ -21,7 +21,7 @@ public class MagidocCleanUrlFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
-        String path = request.getRequestURI();
+        String path = request.getServletPath();
 
         // /docs/graphql 이하의 "확장자 없는" 페이지 요청만 .html로 forward
         boolean isDocs = path.startsWith("/docs/graphql/");

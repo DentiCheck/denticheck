@@ -43,6 +43,24 @@ public class AdminServiceImpl implements AdminService {
         private final AdminInquiryRepository inquiryRepository;
 
         @Override
+        public AdminUserDTO getMe() {
+                String username = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                                .getAuthentication().getName();
+                UserEntity user = userRepository.findByUsername(username)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                return AdminUserDTO.builder()
+                                .id(user.getId().toString())
+                                .displayId(0)
+                                .nickname(user.getNickname())
+                                .email(user.getEmail())
+                                .role(user.getRole() != null ? user.getRole().getName() : "USER")
+                                .status(user.getUserStatusType().name())
+                                .createdAt(user.getCreatedAt().toString())
+                                .build();
+        }
+
+        @Override
         public AdminDashboardStatsDTO getDashboardStats() {
                 AdminDailyStats latest = statsRepository.findAll().stream()
                                 .max((a, b) -> a.getStatsDate().compareTo(b.getStatsDate()))

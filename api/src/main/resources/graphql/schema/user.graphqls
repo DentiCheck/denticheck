@@ -1,9 +1,5 @@
-extend type Query {
-  me: User!
-}
-
 type User {
-  nickname: String
-  email: String
-  profileImage: String
+    nickname: String
+    email: String
+    profileImage: String
 }

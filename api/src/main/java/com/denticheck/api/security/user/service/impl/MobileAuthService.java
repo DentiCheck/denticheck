@@ -16,6 +16,7 @@ import com.denticheck.api.common.exception.user.UserException;
 import com.denticheck.api.domain.user.entity.UserStatusType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
+import com.denticheck.api.domain.user.dto.UserResponseDTO;
 
 @Service
 @Slf4j
@@ -68,7 +69,7 @@ public class MobileAuthService {
                 jwtServiceImpl.addRefresh(user.getUsername(), refreshToken);
 
                 return new JWTResponseDTO(accessToken, refreshToken,
-                                com.denticheck.api.domain.user.dto.UserResponseDTO.builder()
+                                UserResponseDTO.builder()
                                                 .nickname(user.getNickname())
                                                 .email(user.getEmail())
                                                 .profileImage(user.getProfileImage())

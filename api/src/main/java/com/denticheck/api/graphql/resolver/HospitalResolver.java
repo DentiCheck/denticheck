@@ -1,5 +1,6 @@
 package com.denticheck.api.graphql.resolver;
 
+import com.denticheck.api.common.util.UserRoleOnly;
 import com.denticheck.api.domain.hospital.entity.HospitalEntity;
 import com.denticheck.api.domain.hospital.service.HospitalService;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import java.util.List;
 
 @Controller
+@UserRoleOnly
 @RequiredArgsConstructor
 public class HospitalResolver {
 

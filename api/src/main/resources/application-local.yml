@@ -43,3 +43,7 @@ minio:
     secret-key: minioadmin
     bucket: denticheck
     report-prefix: reports
+
+admin:
+    web:
+        refresh-cookie-secure: false

@@ -1,5 +1,6 @@
 package com.denticheck.api.controller;
 
+import com.denticheck.api.common.util.UserRoleOnly;
 import com.denticheck.api.domain.ai_check.dto.AiCheckRunResponse;
 import com.denticheck.api.domain.ai_check.dto.AnalyzeResponse;
 import com.denticheck.api.domain.ai_check.service.AiCheckOrchestratorService;
@@ -14,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api")
+@UserRoleOnly
 @RequiredArgsConstructor
 public class AiCheckController {
 
@@ -32,8 +34,7 @@ public class AiCheckController {
     @PostMapping(value = "/ai-check/analyze", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public AnalyzeResponse runAiCheckAnalyze(
             @RequestPart("file") MultipartFile file,
-            @RequestParam(value = "generatePdf", defaultValue = "false") boolean generatePdf
-    ) {
+            @RequestParam(value = "generatePdf", defaultValue = "false") boolean generatePdf) {
         return aiCheckOrchestratorService.runAnalyze(file, generatePdf);
     }
 }

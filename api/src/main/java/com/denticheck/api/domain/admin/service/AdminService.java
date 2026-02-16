@@ -18,6 +18,9 @@ import com.denticheck.api.domain.admin.dto.AdminInsuranceDTO;
 import java.util.List;
 
 public interface AdminService {
+    // 0. 내 정보
+    AdminUserDTO getMe();
+
     // 1. 대시보드
     AdminDashboardStatsDTO getDashboardStats();
 

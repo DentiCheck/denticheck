@@ -1,6 +1,8 @@
 package com.denticheck.api.security.jwt.filter;
 
 import com.denticheck.api.common.util.JWTUtil;
+import com.denticheck.api.domain.user.entity.UserRoleType;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -24,6 +27,7 @@ import java.util.Collections;
 public class JWTFilter extends OncePerRequestFilter {
 
     private final JWTUtil jwtUtil;
+    private final RoleHierarchy roleHierarchy;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -66,9 +70,11 @@ public class JWTFilter extends OncePerRequestFilter {
                 "access_token_for_admin_test".equals(accessToken)) {
             log.info("Temporary Test Admin Token detected. Granting ROLE_ADMIN.");
             Authentication auth = new UsernamePasswordAuthenticationToken(
-                    "TestAdmin",
+                    "admin_test",
                     null,
-                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN")));
+                    roleHierarchy.getReachableGrantedAuthorities(
+                            Collections
+                                    .singletonList(new SimpleGrantedAuthority("ROLE_" + UserRoleType.ADMIN.name()))));
             SecurityContextHolder.getContext().setAuthentication(auth);
             filterChain.doFilter(request, response);
             return;
@@ -77,9 +83,10 @@ public class JWTFilter extends OncePerRequestFilter {
         if ("access_token_for_user_test".equals(accessToken)) {
             log.info("Temporary Test User Token detected. Granting ROLE_USER.");
             Authentication auth = new UsernamePasswordAuthenticationToken(
-                    "TestUser",
+                    "user1",
                     null,
-                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+                    roleHierarchy.getReachableGrantedAuthorities(
+                            Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + UserRoleType.USER.name()))));
             SecurityContextHolder.getContext().setAuthentication(auth);
             filterChain.doFilter(request, response);
             return;
@@ -92,7 +99,8 @@ public class JWTFilter extends OncePerRequestFilter {
             Authentication auth = new UsernamePasswordAuthenticationToken(
                     username,
                     null,
-                    Collections.singletonList(new SimpleGrantedAuthority(role)));
+                    roleHierarchy.getReachableGrantedAuthorities(
+                            Collections.singletonList(new SimpleGrantedAuthority(role))));
             SecurityContextHolder.getContext().setAuthentication(auth);
 
             filterChain.doFilter(request, response);

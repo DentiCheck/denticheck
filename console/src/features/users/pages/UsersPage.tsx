@@ -4,10 +4,12 @@
  * Description: [관리자 기능] 회원 관리 페이지
  * - 회원 목록 조회, 검색, 상태(ACTIVE/SUSPENDED) 표시
  */
-import { useState, useEffect } from 'react';
-import { useLanguage } from '@/features/dashboard/context/LanguageContext';
-import { graphqlRequest, ADMIN_MANAGEMENT_QUERIES } from '@/shared/lib/api';
-import { SearchFilterBar } from '@/shared/components/SearchFilterBar';
+import { useState, useEffect } from "react";
+import { useLanguage } from "@/features/dashboard/context/LanguageContext";
+import { graphqlRequest, ADMIN_MANAGEMENT_QUERIES } from "@/shared/lib/api";
+import { SearchFilterBar } from "@/shared/components/SearchFilterBar";
+import { ConfirmModal } from "@/shared/components/ConfirmModal";
+import { useAlert } from "@/shared/context/AlertContext";
 
 interface User {
     id: string;
@@ -30,15 +32,25 @@ const UPDATE_USER_STATUS_MUTATION = `
 
 export function UsersPage() {
     const { t } = useLanguage();
+    const { showAlert } = useAlert();
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
-    const [keyword, setKeyword] = useState('');
-    const [filter, setFilter] = useState('all');
+    const [keyword, setKeyword] = useState("");
+    const [filter, setFilter] = useState("all");
+    const [statusConfirm, setStatusConfirm] = useState<{
+        isOpen: boolean;
+        userId: string;
+        newStatus: string;
+    }>({
+        isOpen: false,
+        userId: "",
+        newStatus: "",
+    });
 
     const fetchUsers = () => {
         setLoading(true);
         graphqlRequest(ADMIN_MANAGEMENT_QUERIES.GET_USERS, { keyword })
-            .then(data => {
+            .then((data) => {
                 setUsers(data.adminUsers || []);
             })
             .catch(console.error)
@@ -54,14 +66,27 @@ export function UsersPage() {
         fetchUsers();
     };
 
-    const handleUpdateStatus = async (userId: string, newStatus: string) => {
+    const handleUpdateStatusClick = (userId: string, newStatus: string) => {
+        setStatusConfirm({
+            isOpen: true,
+            userId,
+            newStatus,
+        });
+    };
+
+    const handleConfirmUpdate = async () => {
+        const { userId, newStatus } = statusConfirm;
+        const action = newStatus === "ACTIVE" ? "활성화" : "정지";
+
         try {
             await graphqlRequest(UPDATE_USER_STATUS_MUTATION, { userId, status: newStatus });
-            alert(`사용자 상태가 ${newStatus === 'ACTIVE' ? '활성화' : '정지'}되었습니다.`);
+            showAlert(`사용자 상태가 ${action}되었습니다.`, { title: "알림" });
             fetchUsers();
         } catch (error) {
             console.error(error);
-            alert('상태 변경에 실패했습니다.');
+            showAlert("상태 변경에 실패했습니다.", { title: "오류" });
+        } finally {
+            setStatusConfirm((prev) => ({ ...prev, isOpen: false }));
         }
     };
 
@@ -69,8 +94,8 @@ export function UsersPage() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight text-slate-900">{t('menu_users')}</h2>
-                    <p className="text-slate-500">{t('desc_users')}</p>
+                    <h2 className="text-2xl font-bold tracking-tight text-slate-900">{t("menu_users")}</h2>
+                    <p className="text-slate-500">{t("desc_users")}</p>
                 </div>
                 <SearchFilterBar
                     keyword={keyword}
@@ -79,9 +104,9 @@ export function UsersPage() {
                     setFilter={setFilter}
                     onSearch={handleSearch}
                     options={[
-                        { value: 'all', label: '전체' },
-                        { value: 'email', label: '이메일' },
-                        { value: 'nickname', label: '닉네임' }
+                        { value: "all", label: "전체" },
+                        { value: "email", label: "이메일" },
+                        { value: "nickname", label: "닉네임" },
                     ]}
                 />
             </div>
@@ -92,12 +117,12 @@ export function UsersPage() {
                         <thead className="bg-slate-50 text-slate-500 font-medium border-b">
                             <tr>
                                 <th className="px-6 py-3 font-medium">NO</th>
-                                <th className="px-6 py-3 font-medium">{t('th_nickname')}</th>
-                                <th className="px-6 py-3 font-medium">{t('th_email')}</th>
-                                <th className="px-6 py-3 font-medium">{t('th_role')}</th>
-                                <th className="px-6 py-3 font-medium">{t('th_status')}</th>
-                                <th className="px-6 py-3 font-medium">{t('th_created_at')}</th>
-                                <th className="px-6 py-3 font-medium text-right">{t('th_action')}</th>
+                                <th className="px-6 py-3 font-medium">{t("th_nickname")}</th>
+                                <th className="px-6 py-3 font-medium">{t("th_email")}</th>
+                                <th className="px-6 py-3 font-medium">{t("th_role")}</th>
+                                <th className="px-6 py-3 font-medium">{t("th_status")}</th>
+                                <th className="px-6 py-3 font-medium">{t("th_created_at")}</th>
+                                <th className="px-6 py-3 font-medium text-right">{t("th_action")}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -110,7 +135,7 @@ export function UsersPage() {
                             ) : users.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
-                                        {t('no_users')}
+                                        {t("no_users")}
                                     </td>
                                 </tr>
                             ) : (
@@ -120,16 +145,26 @@ export function UsersPage() {
                                         <td className="px-6 py-4 text-slate-900 font-medium">{user.nickname}</td>
                                         <td className="px-6 py-4 text-slate-600">{user.email}</td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${user.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-700'
-                                                }`}>
+                                            <span
+                                                className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                                    user.role === "ADMIN"
+                                                        ? "bg-purple-100 text-purple-700"
+                                                        : "bg-slate-100 text-slate-700"
+                                                }`}
+                                            >
                                                 {t(user.role)}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${user.status === 'ACTIVE' ? 'bg-green-100 text-green-700' :
-                                                user.status === 'SUSPENDED' ? 'bg-red-100 text-red-700' :
-                                                    'bg-gray-100 text-gray-700'
-                                                }`}>
+                                            <span
+                                                className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                                    user.status === "ACTIVE"
+                                                        ? "bg-green-100 text-green-700"
+                                                        : user.status === "SUSPENDED"
+                                                          ? "bg-red-100 text-red-700"
+                                                          : "bg-gray-100 text-gray-700"
+                                                }`}
+                                            >
                                                 {t(user.status)}
                                             </span>
                                         </td>
@@ -139,9 +174,14 @@ export function UsersPage() {
                                         <td className="px-6 py-4 text-right">
                                             <button
                                                 className="text-blue-600 hover:text-blue-800 font-medium text-sm"
-                                                onClick={() => handleUpdateStatus(user.id, user.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE')}
+                                                onClick={() =>
+                                                    handleUpdateStatusClick(
+                                                        user.id,
+                                                        user.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE",
+                                                    )
+                                                }
                                             >
-                                                {user.status === 'ACTIVE' ? t('SUSPENDED') : t('ACTIVE')}
+                                                {user.status === "ACTIVE" ? t("SUSPENDED") : t("ACTIVE")}
                                             </button>
                                         </td>
                                     </tr>
@@ -151,6 +191,16 @@ export function UsersPage() {
                     </table>
                 </div>
             </div>
+
+            <ConfirmModal
+                isOpen={statusConfirm.isOpen}
+                onClose={() => setStatusConfirm((prev) => ({ ...prev, isOpen: false }))}
+                onConfirm={handleConfirmUpdate}
+                title="회원 상태 변경"
+                message={`정말로 사용자를 ${statusConfirm.newStatus === "ACTIVE" ? "활성화" : "정지"} 하시겠습니까?`}
+                isDestructive={statusConfirm.newStatus === "SUSPENDED"}
+                confirmLabel={statusConfirm.newStatus === "ACTIVE" ? "활성화" : "정지"}
+            />
         </div>
     );
 }

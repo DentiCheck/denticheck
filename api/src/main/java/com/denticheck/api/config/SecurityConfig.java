@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
+
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -31,17 +31,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     private final AuthenticationSuccessHandler socialSuccessHandler;
-    private final JWTFilter jwtFilter;
 
     public SecurityConfig(
-            @Qualifier("SocialSuccessHandler") AuthenticationSuccessHandler socialSuccessHandler,
-            JWTFilter jwtFilter) {
+            @Qualifier("SocialSuccessHandler") AuthenticationSuccessHandler socialSuccessHandler) {
         this.socialSuccessHandler = socialSuccessHandler;
-        this.jwtFilter = jwtFilter;
     }
 
     @Bean
@@ -71,22 +68,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Order(1)
-    public SecurityFilterChain aiCheckSecurityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .securityMatcher("/api/ai-check", "/api/ai-check/**")
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
-        return http.build();
-    }
-
-    @Bean
-    @Order(2)
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JWTFilter jwtFilter) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -109,21 +91,18 @@ public class SecurityConfig {
                         .requestMatchers("/docs/graphql", "/docs/graphql/", "/docs/graphql/**").permitAll() // GraphQL
                                                                                                             // 문서
                                                                                                             // (Magidoc)
-                        /*
-                         * [관리자 기능] [Security Update - 2026.02.14]
-                         * 대시보드 디버깅을 위해 일시적으로 permitAll() 설정했던 것을 authenticated()로 복구합니다.
-                         * 이제 JWTFilter에 추가된 'admin-test-token-2026'을 사용하여 인증 세션을 확보해야 합니다.
-                         */
-                        .requestMatchers("/graphql").authenticated()
+                        .requestMatchers("/graphql").hasRole(UserRoleType.USER.name())
                         .requestMatchers("/admin/**").hasRole(UserRoleType.ADMIN.name())
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint((request, response, authException) -> {
-                            log.error("Unauthorized: {}", authException.getMessage(), authException);
+                            log.warn("Unauthorized request: {} - Path: {}", authException.getMessage(),
+                                    request.getRequestURI());
                             response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                         })
                         .accessDeniedHandler((request, response, authException) -> {
-                            log.error("Access Denied: {}", authException.getMessage(), authException);
+                            log.error("Access Denied: {} - Path: {}", authException.getMessage(),
+                                    request.getRequestURI(), authException);
                             response.sendError(HttpServletResponse.SC_FORBIDDEN);
                         }))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

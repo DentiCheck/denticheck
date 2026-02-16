@@ -1,6 +1,5 @@
 spring:
     security:
-        ### OAuth2 ###
         oauth2:
             client:
                 registration:
@@ -20,7 +19,7 @@ google:
 admin:
     web:
         # TODO: 운영 관리자 웹 refreshToken JWT을 받을 주소.  Cookie <- "refreshToken" : refreshToken
-        login-success-redirect: "http://localhost:5173/cookie"
+        login-success-redirect: "http://localhost:5173/auth/callback"
         refresh-cookie-max-age: 300s
         refresh-cookie-secure: true
         refresh-cookie-httponly: true

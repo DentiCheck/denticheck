@@ -4,12 +4,14 @@
  * Description: [관리자 기능] 제휴 상품 관리 페이지
  * - 상품 목록 조회, 추가(모달), 검색 기능
  */
-import { useState, useEffect } from 'react';
-import { AddProductModal } from '@/features/products/components/AddProductModal';
-import { EditProductModal } from '@/features/products/components/EditProductModal';
-import { useLanguage } from '@/features/dashboard/context/LanguageContext';
-import { graphqlRequest } from '@/shared/lib/api';
-import { SearchFilterBar } from '@/shared/components/SearchFilterBar';
+import { useState, useEffect } from "react";
+import { AddProductModal } from "@/features/products/components/AddProductModal";
+import { EditProductModal } from "@/features/products/components/EditProductModal";
+import { useLanguage } from "@/features/dashboard/context/LanguageContext";
+import { graphqlRequest } from "@/shared/lib/api";
+import { SearchFilterBar } from "@/shared/components/SearchFilterBar";
+import { useAlert } from "@/shared/context/AlertContext";
+import { ConfirmModal } from "@/shared/components/ConfirmModal";
 
 const GET_PRODUCTS_QUERY = `
     query AdminProducts($category: String, $keyword: String) {
@@ -37,38 +39,49 @@ export function ProductsPage() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
     const { t } = useLanguage();
+    const { showAlert } = useAlert();
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [keyword, setKeyword] = useState('');
-    const [filter, setFilter] = useState('all');
+    const [keyword, setKeyword] = useState("");
+    const [filter, setFilter] = useState("all");
+    const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: string; name: string }>({
+        isOpen: false,
+        id: "",
+        name: "",
+    });
 
     const fetchProducts = () => {
         setLoading(true);
         const params: any = {};
-        if (filter === 'category') {
+        if (filter === "category") {
             params.category = keyword;
         } else {
             params.keyword = keyword;
         }
 
         graphqlRequest(GET_PRODUCTS_QUERY, params)
-            .then(data => {
+            .then((data) => {
                 setProducts(data.adminProducts || []);
             })
             .catch(console.error)
             .finally(() => setLoading(false));
     };
 
-    const handleDelete = async (id: string, name: string) => {
-        if (window.confirm(`'${name}' 상품을 삭제하시겠습니까?`)) {
-            try {
-                await graphqlRequest(DELETE_PRODUCT_MUTATION, { id });
-                alert('상품이 삭제되었습니다.');
-                fetchProducts();
-            } catch (error) {
-                console.error(error);
-                alert(t('msg_delete_fail'));
-            }
+    const handleDeleteClick = (id: string, name: string) => {
+        setDeleteConfirm({ isOpen: true, id, name });
+    };
+
+    const handleConfirmDelete = async () => {
+        const { id } = deleteConfirm;
+        try {
+            await graphqlRequest(DELETE_PRODUCT_MUTATION, { id });
+            showAlert("상품이 삭제되었습니다.", { title: "성공" });
+            fetchProducts();
+        } catch (error) {
+            console.error(error);
+            showAlert(t("msg_delete_fail"), { title: "오류" });
+        } finally {
+            setDeleteConfirm({ isOpen: false, id: "", name: "" });
         }
     };
 
@@ -85,8 +98,8 @@ export function ProductsPage() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight text-slate-900">{t('menu_products')}</h2>
-                    <p className="text-slate-500">{t('desc_products')}</p>
+                    <h2 className="text-2xl font-bold tracking-tight text-slate-900">{t("menu_products")}</h2>
+                    <p className="text-slate-500">{t("desc_products")}</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <SearchFilterBar
@@ -96,19 +109,19 @@ export function ProductsPage() {
                         setFilter={setFilter}
                         onSearch={handleSearch}
                         options={[
-                            { value: 'all', label: t('filter_all') },
-                            { value: '칫솔류', label: t('cat_toothbrush') },
-                            { value: '치약 및 세정제', label: t('cat_paste') },
-                            { value: '치간, 혀 및 구강', label: t('cat_interdental') },
-                            { value: '특수케어', label: t('cat_special') },
-                            { value: '기타', label: t('cat_etc') }
+                            { value: "all", label: t("filter_all") },
+                            { value: "칫솔류", label: t("cat_toothbrush") },
+                            { value: "치약 및 세정제", label: t("cat_paste") },
+                            { value: "치간, 혀 및 구강", label: t("cat_interdental") },
+                            { value: "특수케어", label: t("cat_special") },
+                            { value: "기타", label: t("cat_etc") },
                         ]}
                     />
                     <button
                         onClick={() => setIsModalOpen(true)}
                         className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-sm whitespace-nowrap"
                     >
-                        {t('btn_add_product')}
+                        {t("btn_add_product")}
                     </button>
                 </div>
             </div>
@@ -119,12 +132,12 @@ export function ProductsPage() {
                         <thead className="bg-slate-50 text-slate-500 font-medium border-b">
                             <tr>
                                 <th className="px-6 py-3 font-medium">NO</th>
-                                <th className="px-6 py-3 font-medium">{t('th_category')}</th>
-                                <th className="px-6 py-3 font-medium">{t('th_product_name')}</th>
-                                <th className="px-6 py-3 font-medium">{t('th_manufacturer')}</th>
-                                <th className="px-6 py-3 font-medium">{t('th_price')}</th>
-                                <th className="px-6 py-3 font-medium text-center">{t('th_partner')}</th>
-                                <th className="px-6 py-3 font-medium text-center">{t('th_action')}</th>
+                                <th className="px-6 py-3 font-medium">{t("th_category")}</th>
+                                <th className="px-6 py-3 font-medium">{t("th_product_name")}</th>
+                                <th className="px-6 py-3 font-medium">{t("th_manufacturer")}</th>
+                                <th className="px-6 py-3 font-medium">{t("th_price")}</th>
+                                <th className="px-6 py-3 font-medium text-center">{t("th_partner")}</th>
+                                <th className="px-6 py-3 font-medium text-center">{t("th_action")}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -137,7 +150,7 @@ export function ProductsPage() {
                             ) : products.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
-                                        {t('no_products')}
+                                        {t("no_products")}
                                     </td>
                                 </tr>
                             ) : (
@@ -148,7 +161,11 @@ export function ProductsPage() {
                                         <td className="px-6 py-4 text-slate-900 font-medium">
                                             <div className="flex items-center gap-3">
                                                 {product.imageUrl && (
-                                                    <img src={product.imageUrl} alt={product.name} className="w-8 h-8 rounded bg-slate-100 object-cover" />
+                                                    <img
+                                                        src={product.imageUrl}
+                                                        alt={product.name}
+                                                        className="w-8 h-8 rounded bg-slate-100 object-cover"
+                                                    />
                                                 )}
                                                 {product.name}
                                             </div>
@@ -156,10 +173,14 @@ export function ProductsPage() {
                                         <td className="px-6 py-4 text-slate-600">{product.manufacturer}</td>
                                         <td className="px-6 py-4 text-slate-600">₩{product.price.toLocaleString()}</td>
                                         <td className="px-6 py-4 text-center">
-                                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${product.isPartner
-                                                ? 'bg-blue-50 text-blue-600 border-blue-200'
-                                                : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
-                                                {product.isPartner ? t('status_partnered') : t('status_unpartnered')}
+                                            <span
+                                                className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                                                    product.isPartner
+                                                        ? "bg-blue-50 text-blue-600 border-blue-200"
+                                                        : "bg-slate-50 text-slate-400 border-slate-200"
+                                                }`}
+                                            >
+                                                {product.isPartner ? t("status_partnered") : t("status_unpartnered")}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-center">
@@ -168,19 +189,22 @@ export function ProductsPage() {
                                                     className="text-emerald-600 hover:text-emerald-800 font-medium text-sm"
                                                     onClick={async () => {
                                                         try {
-                                                            await graphqlRequest(`
+                                                            await graphqlRequest(
+                                                                `
                                                                 mutation UpdateProductPartnerStatus($id: ID!, $isPartner: Boolean!) {
                                                                     updateProductPartnerStatus(id: $id, isPartner: $isPartner) { id isPartner }
                                                                 }
-                                                            `, { id: product.id, isPartner: !product.isPartner });
+                                                            `,
+                                                                { id: product.id, isPartner: !product.isPartner },
+                                                            );
                                                             fetchProducts();
                                                         } catch (error) {
                                                             console.error(error);
-                                                            alert('상태 변경에 실패했습니다.');
+                                                            showAlert("상태 변경에 실패했습니다.", { title: "오류" });
                                                         }
                                                     }}
                                                 >
-                                                    {product.isPartner ? t('btn_partner_off') : t('btn_partner_on')}
+                                                    {product.isPartner ? t("btn_partner_off") : t("btn_partner_on")}
                                                 </button>
                                                 <button
                                                     className="text-blue-600 hover:text-blue-800 font-medium text-sm"
@@ -189,13 +213,13 @@ export function ProductsPage() {
                                                         setIsEditModalOpen(true);
                                                     }}
                                                 >
-                                                    {t('btn_edit')}
+                                                    {t("btn_edit")}
                                                 </button>
                                                 <button
                                                     className="text-red-600 hover:text-red-800 font-medium text-sm"
-                                                    onClick={() => handleDelete(product.id, product.name)}
+                                                    onClick={() => handleDeleteClick(product.id, product.name)}
                                                 >
-                                                    {t('btn_delete')}
+                                                    {t("btn_delete")}
                                                 </button>
                                             </div>
                                         </td>
@@ -212,7 +236,7 @@ export function ProductsPage() {
                 onClose={() => setIsModalOpen(false)}
                 onSuccess={() => {
                     fetchProducts();
-                    alert('상품이 추가되었습니다.');
+                    showAlert("상품이 추가되었습니다.", { title: "성공" });
                 }}
             />
 
@@ -227,6 +251,16 @@ export function ProductsPage() {
                 }}
                 product={selectedProduct}
             />
+
+            <ConfirmModal
+                isOpen={deleteConfirm.isOpen}
+                onClose={() => setDeleteConfirm((prev) => ({ ...prev, isOpen: false }))}
+                onConfirm={handleConfirmDelete}
+                title="상품 삭제"
+                message={`'${deleteConfirm.name}' 상품을 삭제하시겠습니까?`}
+                isDestructive={true}
+                confirmLabel="삭제"
+            />
         </div>
-    )
+    );
 }

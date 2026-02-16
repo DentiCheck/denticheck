@@ -1,5 +1,6 @@
 package com.denticheck.api.graphql.resolver;
 
+import com.denticheck.api.common.util.UserRoleOnly;
 import com.denticheck.api.domain.chatbot.dto.ChatAppRequest;
 import com.denticheck.api.domain.chatbot.dto.ChatAppResponse;
 import com.denticheck.api.domain.chatbot.dto.ChatSessionResponse;
@@ -22,6 +23,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Controller
+@UserRoleOnly
 @RequiredArgsConstructor
 public class ChatResolver {
 

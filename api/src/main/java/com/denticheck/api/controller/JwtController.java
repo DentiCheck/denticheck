@@ -12,6 +12,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,9 +37,9 @@ public class JwtController {
 
     // 로그아웃 (Refresh 토큰 삭제)
     @PostMapping(value = "/jwt/logout", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public org.springframework.http.ResponseEntity<Void> logout(
+    public ResponseEntity<Void> logout(
             @Validated @RequestBody LogoutRequestDTO dto) {
         jwtServiceImpl.removeRefresh(dto.refreshToken());
-        return org.springframework.http.ResponseEntity.ok().build();
+        return ResponseEntity.ok().build();
     }
 }
