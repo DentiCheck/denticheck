@@ -1,109 +1,99 @@
-
-# ----------------------------
-# General
-# ----------------------------
-
-.vscode/
-.idea/
-.DS_Store
-*.swp
-*.swo
-*.log
-tmp/
-.agent/
-
-# ----------------------------
-# API (Java/Spring Boot)
-# ----------------------------
-
-api/.gradle/
-api/build/
-api/out/
-api/bin/
-api/target/
-api/.env
-# api 폴더에서 실행 시
-api/reports/*.pdf
-# root 폴더에서 실행 시
-reports/*.pdf
-
-# ----------------------------
-# App (React Native/Expo)
-# ----------------------------
-
-# Node / JS (app)
-app/node_modules/
-app/npm-debug.log*
-app/yarn-debug.log*
-app/yarn-error.log*
-app/pnpm-debug.log*
-app/.eslintcache
-# ----------------------------
-# General
-# ----------------------------
-
-.vscode/
-.idea/
-.DS_Store
-*.swp
-*.swo
-*.log
-tmp/
-
-# ----------------------------
-# API (Java/Spring Boot)
-# ----------------------------
-
-api/.gradle/
-api/build/
-api/out/
-api/bin/
-api/target/
-api/.env
-
-# ----------------------------
-# App (React Native/Expo)
-# ----------------------------
-
-# Node / JS (app)
-app/node_modules/
-app/npm-debug.log*
-app/yarn-debug.log*
-app/yarn-error.log*
-app/pnpm-debug.log*
-app/.eslintcache
-PS C:\dev\DentiCheck> git show feature/api-service:.gitignore
 # ---------------------------------------------------------
-# General / OS / IDE
+# General / OS / IDE / Logs
 # ---------------------------------------------------------
-.vscode/
-.idea/
 .DS_Store
-.history/
-.swp
-.swo
-.log
-.Trash-*
-.nfs*
-.fuse_hidden*
-*.suo
-*.sln
-*.iml
-*.iws
-*.ipr
-tmp/
 Thumbs.db
 [Dd]esktop.ini
-env/
-venv/
-.venv/
-ENV/
-*.bak
+.vscode/
+.idea/
+.agent/
+*.swp
+*.swo
+*.log
 *.tmp
+*.bak
+tmp/
+.history/
 
 # ---------------------------------------------------------
-# API (Java/Spring Boot)
+# Environment Variables
+# ---------------------------------------------------------
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# ---------------------------------------------------------
+# API (Java / Spring Boot / Gradle)
 # ---------------------------------------------------------
 api/.gradle/
 api/build/
 api/out/
+api/bin/
+api/target/
+api/*.log
+# Gradle Wrapper (Optional: Uncomment if not intended to be version controlled)
+# api/gradle/wrapper/gradle-wrapper.jar
+
+# ---------------------------------------------------------
+# Console (Web Frontend - React / Vite)
+# ---------------------------------------------------------
+console/node_modules/
+console/dist/
+console/build/
+console/coverage/
+console/.custom-dist-dir/
+console/.eslintcache
+console/npm-debug.log*
+console/yarn-debug.log*
+console/yarn-error.log*
+console/pnpm-debug.log*
+
+# ---------------------------------------------------------
+# AI (Python)
+# ---------------------------------------------------------
+ai/__pycache__/
+ai/*.py[cod]
+ai/*$py.class
+ai/env/
+ai/venv/
+ai/.venv/
+ai/.pytest_cache/
+ai/.coverage
+ai/htmlcov/
+ai/models/
+# Local configuration or specific outputs if needed
+ai/local_settings.py
+ai/db.sqlite3
+ai/docker/
+# Logs
+ai/ai_service.log
+ai/ai_service_start.log
+ai/startup_debug.log
+
+# ---------------------------------------------------------
+# App (React Native / Expo)
+# ---------------------------------------------------------
+app/node_modules/
+app/.expo/
+app/dist/
+app/web-build/
+
+# React Native
+app/android/app/debug.keystore
+app/android/app/build/
+app/android/.gradle/
+app/android/local.properties
+app/ios/Pods/
+app/ios/build/
+app/ios/*.xcworkspace
+app/ios/*.xcodeproj/project.xcworkspace
+app/ios/*.xcodeproj/xcuserdata
+
+# React Native Logs
+app/npm-debug.log*
+app/yarn-debug.log*
+app/yarn-error.log*
+app/pnpm-debug.log*

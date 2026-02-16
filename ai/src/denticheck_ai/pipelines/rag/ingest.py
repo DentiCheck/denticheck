@@ -27,7 +27,7 @@ import json
 import os
 from dotenv import load_dotenv
 from langchain_milvus import Milvus
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
 
 # 환경 변수 로드
@@ -41,13 +41,6 @@ JSON 형식의 치과 의학 지식을 벡터 데이터베이스(Milvus)에 적�
 [실행 방법]
 python -m src.denticheck_ai.pipelines.rag.ingest
 """
-
-import json
-import os
-from langchain_core.documents import Document
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_milvus import Milvus
-
 def ingest_data():
     """
     JSON 지식 베이스 데이터를 읽어 임베딩 과정을 거친 후 Milvus DB에 적재합니다.
@@ -85,7 +78,7 @@ def ingest_data():
     print("로컬 임베딩 모델 로드 중 (최초 실행 시 다운로드 진행)...")
     embeddings = HuggingFaceEmbeddings(
         model_name="jhgan/ko-sroberta-multitask",
-        model_kwargs={'device': 'cuda'}, # GPU 활용을 위해 'cuda'로 변경됨
+        model_kwargs={'device': 'cpu'}, # GPU 활용을 위해 'cuda'로 변경됨
         encode_kwargs={'normalize_embeddings': True}
     )
 

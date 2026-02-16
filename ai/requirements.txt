@@ -12,6 +12,7 @@ langchain
 langchain-ollama
 langchain-milvus
 langchain-community
+langchain-huggingface
 sentence-transformers
 pymilvus
 python-dotenv

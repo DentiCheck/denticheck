@@ -18,7 +18,7 @@ import os
 from typing import List
 from dotenv import load_dotenv
 from langchain_milvus import Milvus
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 
 # 환경 변수 로드
 load_dotenv()
@@ -35,7 +35,7 @@ class MilvusRetriever:
         # 1. 임베딩 모델 설정 (Ingest 단계와 반드시 동일한 모델 사용)
         self.embeddings = HuggingFaceEmbeddings(
             model_name="jhgan/ko-sroberta-multitask",
-            model_kwargs={'device': 'cuda'}, # GPU 활용을 위해 'cuda'로 변경됨
+            model_kwargs={'device': 'cpu'}, # GPU 활용을 위해 'cuda'로 변경됨
             encode_kwargs={'normalize_embeddings': True}
         )
         
