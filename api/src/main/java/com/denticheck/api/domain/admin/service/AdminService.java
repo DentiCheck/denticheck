@@ -14,6 +14,9 @@ import com.denticheck.api.domain.admin.dto.AdminDailyUsageDTO;
 import com.denticheck.api.domain.admin.dto.AdminWeeklyUsageDTO;
 import com.denticheck.api.domain.admin.dto.AdminProductDTO;
 import com.denticheck.api.domain.admin.dto.AdminInsuranceDTO;
+import com.denticheck.api.domain.admin.dto.DentalInputDTO;
+import com.denticheck.api.domain.admin.dto.ProductInputDTO;
+import com.denticheck.api.domain.admin.dto.InsuranceInputDTO;
 
 import java.util.List;
 
@@ -45,28 +48,28 @@ public interface AdminService {
     List<AdminInsuranceDTO> getAllInsuranceProducts(String category, String keyword);
 
     // Create Methods
-    AdminDentistDTO createHospital(com.denticheck.api.domain.admin.dto.HospitalInputDTO input);
+    AdminDentistDTO createDental(DentalInputDTO input);
 
     AdminProductDTO createProduct(com.denticheck.api.domain.admin.dto.ProductInputDTO input);
 
     AdminInsuranceDTO createInsurance(com.denticheck.api.domain.admin.dto.InsuranceInputDTO input);
 
     // Update Methods
-    AdminDentistDTO updateHospital(String id, com.denticheck.api.domain.admin.dto.HospitalInputDTO input);
+    AdminDentistDTO updateDental(String id, DentalInputDTO input);
 
     AdminProductDTO updateProduct(String id, com.denticheck.api.domain.admin.dto.ProductInputDTO input);
 
     AdminInsuranceDTO updateInsurance(String id, com.denticheck.api.domain.admin.dto.InsuranceInputDTO input);
 
     // Delete Methods
-    boolean deleteHospital(String id);
+    boolean deleteDental(String id);
 
     boolean deleteProduct(String id);
 
     boolean deleteInsurance(String id);
 
     // Partnership Status Management
-    AdminDentistDTO updateHospitalPartnerStatus(String id, boolean isPartner);
+    AdminDentistDTO updateDentalPartnerStatus(String id, boolean isPartner);
 
     AdminProductDTO updateProductPartnerStatus(String id, boolean isPartner);
 

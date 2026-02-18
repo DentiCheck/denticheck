@@ -27,8 +27,8 @@ const GET_DENTISTS_QUERY = `
 `;
 
 const DELETE_DENTIST_MUTATION = `
-    mutation DeleteHospital($id: ID!) {
-        deleteHospital(id: $id)
+    mutation DeleteDental($id: ID!) {
+        deleteDental(id: $id)
     }
 `;
 
@@ -158,11 +158,10 @@ export function DentistsPage() {
                                         <td className="px-6 py-4 text-slate-600 text-center">{dentist.phone}</td>
                                         <td className="px-6 py-4 text-center">
                                             <span
-                                                className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                                                    dentist.isPartner
+                                                className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${dentist.isPartner
                                                         ? "bg-blue-50 text-blue-600 border-blue-200"
                                                         : "bg-slate-50 text-slate-400 border-slate-200"
-                                                }`}
+                                                    }`}
                                             >
                                                 {dentist.isPartner ? t("status_partnered") : t("status_unpartnered")}
                                             </span>
@@ -175,8 +174,8 @@ export function DentistsPage() {
                                                         try {
                                                             await graphqlRequest(
                                                                 `
-                                                                mutation UpdateHospitalPartnerStatus($id: ID!, $isPartner: Boolean!) {
-                                                                    updateHospitalPartnerStatus(id: $id, isPartner: $isPartner) { id isPartner }
+                                                                mutation UpdateDentalPartnerStatus($id: ID!, $isPartner: Boolean!) {
+                                                                    updateDentalPartnerStatus(id: $id, isPartner: $isPartner) { id isPartner }
                                                                 }
                                                             `,
                                                                 { id: dentist.id, isPartner: !dentist.isPartner },

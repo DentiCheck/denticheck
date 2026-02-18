@@ -11,8 +11,8 @@ interface AddDentistModalProps {
 }
 
 const CREATE_DENTIST_MUTATION = `
-    mutation CreateHospital($input: HospitalInput!) {
-        createHospital(input: $input) {
+    mutation CreateDental($input: DentalInput!) {
+        createDental(input: $input) {
             id
             name
         }

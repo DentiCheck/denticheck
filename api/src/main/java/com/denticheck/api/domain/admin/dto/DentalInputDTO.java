@@ -13,7 +13,7 @@ import lombok.AllArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class HospitalInputDTO {
+public class DentalInputDTO {
     private String name;
     private String address;
     private String phone;

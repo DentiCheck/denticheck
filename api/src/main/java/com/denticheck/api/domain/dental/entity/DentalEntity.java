@@ -10,6 +10,7 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
@@ -58,6 +59,12 @@ public class DentalEntity {
 
     @Column(name = "business_status", length = 30)
     private String businessStatus;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "homepage_url", length = 500)
+    private String homepageUrl;
 
     @Column(name = "rating_avg", nullable = false, precision = 3, scale = 2)
     @Builder.Default

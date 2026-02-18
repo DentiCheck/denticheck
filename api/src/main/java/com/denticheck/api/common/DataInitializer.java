@@ -1,17 +1,11 @@
-/**
- * Backend File: Data Initializer
- * Path: api/src/main/java/com/denticheck/api/common/DataInitializer.java
- * Description: [관리자 기능] 개발 환경 초기 데이터 시딩
- * - 관리자 계정, 테스트 유저, 제휴 병원/상품/보험 더미 데이터 생성
- */
 package com.denticheck.api.common;
 
 import com.denticheck.api.domain.admin.entity.PartnerProduct;
 import com.denticheck.api.domain.admin.entity.InsuranceProduct;
 import com.denticheck.api.domain.admin.repository.PartnerProductRepository;
 import com.denticheck.api.domain.admin.repository.InsuranceProductRepository;
-import com.denticheck.api.domain.hospital.entity.HospitalEntity;
-import com.denticheck.api.domain.hospital.repository.HospitalRepository;
+import com.denticheck.api.domain.dental.entity.DentalEntity;
+import com.denticheck.api.domain.dental.repository.DentalRepository;
 import com.denticheck.api.domain.user.entity.RoleEntity;
 import com.denticheck.api.domain.user.entity.SocialProviderType;
 import com.denticheck.api.domain.user.entity.UserEntity;
@@ -23,7 +17,9 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -31,7 +27,7 @@ public class DataInitializer implements CommandLineRunner {
 
         private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DataInitializer.class);
 
-        private final HospitalRepository hospitalRepository;
+        private final DentalRepository dentalRepository;
         private final PartnerProductRepository partnerProductRepository;
         private final InsuranceProductRepository insuranceProductRepository;
         private final UserRepository userRepository;
@@ -40,21 +36,41 @@ public class DataInitializer implements CommandLineRunner {
         @Override
         @Transactional
         public void run(String... args) throws Exception {
-                if (hospitalRepository.count() == 0) {
-                        log.info("Initializing Hospital Data...");
-                        hospitalRepository.saveAll(Arrays.asList(
-                                        HospitalEntity.builder().name("서울중앙치과의원").address("서울특별시 중구 세종대로 110")
+                if (dentalRepository.count() == 0) {
+                        log.info("Initializing Dental Data...");
+                        dentalRepository.saveAll(Arrays.asList(
+                                        DentalEntity.builder()
+                                                        .id(UUID.randomUUID())
+                                                        .source("SEED").sourceKey("SEED_1")
+                                                        .name("서울중앙치과의원").address("서울특별시 중구 세종대로 110")
                                                         .phone("02-123-4567")
-                                                        .latitude(37.5665).longitude(126.9780).build(),
-                                        HospitalEntity.builder().name("강남바른치과").address("서울특별시 강남구 테헤란로 123")
+                                                        .lat(BigDecimal.valueOf(37.5665))
+                                                        .lng(BigDecimal.valueOf(126.9780))
+                                                        .isAffiliate(true).build(),
+                                        DentalEntity.builder()
+                                                        .id(UUID.randomUUID())
+                                                        .source("SEED").sourceKey("SEED_2")
+                                                        .name("강남바른치과").address("서울특별시 강남구 테헤란로 123")
                                                         .phone("02-555-7777")
-                                                        .latitude(37.5665).longitude(126.9780).build(),
-                                        HospitalEntity.builder().name("부산해운대치과").address("부산광역시 해운대구 우동 456")
+                                                        .lat(BigDecimal.valueOf(37.5665))
+                                                        .lng(BigDecimal.valueOf(126.9780))
+                                                        .isAffiliate(true).build(),
+                                        DentalEntity.builder()
+                                                        .id(UUID.randomUUID())
+                                                        .source("SEED").sourceKey("SEED_3")
+                                                        .name("부산해운대치과").address("부산광역시 해운대구 우동 456")
                                                         .phone("051-789-0000")
-                                                        .latitude(35.1587).longitude(129.1604).build(),
-                                        HospitalEntity.builder().name("대구시티치과").address("대구광역시 중구 공평로 789")
+                                                        .lat(BigDecimal.valueOf(35.1587))
+                                                        .lng(BigDecimal.valueOf(129.1604))
+                                                        .isAffiliate(true).build(),
+                                        DentalEntity.builder()
+                                                        .id(UUID.randomUUID())
+                                                        .source("SEED").sourceKey("SEED_4")
+                                                        .name("대구시티치과").address("대구광역시 중구 공평로 789")
                                                         .phone("053-111-2222")
-                                                        .latitude(35.8714).longitude(128.6014).build()));
+                                                        .lat(BigDecimal.valueOf(35.8714))
+                                                        .lng(BigDecimal.valueOf(128.6014))
+                                                        .isAffiliate(true).build()));
                 }
 
                 if (partnerProductRepository.count() == 0) {

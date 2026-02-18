@@ -3,7 +3,7 @@ package com.denticheck.api.domain.admin.scheduler;
 import com.denticheck.api.domain.admin.entity.AdminDailyStats;
 import com.denticheck.api.domain.admin.repository.AdminDailyStatsRepository;
 import com.denticheck.api.domain.admin.repository.AdminInquiryRepository;
-import com.denticheck.api.domain.hospital.repository.HospitalRepository;
+import com.denticheck.api.domain.dental.repository.DentalRepository;
 import com.denticheck.api.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ public class AdminStatsScheduler {
 
     private final AdminDailyStatsRepository statsRepository;
     private final UserRepository userRepository;
-    private final HospitalRepository hospitalRepository;
+    private final DentalRepository dentalRepository;
     private final AdminInquiryRepository inquiryRepository;
     private final com.denticheck.api.domain.chatbot.repository.ChatSessionRepository chatSessionRepository;
 
@@ -40,7 +40,7 @@ public class AdminStatsScheduler {
 
         // 1. 핵심 지표 계산
         int totalUsers = (int) userRepository.count();
-        int totalDentists = (int) hospitalRepository.count();
+        int totalDentists = (int) dentalRepository.count();
 
         // 실제 데이터 집계
         int newInquiries = (int) inquiryRepository.countByCreatedAtAfter(startOfYesterday);

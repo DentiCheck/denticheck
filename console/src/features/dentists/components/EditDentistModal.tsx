@@ -20,8 +20,8 @@ interface EditDentistModalProps {
 }
 
 const UPDATE_DENTIST_MUTATION = `
-    mutation UpdateHospital($id: ID!, $input: HospitalInput!) {
-        updateHospital(id: $id, input: $input) {
+    mutation UpdateDental($id: ID!, $input: DentalInput!) {
+        updateDental(id: $id, input: $input) {
             id
             name
         }

@@ -17,7 +17,7 @@ import com.denticheck.api.domain.admin.dto.AdminProductDTO;
 import com.denticheck.api.domain.admin.dto.AdminInsuranceDTO;
 import com.denticheck.api.domain.admin.service.AdminService;
 
-import com.denticheck.api.domain.admin.dto.HospitalInputDTO;
+import com.denticheck.api.domain.admin.dto.DentalInputDTO;
 import com.denticheck.api.domain.admin.dto.ProductInputDTO;
 import com.denticheck.api.domain.admin.dto.InsuranceInputDTO;
 
@@ -103,9 +103,8 @@ public class AdminResolver {
     }
 
     @MutationMapping
-    public AdminDentistDTO createHospital(
-            @Argument("input") HospitalInputDTO input) {
-        return adminService.createHospital(input);
+    public AdminDentistDTO createDental(@Argument DentalInputDTO input) {
+        return adminService.createDental(input);
     }
 
     @MutationMapping
@@ -121,10 +120,10 @@ public class AdminResolver {
     }
 
     @MutationMapping
-    public AdminDentistDTO updateHospital(
+    public AdminDentistDTO updateDental(
             @Argument("id") String id,
-            @Argument("input") HospitalInputDTO input) {
-        return adminService.updateHospital(id, input);
+            @Argument("input") DentalInputDTO input) {
+        return adminService.updateDental(id, input);
     }
 
     @MutationMapping
@@ -142,8 +141,8 @@ public class AdminResolver {
     }
 
     @MutationMapping
-    public boolean deleteHospital(@Argument("id") String id) {
-        return adminService.deleteHospital(id);
+    public boolean deleteDental(@Argument String id) {
+        return adminService.deleteDental(id);
     }
 
     @MutationMapping
@@ -158,10 +157,8 @@ public class AdminResolver {
 
     // 4. 제휴 상태 관리
     @MutationMapping
-    public AdminDentistDTO updateHospitalPartnerStatus(
-            @Argument("id") String id,
-            @Argument("isPartner") boolean isPartner) {
-        return adminService.updateHospitalPartnerStatus(id, isPartner);
+    public AdminDentistDTO updateDentalPartnerStatus(@Argument String id, @Argument boolean isPartner) {
+        return adminService.updateDentalPartnerStatus(id, isPartner);
     }
 
     @MutationMapping

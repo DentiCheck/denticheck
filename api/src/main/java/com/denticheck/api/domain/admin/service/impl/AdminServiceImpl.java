@@ -5,7 +5,17 @@
 package com.denticheck.api.domain.admin.service.impl;
 
 import java.math.BigDecimal;
-import com.denticheck.api.domain.admin.dto.*;
+import com.denticheck.api.domain.admin.dto.AdminDashboardStatsDTO;
+import com.denticheck.api.domain.admin.dto.AdminDailyUsageDTO;
+import com.denticheck.api.domain.admin.dto.AdminDentistDTO;
+import com.denticheck.api.domain.admin.dto.AdminInquiryDTO;
+import com.denticheck.api.domain.admin.dto.AdminProductDTO;
+import com.denticheck.api.domain.admin.dto.AdminUserDTO;
+import com.denticheck.api.domain.admin.dto.AdminWeeklyUsageDTO;
+import com.denticheck.api.domain.admin.dto.DentalInputDTO;
+import com.denticheck.api.domain.admin.dto.AdminInsuranceDTO;
+import com.denticheck.api.domain.admin.dto.ProductInputDTO;
+import com.denticheck.api.domain.admin.dto.InsuranceInputDTO;
 import com.denticheck.api.domain.admin.entity.AdminDailyStats;
 import com.denticheck.api.domain.admin.entity.AdminInquiry;
 import com.denticheck.api.domain.admin.entity.InsuranceProduct;
@@ -15,16 +25,16 @@ import com.denticheck.api.domain.admin.repository.AdminInquiryRepository;
 import com.denticheck.api.domain.admin.repository.InsuranceProductRepository;
 import com.denticheck.api.domain.admin.repository.PartnerProductRepository;
 import com.denticheck.api.domain.admin.service.AdminService;
-import com.denticheck.api.domain.hospital.entity.HospitalEntity;
-import com.denticheck.api.domain.hospital.repository.HospitalRepository;
+import com.denticheck.api.domain.dental.entity.DentalEntity;
+import com.denticheck.api.domain.dental.repository.DentalRepository;
 import com.denticheck.api.domain.user.entity.UserEntity;
 import com.denticheck.api.domain.user.entity.UserStatusType;
 import com.denticheck.api.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import com.denticheck.api.common.exception.user.UserException;
 import com.denticheck.api.common.exception.user.UserErrorCode;
-import com.denticheck.api.common.exception.hospital.HospitalException;
-import com.denticheck.api.common.exception.hospital.HospitalErrorCode;
+import com.denticheck.api.common.exception.dental.DentalException;
+import com.denticheck.api.common.exception.dental.DentalErrorCode;
 import com.denticheck.api.common.exception.admin.AdminException;
 import com.denticheck.api.common.exception.admin.AdminErrorCode;
 import com.denticheck.api.infrastructure.external.KakaoMapService;
@@ -44,7 +54,7 @@ public class AdminServiceImpl implements AdminService {
 
         private final AdminDailyStatsRepository statsRepository;
         private final UserRepository userRepository;
-        private final HospitalRepository hospitalRepository;
+        private final DentalRepository dentalRepository;
         private final PartnerProductRepository partnerProductRepository;
         private final InsuranceProductRepository insuranceProductRepository;
         private final AdminInquiryRepository inquiryRepository;
@@ -178,28 +188,32 @@ public class AdminServiceImpl implements AdminService {
         @Override
         public List<AdminDentistDTO> getAllDentists(String keyword, String filter) {
                 log.info("Fetching dentists with keyword: {}, filter: {}", keyword, filter);
-                List<HospitalEntity> hospitals;
+                List<DentalEntity> dentals;
                 if (keyword == null || keyword.isEmpty()) {
-                        hospitals = hospitalRepository.findAll();
+                        dentals = dentalRepository.findAll();
                 } else if ("address".equalsIgnoreCase(filter)) {
-                        hospitals = hospitalRepository.findByAddressContaining(keyword);
+                        dentals = dentalRepository.findByAddressContaining(keyword);
                 } else if ("name".equalsIgnoreCase(filter)) {
-                        hospitals = hospitalRepository.findByNameContaining(keyword);
+                        dentals = dentalRepository.findByNameContaining(keyword);
                 } else {
-                        hospitals = hospitalRepository.findByNameContainingOrAddressContaining(keyword, keyword);
+                        dentals = dentalRepository.findByNameContainingOrAddressContaining(keyword, keyword);
                 }
-                hospitals.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
-                final List<HospitalEntity> finalHospitals = hospitals;
-                return IntStream.range(0, finalHospitals.size())
+                dentals.sort((a, b) -> {
+                        if (a.getCreatedAt() == null || b.getCreatedAt() == null)
+                                return 0;
+                        return b.getCreatedAt().compareTo(a.getCreatedAt());
+                });
+                final List<DentalEntity> finalDentals = dentals;
+                return IntStream.range(0, finalDentals.size())
                                 .mapToObj(i -> {
-                                        HospitalEntity h = finalHospitals.get(i);
+                                        DentalEntity d = finalDentals.get(i);
                                         return AdminDentistDTO.builder()
-                                                        .id(h.getId().toString())
+                                                        .id(d.getId().toString())
                                                         .displayId(i + 1)
-                                                        .name(h.getName())
-                                                        .address(h.getAddress())
-                                                        .phone(h.getPhone())
-                                                        .isPartner(h.isPartner())
+                                                        .name(d.getName())
+                                                        .address(d.getAddress())
+                                                        .phone(d.getPhone())
+                                                        .isPartner(d.getIsAffiliate())
                                                         .build();
                                 })
                                 .collect(Collectors.toList());
@@ -296,24 +310,28 @@ public class AdminServiceImpl implements AdminService {
 
         @Override
         @Transactional
-        public AdminDentistDTO createHospital(HospitalInputDTO input) {
-                HospitalEntity hospital = HospitalEntity.builder()
+        public AdminDentistDTO createDental(DentalInputDTO input) {
+                DentalEntity dental = DentalEntity.builder()
+                                .id(java.util.UUID.randomUUID())
                                 .name(input.getName())
                                 .address(input.getAddress())
                                 .phone(input.getPhone())
                                 .description(input.getDescription())
-                                .latitude(input.getLatitude())
-                                .longitude(input.getLongitude())
+                                .lat(input.getLatitude() != null ? BigDecimal.valueOf(input.getLatitude()) : null)
+                                .lng(input.getLongitude() != null ? BigDecimal.valueOf(input.getLongitude()) : null)
                                 .homepageUrl(input.getHomepageUrl())
+                                .source("MANUAL")
+                                .sourceKey("MANUAL_" + java.util.UUID.randomUUID().toString())
+                                .isAffiliate(true)
                                 .build();
-                HospitalEntity saved = hospitalRepository.save(hospital);
+                DentalEntity saved = dentalRepository.save(dental);
                 return AdminDentistDTO.builder()
                                 .id(saved.getId().toString())
                                 .displayId(0)
                                 .name(saved.getName())
                                 .address(saved.getAddress())
                                 .phone(saved.getPhone())
-                                .isPartner(saved.isPartner())
+                                .isPartner(saved.getIsAffiliate())
                                 .build();
         }
 
@@ -365,45 +383,45 @@ public class AdminServiceImpl implements AdminService {
 
         @Override
         @Transactional
-        public AdminDentistDTO updateHospital(String id, HospitalInputDTO input) {
-                HospitalEntity hospital = hospitalRepository.findById(java.util.UUID.fromString(id))
-                                .orElseThrow(() -> new HospitalException(HospitalErrorCode.HOSPITAL_NOT_FOUND));
+        public AdminDentistDTO updateDental(String id, DentalInputDTO input) {
+                DentalEntity dental = dentalRepository.findById(java.util.UUID.fromString(id))
+                                .orElseThrow(() -> new DentalException(DentalErrorCode.DENTAL_NOT_FOUND));
 
-                // Null-safe update: input이 null이면 기존 값 유지
-                String name = input.getName() != null ? input.getName() : hospital.getName();
-                String address = input.getAddress() != null ? input.getAddress() : hospital.getAddress();
-                String phone = input.getPhone() != null ? input.getPhone() : hospital.getPhone();
-                String description = input.getDescription() != null ? input.getDescription()
-                                : hospital.getDescription();
-                Double latitude = input.getLatitude() != null ? input.getLatitude() : hospital.getLatitude();
-                Double longitude = input.getLongitude() != null ? input.getLongitude() : hospital.getLongitude();
-
-                // Auto Geocoding if address changed
-                if (input.getAddress() != null && !input.getAddress().equals(hospital.getAddress())) {
+                // Null-safe update
+                if (input.getName() != null)
+                        dental.setName(input.getName());
+                if (input.getAddress() != null) {
+                        dental.setAddress(input.getAddress());
+                        // Auto Geocoding
                         try {
-                                Double[] coords = kakaoMapService.getCoordinates(address);
+                                Double[] coords = kakaoMapService.getCoordinates(input.getAddress());
                                 if (coords != null) {
-                                        latitude = coords[0];
-                                        longitude = coords[1];
+                                        dental.setLat(BigDecimal.valueOf(coords[0]));
+                                        dental.setLng(BigDecimal.valueOf(coords[1]));
                                 }
                         } catch (Exception e) {
-                                log.error("Geocoding failed for address: {}", address, e);
+                                log.error("Geocoding failed for address: {}", input.getAddress(), e);
                         }
                 }
+                if (input.getPhone() != null)
+                        dental.setPhone(input.getPhone());
+                if (input.getDescription() != null)
+                        dental.setDescription(input.getDescription());
+                if (input.getLatitude() != null)
+                        dental.setLat(BigDecimal.valueOf(input.getLatitude()));
+                if (input.getLongitude() != null)
+                        dental.setLng(BigDecimal.valueOf(input.getLongitude()));
+                if (input.getHomepageUrl() != null)
+                        dental.setHomepageUrl(input.getHomepageUrl());
 
-                String homepageUrl = input.getHomepageUrl() != null ? input.getHomepageUrl()
-                                : hospital.getHomepageUrl();
-
-                hospital.update(name, address, phone, description, latitude, longitude, homepageUrl);
-
-                hospitalRepository.saveAndFlush(hospital);
+                dentalRepository.saveAndFlush(dental);
                 return AdminDentistDTO.builder()
-                                .id(hospital.getId().toString())
+                                .id(dental.getId().toString())
                                 .displayId(0)
-                                .name(hospital.getName())
-                                .address(hospital.getAddress())
-                                .phone(hospital.getPhone())
-                                .isPartner(hospital.isPartner())
+                                .name(dental.getName())
+                                .address(dental.getAddress())
+                                .phone(dental.getPhone())
+                                .isPartner(dental.getIsAffiliate())
                                 .build();
         }
 
@@ -468,17 +486,17 @@ public class AdminServiceImpl implements AdminService {
 
         @Override
         @Transactional
-        public AdminDentistDTO updateHospitalPartnerStatus(String id, boolean isPartner) {
-                HospitalEntity hospital = hospitalRepository.findById(java.util.UUID.fromString(id))
-                                .orElseThrow(() -> new HospitalException(HospitalErrorCode.HOSPITAL_NOT_FOUND));
-                hospital.updatePartnerStatus(isPartner);
-                hospitalRepository.saveAndFlush(hospital);
+        public AdminDentistDTO updateDentalPartnerStatus(String id, boolean isPartner) {
+                DentalEntity dental = dentalRepository.findById(java.util.UUID.fromString(id))
+                                .orElseThrow(() -> new DentalException(DentalErrorCode.DENTAL_NOT_FOUND));
+                dental.setIsAffiliate(isPartner);
+                dentalRepository.saveAndFlush(dental);
                 return AdminDentistDTO.builder()
-                                .id(hospital.getId().toString())
-                                .name(hospital.getName())
-                                .address(hospital.getAddress())
-                                .phone(hospital.getPhone())
-                                .isPartner(hospital.isPartner())
+                                .id(dental.getId().toString())
+                                .name(dental.getName())
+                                .address(dental.getAddress())
+                                .phone(dental.getPhone())
+                                .isPartner(dental.getIsAffiliate())
                                 .build();
         }
 
@@ -519,12 +537,12 @@ public class AdminServiceImpl implements AdminService {
 
         @Override
         @Transactional
-        public boolean deleteHospital(String id) {
+        public boolean deleteDental(String id) {
                 try {
-                        hospitalRepository.deleteById(java.util.UUID.fromString(id));
+                        dentalRepository.deleteById(java.util.UUID.fromString(id));
                         return true;
                 } catch (Exception e) {
-                        log.error("Error deleting hospital: {}", e.getMessage());
+                        log.error("Error deleting dental: {}", e.getMessage());
                         return false;
                 }
         }

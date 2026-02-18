@@ -21,10 +21,10 @@ extend type Mutation {
     # 회원 상태 변경 (SUSPENDED 등)
     updateUserStatus(userId: ID!, status: String!): AdminUser!
 
-    # 제휴 병원 관리
-    createHospital(input: HospitalInput!): AdminDentist!
-    updateHospital(id: ID!, input: HospitalInput!): AdminDentist!
-    deleteHospital(id: ID!): Boolean!
+    # 제휴 치과 관리
+    createDental(input: DentalInput!): AdminDentist!
+    updateDental(id: ID!, input: DentalInput!): AdminDentist!
+    deleteDental(id: ID!): Boolean!
 
     # 제휴 상품 관리
     createProduct(input: ProductInput!): AdminProduct!
@@ -37,7 +37,7 @@ extend type Mutation {
     deleteInsurance(id: ID!): Boolean!
 
     # 제휴 상태 관리
-    updateHospitalPartnerStatus(id: ID!, isPartner: Boolean!): AdminDentist!
+    updateDentalPartnerStatus(id: ID!, isPartner: Boolean!): AdminDentist!
     updateProductPartnerStatus(id: ID!, isPartner: Boolean!): AdminProduct!
     updateInsurancePartnerStatus(id: ID!, isPartner: Boolean!): AdminInsurance!
 }
@@ -114,7 +114,7 @@ type AdminInquiry {
     status: String!
 }
 
-input HospitalInput {
+input DentalInput {
     name: String!
     address: String
     phone: String
