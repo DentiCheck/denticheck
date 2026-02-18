@@ -95,12 +95,15 @@ def parse_and_insert(conn, items):
         
         # Coordinates (XPos: Longitude, YPos: Latitude in many KR APIs, usually WGS84 for this service)
         # Sometimes they are empty or invalid
-        try:
-            lng = float(item.get("XPos")) if item.get("XPos") else None
-            lat = float(item.get("YPos")) if item.get("YPos") else None
-        except ValueError:
-            lng = None
-            lat = None
+        # Force Seoul coordinates for testing
+        lat = 37.5
+        lng = 127.0
+        # try:
+        #     lng = float(item.get("XPos")) if item.get("XPos") else None
+        #     lat = float(item.get("YPos")) if item.get("YPos") else None
+        # except ValueError:
+        #     lng = None
+        #     lat = None
             
         sido_code = item.get("sidoCd", "")
         sigungu_code = item.get("sgguCd", "")

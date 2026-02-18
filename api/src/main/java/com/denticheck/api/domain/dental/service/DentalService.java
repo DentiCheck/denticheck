@@ -7,7 +7,9 @@ import java.util.List;
 public interface DentalService {
     List<DentalEntity> getAllDentals();
 
-    List<DentalEntity> getNearbyDentals(double latitude, double longitude, double radiusKm);
+    org.springframework.data.domain.Page<DentalEntity> getNearbyDentals(double latitude, double longitude,
+            double radiusKm,
+            org.springframework.data.domain.Pageable pageable);
 
     List<DentalEntity> getMyFavoriteDentals(String username);
 

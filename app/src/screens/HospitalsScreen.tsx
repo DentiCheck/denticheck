@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, Linking, ActivityIndicator } from 'react-native';
 import { useQuery } from '@apollo/client/react';
-import { GET_HOSPITALS } from '../graphql/queries';
+import { SEARCH_HOSPITALS } from '../graphql/queries';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
@@ -28,12 +28,36 @@ type Hospital = {
     isAd?: boolean;
 };
 
+interface HospitalQueryContent {
+    id: string;
+    name: string;
+    address?: string;
+    phone?: string;
+    latitude?: number;
+    longitude?: number;
+}
+
+interface SearchHospitalsData {
+    searchHospitals: {
+        content: HospitalQueryContent[];
+    };
+}
+
+interface SearchHospitalsVars {
+    latitude: number;
+    longitude: number;
+    radius: number;
+    page: number;
+    size: number;
+}
+
 export default function HospitalsScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const route = useRoute();
     const { theme } = useColorTheme();
     const [searchQuery, setSearchQuery] = useState('');
     const [favorites, setFavorites] = useState<string[]>([]);
+    const [page, setPage] = useState(0);
 
     // Get tab param from navigation
     const { tab } = (route.params as { tab?: string }) || {};
@@ -46,9 +70,25 @@ export default function HospitalsScreen() {
         }
     }, [tab]);
 
-    const { data, loading, error } = useQuery<any>(GET_HOSPITALS);
+    // Default location (Seoul Station) for search
+    const defaultLocation = {
+        latitude: 37.5547,
+        longitude: 126.9707,
+    };
 
-    const hospitals: Hospital[] = data?.hospitals?.map((h: any) => ({
+    const { data, loading, error, fetchMore } = useQuery<SearchHospitalsData, SearchHospitalsVars>(SEARCH_HOSPITALS, {
+        variables: {
+            latitude: defaultLocation.latitude,
+            longitude: defaultLocation.longitude,
+            radius: 20.0, // 20km radius
+            page: 0,
+            size: 10,
+        },
+    });
+
+    const hospitalsData = data?.searchHospitals?.content || [];
+
+    const hospitals: Hospital[] = hospitalsData.map((h: any) => ({
         id: h.id,
         name: h.name,
         address: h.address || '주소 정보 없음',
@@ -60,7 +100,7 @@ export default function HospitalsScreen() {
         openTime: '09:00 - 18:00', // Mock
         features: [], // Mock
         isAd: false,
-    })) || [];
+    }));
 
     if (loading) {
         return (

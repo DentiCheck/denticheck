@@ -48,16 +48,16 @@ public class DentalEntity {
     @Column(name = "sigungu_code", length = 20)
     private String sigunguCode;
 
-    @Column(name = "lat")
+    @Column(name = "lat", precision = 10, scale = 7)
     private java.math.BigDecimal lat;
 
-    @Column(name = "lng")
+    @Column(name = "lng", precision = 10, scale = 7)
     private java.math.BigDecimal lng;
 
     @Column(name = "business_status", length = 30)
     private String businessStatus;
 
-    @Column(name = "rating_avg", nullable = false)
+    @Column(name = "rating_avg", nullable = false, precision = 3, scale = 2)
     @Builder.Default
     private java.math.BigDecimal ratingAvg = java.math.BigDecimal.ZERO;
 

@@ -16,6 +16,8 @@ import CommentListScreen from "../screens/CommentListScreen";
 import NotificationSettingsScreen from "../screens/NotificationSettingsScreen";
 import CustomerServiceScreen from "../screens/CustomerServiceScreen";
 import TermsPoliciesScreen from "../screens/TermsPoliciesScreen";
+import ReviewListScreen from "../screens/ReviewListScreen";
+import ReviewWriteScreen from "../screens/ReviewWriteScreen";
 import { useAuth } from "../shared/providers/AuthProvider";
 import { View, ActivityIndicator } from "react-native";
 
@@ -35,6 +37,8 @@ export type RootStackParamList = {
   NotificationSettings: undefined;
   CustomerService: undefined;
   TermsPolicies: undefined;
+  ReviewList: { dentalId: string; hospitalName: string };
+  ReviewWrite: { dentalId: string; hospitalName: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -82,6 +86,8 @@ export function RootNavigator() {
             component={CustomerServiceScreen}
           />
           <Stack.Screen name="TermsPolicies" component={TermsPoliciesScreen} />
+          <Stack.Screen name="ReviewList" component={ReviewListScreen} />
+          <Stack.Screen name="ReviewWrite" component={ReviewWriteScreen} />
         </>
       ) : (
         <>

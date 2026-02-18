@@ -33,8 +33,8 @@ public class DentalReviewEntity {
     @JoinColumn(name = "dental_id", nullable = false)
     private DentalEntity dental;
 
-    @Column(name = "rating", nullable = false)
-    private Integer rating;
+    @Column(name = "rating", nullable = false, columnDefinition = "SMALLINT")
+    private Short rating;
 
     @Column(name = "title", length = 200)
     private String title;

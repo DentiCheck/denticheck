@@ -33,12 +33,39 @@ public class DentalResolver {
     // [Hospital]
 
     @QueryMapping
-    public List<DentalEntity> searchHospitals(@Argument Double latitude, @Argument Double longitude,
-            @Argument Double radius) {
-        if (latitude != null && longitude != null && radius != null) {
-            return dentalService.getNearbyDentals(latitude, longitude, radius);
+    public DentalPage searchHospitals(@Argument Double latitude, @Argument Double longitude,
+            @Argument Double radius, @Argument int page, @Argument int size) {
+
+        if (latitude == null || longitude == null || radius == null) {
+            // Default behavior or error. For now, empty or throw.
+            // But logic says if args provided.
+            // In schema, lat/long are non-null (!), so they will be provided.
         }
-        return dentalService.getAllDentals();
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        org.springframework.data.domain.Page<DentalEntity> dentalPage = dentalService.getNearbyDentals(latitude,
+                longitude, radius, pageable);
+
+        return new DentalPage(dentalPage);
+    }
+
+    @lombok.Data
+    public static class DentalPage {
+        private List<DentalEntity> content;
+        private PageInfo pageInfo;
+
+        public DentalPage(org.springframework.data.domain.Page<DentalEntity> page) {
+            this.content = page.getContent();
+            this.pageInfo = new PageInfo(page.getNumber(), page.getTotalPages(), (int) page.getTotalElements());
+        }
+    }
+
+    @lombok.Data
+    @lombok.AllArgsConstructor
+    public static class PageInfo {
+        private int currentPage;
+        private int totalPages;
+        private int totalElements;
     }
 
     @org.springframework.graphql.data.method.annotation.SchemaMapping(typeName = "Hospital", field = "reviews")

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Linking, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { ChevronLeft, MapPin, Phone, Clock, Star, Heart, Calendar, Share2, Info } from 'lucide-react-native';
 import { useColorTheme } from '../shared/providers/ColorThemeProvider';
@@ -9,7 +10,7 @@ import { Button } from '../shared/components/ui/Button';
 import { Badge } from '../shared/components/ui/Badge';
 
 export default function HospitalDetailScreen() {
-    const navigation = useNavigation();
+    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const route = useRoute<RouteProp<RootStackParamList, 'HospitalDetail'>>();
     const { theme } = useColorTheme();
 
@@ -65,11 +66,14 @@ export default function HospitalDetailScreen() {
                         <View className="flex-row items-start justify-between mb-2">
                             <View>
                                 <Text className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{hospital.name}</Text>
-                                <View className="flex-row items-center gap-2">
+                                <TouchableOpacity
+                                    onPress={() => navigation.navigate('ReviewList', { dentalId: hospital.id, hospitalName: hospital.name })}
+                                    className="flex-row items-center gap-2"
+                                >
                                     <Star size={18} color="#eab308" fill="#eab308" />
                                     <Text className="text-base font-bold text-slate-900 dark:text-white">{hospital.rating}</Text>
-                                    <Text className="text-base text-slate-500">({hospital.reviewCount}개의 후기)</Text>
-                                </View>
+                                    <Text className="text-base text-slate-500 underline">({hospital.reviewCount}개의 후기)</Text>
+                                </TouchableOpacity>
                             </View>
                             {hospital.isOpen && (
                                 <Badge className="bg-green-100 dark:bg-green-900/30">

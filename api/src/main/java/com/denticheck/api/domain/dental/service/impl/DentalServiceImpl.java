@@ -21,6 +21,7 @@ public class DentalServiceImpl implements DentalService {
     private final DentalRepository dentalRepository;
     private final DentalLikeRepository dentalLikeRepository;
     private final UserRepository userRepository;
+    private final com.denticheck.api.domain.user.repository.RoleRepository roleRepository;
     private final com.denticheck.api.domain.dental.repository.DentalVisitRepository dentalVisitRepository;
     private final com.denticheck.api.domain.dental.repository.DentalReviewRepository dentalReviewRepository;
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
@@ -33,8 +34,21 @@ public class DentalServiceImpl implements DentalService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<DentalEntity> getNearbyDentals(double latitude, double longitude, double radiusKm) {
-        return dentalRepository.findNearbyDentals(latitude, longitude, radiusKm);
+    public org.springframework.data.domain.Page<DentalEntity> getNearbyDentals(double latitude, double longitude,
+            double radiusKm, org.springframework.data.domain.Pageable pageable) {
+        // Calculate Bounding Box
+        // 1 degree of latitude is approximately 111.32 km
+        double latChange = radiusKm / 111.32;
+        double minLat = latitude - latChange;
+        double maxLat = latitude + latChange;
+
+        // 1 degree of longitude is approximately 111.32 * cos(latitude) km
+        double lngChange = radiusKm / (111.32 * Math.cos(Math.toRadians(latitude)));
+        double minLng = longitude - lngChange;
+        double maxLng = longitude + lngChange;
+
+        return dentalRepository.findNearbyDentals(latitude, longitude, radiusKm, minLat, maxLat, minLng, maxLng,
+                pageable);
     }
 
     @Override
@@ -59,7 +73,24 @@ public class DentalServiceImpl implements DentalService {
     public com.denticheck.api.domain.dental.entity.DentalReviewEntity createReview(java.util.UUID dentalId,
             String username, int rating, String content, java.util.List<String> tags) {
         UserEntity user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+                .orElseGet(() -> {
+                    if ("anonymous".equals(username)) {
+                        com.denticheck.api.domain.user.entity.RoleEntity userRole = roleRepository.findByName("USER")
+                                .orElseGet(() -> roleRepository.save(com.denticheck.api.domain.user.entity.RoleEntity
+                                        .builder().name("USER").build()));
+
+                        UserEntity newUser = UserEntity.builder()
+                                .id(java.util.UUID.randomUUID())
+                                .username("anonymous")
+                                .email("anonymous@example.com")
+                                .nickname("익명")
+                                .role(userRole)
+                                .socialProviderType(com.denticheck.api.domain.user.entity.SocialProviderType.GOOGLE) // Mock
+                                .build();
+                        return userRepository.save(newUser);
+                    }
+                    throw new IllegalArgumentException("User not found: " + username);
+                });
 
         DentalEntity dental = dentalRepository.findById(dentalId)
                 .orElseThrow(() -> new IllegalArgumentException("Dental not found: " + dentalId));
@@ -92,7 +123,7 @@ public class DentalServiceImpl implements DentalService {
                 .visit(visit)
                 .user(user)
                 .dental(dental)
-                .rating(rating)
+                .rating((short) rating)
                 .content(content)
                 .tagsJson(tagsJson)
                 .isAnonymous(false)

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import { useQuery } from '@apollo/client/react';
-import { GET_HOSPITALS } from '../graphql/queries';
+import { SEARCH_HOSPITALS } from '../graphql/queries';
 import MapView, { Marker } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -14,23 +14,38 @@ const { width, height } = Dimensions.get('window');
 
 // Mock Data (Same as HospitalsScreen for consistency)
 
+interface Hospital {
+    id: string;
+    name: string;
+    latitude: number;
+    longitude: number;
+    address?: string;
+}
+
+interface SearchHospitalsData {
+    searchHospitals: {
+        content: Hospital[];
+        pageInfo: {
+            currentPage: number;
+            totalPages: number;
+            totalElements: number;
+        };
+    };
+}
+
+interface SearchHospitalsVars {
+    latitude: number;
+    longitude: number;
+    radius: number;
+    page: number;
+    size: number;
+}
+
 
 export default function HospitalMapScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const { theme } = useColorTheme();
     const [selectedHospital, setSelectedHospital] = useState<string | null>(null);
-
-    const { data, loading, error } = useQuery<any>(GET_HOSPITALS);
-
-    // Filter out hospitals with missing coordinates
-    const hospitals = data?.hospitals?.filter((h: any) => h.latitude != null && h.longitude != null).map((h: any) => ({
-        id: h.id,
-        name: h.name,
-        latitude: h.latitude,
-        longitude: h.longitude,
-        address: h.address || '주소 정보 없음',
-        // Add other fields if needed for detail navigation
-    })) || [];
 
     // Default region: Gangnam, Seoul
     const [region, setRegion] = useState({
@@ -39,6 +54,27 @@ export default function HospitalMapScreen() {
         latitudeDelta: 0.04,
         longitudeDelta: 0.04,
     });
+
+    const { data, loading, error } = useQuery<SearchHospitalsData, SearchHospitalsVars>(SEARCH_HOSPITALS, {
+        variables: {
+            latitude: region.latitude,
+            longitude: region.longitude,
+            radius: 10.0,
+            page: 0,
+            size: 20, // Load top 20 for map
+        },
+    });
+
+    // Filter out hospitals with missing coordinates
+    const hospitalsData = data?.searchHospitals?.content || [];
+    const hospitals = hospitalsData.filter((h: any) => h.latitude != null && h.longitude != null).map((h: any) => ({
+        id: h.id,
+        name: h.name,
+        latitude: h.latitude,
+        longitude: h.longitude,
+        address: h.address || '주소 정보 없음',
+        // Add other fields if needed for detail navigation
+    }));
 
     if (loading) {
         return (
