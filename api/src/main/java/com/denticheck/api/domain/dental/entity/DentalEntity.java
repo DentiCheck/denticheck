@@ -1,28 +1,16 @@
 package com.denticheck.api.domain.dental.entity;
 
-<<<<<<< HEAD
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.ZonedDateTime;
-=======
-import jakarta.persistence.*;
-import lombok.*;
-
 import java.math.BigDecimal;
->>>>>>> origin/feature/api-service
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
@@ -34,15 +22,6 @@ public class DentalEntity {
     @Column(name = "id", nullable = false)
     private UUID id;
 
-<<<<<<< HEAD
-    @Column(name = "source", length = 50, nullable = false)
-    private String source;
-
-    @Column(name = "source_key", length = 100, nullable = false, unique = true)
-    private String sourceKey;
-
-    @Column(name = "name", length = 200, nullable = false)
-=======
     @Column(name = "source", nullable = false, length = 50)
     private String source;
 
@@ -50,18 +29,19 @@ public class DentalEntity {
     private String sourceKey;
 
     @Column(name = "name", nullable = false, length = 200)
->>>>>>> origin/feature/api-service
     private String name;
 
     @Column(name = "phone", length = 30)
     private String phone;
 
-<<<<<<< HEAD
-    @Column(name = "address", columnDefinition = "TEXT", nullable = false)
-=======
     @Column(name = "address", nullable = false, columnDefinition = "TEXT")
->>>>>>> origin/feature/api-service
     private String address;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "homepage_url", length = 500)
+    private String homepageUrl;
 
     @Column(name = "sido_code", length = 20)
     private String sidoCode;
@@ -70,11 +50,10 @@ public class DentalEntity {
     private String sigunguCode;
 
     @Column(name = "lat", precision = 10, scale = 7)
-<<<<<<< HEAD
-    private java.math.BigDecimal lat;
+    private BigDecimal lat;
 
     @Column(name = "lng", precision = 10, scale = 7)
-    private java.math.BigDecimal lng;
+    private BigDecimal lng;
 
     public Double getLatitude() {
         return lat != null ? lat.doubleValue() : null;
@@ -89,7 +68,7 @@ public class DentalEntity {
 
     @Column(name = "rating_avg", nullable = false, precision = 3, scale = 2)
     @Builder.Default
-    private java.math.BigDecimal ratingAvg = java.math.BigDecimal.ZERO;
+    private BigDecimal ratingAvg = BigDecimal.ZERO;
 
     @Column(name = "rating_count", nullable = false)
     @Builder.Default
@@ -107,23 +86,14 @@ public class DentalEntity {
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt;
 
-    public void updateRating(int newRating, int oldRatingCount, java.math.BigDecimal oldRatingAvg) {
+    public void updateRating(int newRating, int oldRatingCount, BigDecimal oldRatingAvg) {
         // Calculate new average
         // (oldAvg * oldCount + newRating) / (oldCount + 1)
-        java.math.BigDecimal total = oldRatingAvg.multiply(java.math.BigDecimal.valueOf(oldRatingCount));
-        total = total.add(java.math.BigDecimal.valueOf(newRating));
+        BigDecimal total = oldRatingAvg.multiply(BigDecimal.valueOf(oldRatingCount));
+        total = total.add(BigDecimal.valueOf(newRating));
 
         int newCount = oldRatingCount + 1;
         this.ratingCount = newCount;
-        this.ratingAvg = total.divide(java.math.BigDecimal.valueOf(newCount), 2, java.math.RoundingMode.HALF_UP);
+        this.ratingAvg = total.divide(BigDecimal.valueOf(newCount), 2, java.math.RoundingMode.HALF_UP);
     }
-=======
-    private BigDecimal lat;
-
-    @Column(name = "lng", precision = 10, scale = 7)
-    private BigDecimal lng;
-
-    @Column(name = "business_status", length = 30)
-    private String businessStatus;
->>>>>>> origin/feature/api-service
 }
