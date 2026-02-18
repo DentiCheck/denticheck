@@ -93,17 +93,17 @@ def parse_and_insert(conn, items):
         phone = item.get("telno", "")
         address = item.get("addr", "")
         
-        # Coordinates (XPos: Longitude, YPos: Latitude in many KR APIs, usually WGS84 for this service)
-        # Sometimes they are empty or invalid
-        # Force Seoul coordinates for testing
-        lat = 37.5
-        lng = 127.0
-        # try:
-        #     lng = float(item.get("XPos")) if item.get("XPos") else None
-        #     lat = float(item.get("YPos")) if item.get("YPos") else None
-        # except ValueError:
-        #     lng = None
-        #     lat = None
+        # Coordinates (XPos: Longitude, YPos: Latitude)
+        # We use the real coordinates from the API. 
+        # To avoid multiple markers overlapping at the exact same spot during testing,
+        # we can add a tiny random jitter if they are missing or for all of them if desired.
+        import random
+        try:
+            lng = float(item.get("XPos")) if item.get("XPos") else 126.97 + (random.random() - 0.5) * 0.01
+            lat = float(item.get("YPos")) if item.get("YPos") else 37.56 + (random.random() - 0.5) * 0.01
+        except ValueError:
+            lng = 126.97 + (random.random() - 0.5) * 0.01
+            lat = 37.56 + (random.random() - 0.5) * 0.01
             
         sido_code = item.get("sidoCd", "")
         sigungu_code = item.get("sgguCd", "")
@@ -220,8 +220,8 @@ def main():
             
         page_no += 1
         
-        if total_count >= 10000:
-            print("Reached limit of 10000 records.")
+        if total_count >= 3000:
+            print("Reached limit of 3000 records.")
             break
         
     conn.close()

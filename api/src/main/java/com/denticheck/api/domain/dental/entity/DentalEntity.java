@@ -54,6 +54,14 @@ public class DentalEntity {
     @Column(name = "lng", precision = 10, scale = 7)
     private java.math.BigDecimal lng;
 
+    public Double getLatitude() {
+        return lat != null ? lat.doubleValue() : null;
+    }
+
+    public Double getLongitude() {
+        return lng != null ? lng.doubleValue() : null;
+    }
+
     @Column(name = "business_status", length = 30)
     private String businessStatus;
 
