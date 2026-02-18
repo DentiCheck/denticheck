@@ -1,0 +1,30 @@
+> Task :compileJava UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :classes UP-TO-DATE
+
+> Task :compileTestJava
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\dental\controller\DentalReviewControllerTest.java:38: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+    @MockBean
+     ^
+1 warning
+
+> Task :processTestResources NO-SOURCE
+> Task :testClasses
+> Task :test FAILED
+
+[Incubating] Problems report is available at: file:///C:/hackathon/denticheck/api/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':test'.
+> No tests found for given includes: [ com.denticheck.api.domain.dental.*](--tests filter)
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 6s
+4 actionable tasks: 2 executed, 2 up-to-date

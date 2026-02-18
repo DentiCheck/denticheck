@@ -15,6 +15,28 @@ export const GET_HOSPITALS = gql`
   }
 `;
 
+export const SEARCH_HOSPITALS = gql`
+  query SearchHospitals($latitude: Float!, $longitude: Float!, $radius: Float, $page: Int, $size: Int) {
+    searchHospitals(latitude: $latitude, longitude: $longitude, radius: $radius, page: $page, size: $size) {
+      content {
+        id
+        name
+        address
+        phone
+        description
+        latitude
+        longitude
+        homepageUrl
+      }
+      pageInfo {
+        currentPage
+        totalPages
+        totalElements
+      }
+    }
+  }
+`;
+
 export const GET_POSTS = gql`
   query GetPosts($limit: Int, $offset: Int, $postType: String) {
     posts(limit: $limit, offset: $offset, postType: $postType) {

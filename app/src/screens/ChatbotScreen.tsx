@@ -156,27 +156,26 @@ export default function ChatbotScreen() {
                 className={`max-w-[80%] ${message.role === "user" ? "items-end" : "items-start"}`}
               >
                 <View
-                  className={`p-4 rounded-2xl ${
-                    message.role === "user"
+                  className={`p-4 rounded-2xl ${message.role === "user"
                       ? "bg-blue-500 rounded-tr-none"
                       : "bg-white rounded-tl-none border border-slate-100"
-                  }`}
+                    }`}
                   style={
                     message.role === "assistant"
                       ? {
-                          elevation: 2,
-                          shadowColor: "#000",
-                          shadowOffset: { width: 0, height: 1 },
-                          shadowOpacity: 0.05,
-                          shadowRadius: 2,
-                        }
+                        elevation: 2,
+                        shadowColor: "#000",
+                        shadowOffset: { width: 0, height: 1 },
+                        shadowOpacity: 0.05,
+                        shadowRadius: 2,
+                      }
                       : undefined
                   }
                 >
                   <Text
                     className={`text-[15px] leading-6 ${message.role === "user" ? "text-white" : "text-slate-700"}`}
                   >
-                    {message.content}
+                    {message.content.replace(/\*\*/g, "")}
                   </Text>
                 </View>
                 <Text className="text-[10px] text-slate-400 mt-1 px-1">
@@ -248,18 +247,17 @@ export default function ChatbotScreen() {
               <TouchableOpacity
                 onPress={() => handleSend()}
                 disabled={!input.trim()}
-                className={`w-12 h-12 rounded-full items-center justify-center ${
-                  input.trim() ? "bg-blue-500" : "bg-slate-200"
-                }`}
+                className={`w-12 h-12 rounded-full items-center justify-center ${input.trim() ? "bg-blue-500" : "bg-slate-200"
+                  }`}
                 style={
                   input.trim()
                     ? {
-                        elevation: 4,
-                        shadowColor: "#3b82f6",
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: 0.3,
-                        shadowRadius: 4,
-                      }
+                      elevation: 4,
+                      shadowColor: "#3b82f6",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.3,
+                      shadowRadius: 4,
+                    }
                     : undefined
                 }
               >

@@ -1,7 +1,6 @@
 package com.denticheck.api.domain.hospital.service;
 
 import com.denticheck.api.domain.hospital.entity.HospitalEntity;
-
 import java.util.List;
 
 public interface HospitalService {

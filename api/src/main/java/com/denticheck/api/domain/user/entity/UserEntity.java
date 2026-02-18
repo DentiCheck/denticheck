@@ -75,5 +75,5 @@ public class UserEntity extends com.denticheck.api.common.entity.BaseTimeEntity 
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private java.util.List<com.denticheck.api.domain.hospital.entity.UserHospitalEntity> favorites = new java.util.ArrayList<>();
+    private java.util.List<com.denticheck.api.domain.dental.entity.DentalLikeEntity> favorites = new java.util.ArrayList<>();
 }
