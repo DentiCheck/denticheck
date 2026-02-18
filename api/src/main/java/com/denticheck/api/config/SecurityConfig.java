@@ -109,6 +109,7 @@ public class SecurityConfig {
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll() // REST 문서 기본 경로(springdoc)
                         .requestMatchers("/docs/api-docs/**", "/docs/swagger-ui/**").permitAll() // REST 문서 (springdoc)
                         .requestMatchers("/docs/graphql", "/docs/graphql/", "/docs/graphql/**").permitAll() // GraphQL 문서 (Magidoc)
+                        .requestMatchers("/community/post/**").permitAll() // 공유 링크용 리다이렉트 (앱 딥링크로 이동)
                         .requestMatchers("/graphql").hasRole(UserRoleType.USER.name())
                         .requestMatchers("/admin/**").hasRole(UserRoleType.ADMIN.name())
                         .anyRequest().authenticated())

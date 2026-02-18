@@ -11,6 +11,9 @@ public interface CommunityPostService {
     /** 최신순 페이징 (limit 기본 10, offset 0). postType null이면 전체, "product"|"hospital"이면 해당만 */
     List<CommunityPostDto> findAll(int limit, int offset, String postType);
 
+    /** 단일 게시글 조회 (공유 링크 등). 없으면 empty */
+    java.util.Optional<CommunityPostDto> findById(java.util.UUID postId);
+
     CommunityPostDto create(String authorName, String content, String postType, List<java.util.UUID> dentalIds, List<String> imageUrls);
 
     /** 작성자일 때만 삭제, 아니면 AccessDeniedException */

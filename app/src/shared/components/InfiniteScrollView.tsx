@@ -8,20 +8,18 @@ export type InfiniteScrollViewProps<T> = {
   hasMore: boolean;
   loadingMore: boolean;
   onLoadMore: () => void;
-  /** 0~1, 끝에서 이 비율만큼 남았을 때 onLoadMore 호출 (기본 0.3) */
   onEndReachedThreshold?: number;
   ListHeaderComponent?: React.ReactElement | null;
   ListEmptyComponent?: React.ReactElement | null;
   contentContainerStyle?: object;
-  /** 로딩 인디케이터 색 */
   loadingColor?: string;
   className?: string;
+  /** ref 전달 시 scrollToIndex 등 FlatList 메서드 사용 가능 */
+  listRef?: React.RefObject<FlatList<T> | null>;
+  /** 이 값이 바뀌면 행을 다시 그림 (예: 답글 펼침 상태). data 외 상태로 렌더가 바뀔 때 필수 */
+  extraData?: unknown;
 };
 
-/**
- * 스크롤이 끝에 가까워지면 onLoadMore를 호출하는 FlatList 래퍼.
- * shared에 두어 다른 피드/목록 화면에서도 재사용 가능.
- */
 export function InfiniteScrollView<T>({
   data,
   renderItem,
@@ -35,6 +33,8 @@ export function InfiniteScrollView<T>({
   contentContainerStyle,
   loadingColor = "#0ea5e9",
   className,
+  listRef,
+  extraData,
 }: InfiniteScrollViewProps<T>) {
   const handleEndReached = () => {
     if (hasMore && !loadingMore) onLoadMore();
@@ -52,8 +52,10 @@ export function InfiniteScrollView<T>({
 
   return (
     <FlatList<T>
+      ref={listRef}
       className={className}
       data={data}
+      extraData={extraData}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
       onEndReached={handleEndReached}

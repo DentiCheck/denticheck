@@ -9,6 +9,7 @@ import com.denticheck.api.domain.community.entity.CommunityPostLikeEntity;
 import com.denticheck.api.domain.community.repository.CommunityPostImageRepository;
 import com.denticheck.api.domain.community.repository.CommunityPostLikeRepository;
 import com.denticheck.api.domain.community.repository.CommunityPostRepository;
+import com.denticheck.api.domain.community.service.CommunityImageUploadService;
 import com.denticheck.api.domain.community.service.CommunityPostService;
 import com.denticheck.api.domain.dental.entity.DentalEntity;
 import com.denticheck.api.domain.dental.repository.DentalRepository;
@@ -28,6 +29,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.Collections;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +38,7 @@ public class CommunityPostServiceImpl implements CommunityPostService {
     private final CommunityPostRepository communityPostRepository;
     private final CommunityPostLikeRepository communityPostLikeRepository;
     private final CommunityPostImageRepository communityPostImageRepository;
+    private final CommunityImageUploadService communityImageUploadService;
     private final DentalRepository dentalRepository;
 
     @Override
@@ -68,6 +71,16 @@ public class CommunityPostServiceImpl implements CommunityPostService {
                 .sorted(Comparator.comparingInt(e -> order.getOrDefault(e.getId(), 0)))
                 .map(e -> toDto(e, null, imagesByPostId.getOrDefault(e.getId(), Collections.emptyList())))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<CommunityPostDto> findById(UUID postId) {
+        return communityPostRepository.findByIdWithDentals(postId)
+                .map(e -> {
+                    List<String> images = loadImagesByPostIds(List.of(postId)).getOrDefault(postId, Collections.emptyList());
+                    return toDto(e, null, images);
+                });
     }
 
     @Override
@@ -135,7 +148,12 @@ public class CommunityPostServiceImpl implements CommunityPostService {
         if (!authorName.equals(post.getAuthorName())) {
             throw new AccessDeniedException("본인 게시글만 삭제할 수 있습니다.");
         }
+        List<String> imageUrls = communityPostImageRepository.findByPost_IdInOrderBySortOrderAsc(List.of(postId))
+                .stream()
+                .map(CommunityPostImageEntity::getImageUrl)
+                .toList();
         communityPostRepository.delete(post);
+        imageUrls.forEach(communityImageUploadService::deleteByUrl);
     }
 
     @Override
@@ -178,12 +196,12 @@ public class CommunityPostServiceImpl implements CommunityPostService {
         String initial = author.isEmpty() ? "" : author.substring(0, 1);
         List<CommunityPostDto.PostTagDto> tags = new ArrayList<>();
         if (tagDentals != null && !tagDentals.isEmpty()) {
-            tagDentals.forEach(dental -> tags.add(new CommunityPostDto.PostTagDto("hospital", dental.getName() != null ? dental.getName() : "")));
+            tagDentals.forEach(dental -> tags.add(new CommunityPostDto.PostTagDto("hospital", dental.getName() != null ? dental.getName() : "", dental.getId())));
         } else if (e.getDentalLinks() != null) {
             e.getDentalLinks().stream()
                     .map(CommunityPostDentalEntity::getDental)
                     .filter(d -> d != null)
-                    .forEach(dental -> tags.add(new CommunityPostDto.PostTagDto("hospital", dental.getName() != null ? dental.getName() : "")));
+                    .forEach(dental -> tags.add(new CommunityPostDto.PostTagDto("hospital", dental.getName() != null ? dental.getName() : "", dental.getId())));
         }
         return CommunityPostDto.builder()
                 .id(e.getId())

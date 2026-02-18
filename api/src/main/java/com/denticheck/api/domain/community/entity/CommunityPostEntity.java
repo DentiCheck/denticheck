@@ -40,6 +40,10 @@ public class CommunityPostEntity extends BaseTimeEntity {
     @Builder.Default
     private Integer commentCount = 0;
 
+    public void setCommentCount(Integer commentCount) {
+        this.commentCount = commentCount != null ? commentCount : 0;
+    }
+
     /** 게시글 종류: product(상품후기), hospital(병원후기), null이면 전체(일반) */
     @Column(name = "post_type", length = 20)
     private String postType;

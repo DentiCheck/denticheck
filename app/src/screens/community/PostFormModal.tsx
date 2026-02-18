@@ -18,9 +18,8 @@ import {
   X,
   ImagePlus,
 } from "lucide-react-native";
-import { useQuery } from "@apollo/client/react";
-import { GET_DENTALS } from "../../graphql/queries";
 import { Button } from "../../shared/components/ui/Button";
+import { TagPickerModal, type Tag } from "../../shared/components/TagPickerModal";
 
 export type PostType = "all" | "product" | "hospital";
 
@@ -35,7 +34,7 @@ export type PostFormInitialValues = {
   content: string;
   postType: PostType | null;
   dentalIds: string[];
-  tags: { type: "product" | "hospital"; name: string; id?: string }[];
+  tags: Tag[];
   images?: { uri: string }[];
 };
 
@@ -43,7 +42,7 @@ const MAX_IMAGES = 4;
 const defaultFormState = {
   content: "",
   postType: "all" as PostType,
-  tags: [] as { type: "product" | "hospital"; name: string; id?: string }[],
+  tags: [] as Tag[],
   images: [] as { uri: string }[],
 };
 
@@ -66,8 +65,7 @@ export function PostFormModal({
   initialValues,
 }: PostFormModalProps) {
   const [formData, setFormData] = useState(defaultFormState);
-  const [dentalSearch, setDentalSearch] = useState("");
-  const [showDentalPicker, setShowDentalPicker] = useState(false);
+  const [showTagPicker, setShowTagPicker] = useState(false);
   const [imagePickerOpening, setImagePickerOpening] = useState(false);
 
   useEffect(() => {
@@ -79,43 +77,23 @@ export function PostFormModal({
         tags: initialValues.tags ?? [],
         images: initialValues.images ?? [],
       });
-      setDentalSearch("");
-      setShowDentalPicker(false);
+      setShowTagPicker(false);
     } else {
       setFormData(defaultFormState);
-      setDentalSearch("");
-      setShowDentalPicker(false);
+      setShowTagPicker(false);
     }
   }, [visible, initialValues]);
 
-  const {
-    data: dentalsData,
-    loading: dentalsLoading,
-    error: dentalsError,
-  } = useQuery<{
-    dentals: Array<{ id: string; name: string; address?: string; phone?: string }>;
-  }>(GET_DENTALS, {
-    variables: { name: dentalSearch.trim() || undefined, limit: 50 },
-    skip: !visible || !showDentalPicker,
-    fetchPolicy: "network-only",
-  });
-  const dentals = dentalsData?.dentals ?? [];
-
-  const addTag = (type: "product" | "hospital", name: string, id?: string) => {
-    if (!formData.tags.find((t) => t.type === type && (id ? t.id === id : t.name === name))) {
+  const handleSelectTag = (tag: Tag) => {
+    if (!formData.tags.find((t) => t.type === tag.type && (tag.id ? t.id === tag.id : t.name === tag.name))) {
       setFormData({
         ...formData,
-        tags: [...formData.tags, { type, name, ...(id ? { id } : {}) }],
+        tags: [...formData.tags, tag],
       });
     }
   };
-  const hospitalTags = formData.tags.filter((t) => t.type === "hospital");
-  const canAddMoreHospital = hospitalTags.length < 3;
-  const addDentalTag = (dental: { id: string; name: string }) => {
-    if (!canAddMoreHospital) return;
-    addTag("hospital", dental.name, dental.id);
-  };
-  const removeTag = (index: number) => {
+
+  const handleRemoveTag = (index: number) => {
     setFormData({ ...formData, tags: formData.tags.filter((_, i) => i !== index) });
   };
 
@@ -173,8 +151,7 @@ export function PostFormModal({
 
   const handleClose = () => {
     setFormData(defaultFormState);
-    setShowDentalPicker(false);
-    setDentalSearch("");
+    setShowTagPicker(false);
     onClose();
   };
 
@@ -323,21 +300,23 @@ export function PostFormModal({
                   <Text className="text-sm font-medium text-slate-400">상품 태그 (준비 중)</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => setShowDentalPicker((v) => !v)}
+                  onPress={() => setShowTagPicker(true)}
                   className={`flex-row items-center border px-3 py-2 rounded-xl ${
-                    showDentalPicker
+                    formData.tags.filter((t) => t.type === "hospital").length > 0
                       ? "bg-blue-100 dark:bg-blue-900/30 border-blue-400"
                       : "bg-white dark:bg-slate-800 border-slate-200"
                   }`}
                 >
                   <LucideHospital
                     size={16}
-                    color={showDentalPicker ? "#1d4ed8" : "#475569"}
+                    color={formData.tags.filter((t) => t.type === "hospital").length > 0 ? "#1d4ed8" : "#475569"}
                     style={{ marginRight: 6 }}
                   />
                   <Text
                     className={`text-sm font-medium ${
-                      showDentalPicker ? "text-blue-700 dark:text-blue-300" : "text-slate-600 dark:text-slate-300"
+                      formData.tags.filter((t) => t.type === "hospital").length > 0
+                        ? "text-blue-700 dark:text-blue-300"
+                        : "text-slate-600 dark:text-slate-300"
                     }`}
                   >
                     치과 선택
@@ -345,95 +324,34 @@ export function PostFormModal({
                 </TouchableOpacity>
               </View>
 
-              {showDentalPicker && (
-                <View className="mb-4 mt-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-600">
-                  {hospitalTags.length > 0 && (
-                    <View className="flex-row flex-wrap gap-2 mb-3">
-                      {formData.tags.map(
-                        (tag, idx) =>
-                          tag.type === "hospital" && (
-                            <TouchableOpacity
-                              key={idx}
-                              onPress={() => removeTag(idx)}
-                              className="flex-row items-center pl-3 pr-2 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900/50"
-                            >
-                              <Text className="text-xs font-bold mr-1 text-blue-700 dark:text-blue-300">
-                                {tag.name}
-                              </Text>
-                              <X size={12} color="#1d4ed8" />
-                            </TouchableOpacity>
-                          )
-                      )}
-                    </View>
-                  )}
-                  {hospitalTags.length >= 3 && (
-                    <Text className="text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">
-                      병원은 최대 3개까지 선택할 수 있어요.
-                    </Text>
-                  )}
-                  <Text className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                    검색어 없이 보면 최대 50개 목록이 보이고, 입력하면 이름으로 필터돼요.
-                  </Text>
-                  <TextInput
-                    placeholder="치과 이름 검색 (선택)"
-                    placeholderTextColor="#94a3b8"
-                    value={dentalSearch}
-                    onChangeText={setDentalSearch}
-                    className="bg-white dark:bg-slate-700 px-3 py-2 rounded-lg text-slate-800 dark:text-white mb-2"
-                  />
-                  <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled>
-                    {dentalsLoading ? (
-                      <Text className="text-slate-400 text-sm py-2">치과 목록을 불러오는 중...</Text>
-                    ) : dentalsError ? (
-                      <Text className="text-amber-600 dark:text-amber-400 text-sm py-2">
-                        목록을 불러오지 못했어요. 네트워크를 확인해 주세요.
-                      </Text>
-                    ) : dentals.length === 0 ? (
-                      <Text className="text-slate-400 text-sm py-2">
-                        {dentalSearch.trim()
-                          ? "검색 결과가 없어요."
-                          : "등록된 치과가 없어요. load_dentals.py 실행 여부를 확인해 주세요."}
-                      </Text>
-                    ) : (
-                      dentals.map((d) => (
-                        <TouchableOpacity
-                          key={d.id}
-                          onPress={() => addDentalTag(d)}
-                          disabled={!canAddMoreHospital}
-                          className={`py-2.5 px-2 border-b border-slate-100 dark:border-slate-700 last:border-b-0 ${
-                            !canAddMoreHospital ? "opacity-50" : ""
-                          }`}
-                        >
-                          <Text className="text-slate-800 dark:text-white font-medium" numberOfLines={1}>
-                            {d.name}
-                          </Text>
-                          {d.address ? (
-                            <Text className="text-xs text-slate-500 mt-0.5" numberOfLines={1}>
-                              {d.address}
-                            </Text>
-                          ) : null}
-                        </TouchableOpacity>
-                      ))
-                    )}
-                  </ScrollView>
-                </View>
-              )}
-
-              {formData.tags.some((t) => t.type === "product") && (
+              {/* 선택된 태그 표시 */}
+              {formData.tags.length > 0 && (
                 <View className="flex-row flex-wrap gap-2 mt-2">
-                  {formData.tags.map(
-                    (tag, idx) =>
-                      tag.type === "product" && (
-                        <TouchableOpacity
-                          key={idx}
-                          onPress={() => removeTag(idx)}
-                          className="flex-row items-center pl-3 pr-2 py-1.5 rounded-full bg-indigo-100"
-                        >
-                          <Text className="text-xs font-bold mr-1 text-indigo-700">{tag.name}</Text>
-                          <X size={12} color="#4338ca" />
-                        </TouchableOpacity>
-                      )
-                  )}
+                  {formData.tags.map((tag, idx) => (
+                    <TouchableOpacity
+                      key={idx}
+                      onPress={() => handleRemoveTag(idx)}
+                      className={`flex-row items-center pl-3 pr-2 py-1.5 rounded-full ${
+                        tag.type === "hospital"
+                          ? "bg-blue-100 dark:bg-blue-900/50"
+                          : "bg-indigo-100"
+                      }`}
+                    >
+                      <Text
+                        className={`text-xs font-bold mr-1 ${
+                          tag.type === "hospital"
+                            ? "text-blue-700 dark:text-blue-300"
+                            : "text-indigo-700"
+                        }`}
+                      >
+                        {tag.name}
+                      </Text>
+                      <X
+                        size={12}
+                        color={tag.type === "hospital" ? "#1d4ed8" : "#4338ca"}
+                      />
+                    </TouchableOpacity>
+                  ))}
                 </View>
               )}
             </View>
@@ -458,6 +376,17 @@ export function PostFormModal({
           </Button>
         </View>
       </View>
+
+      {/* 태그 선택 모달 */}
+      <TagPickerModal
+        visible={showTagPicker}
+        onClose={() => setShowTagPicker(false)}
+        selectedTags={formData.tags}
+        onSelectTag={handleSelectTag}
+        onRemoveTag={handleRemoveTag}
+        maxHospitalTags={3}
+        enableProductTags={false}
+      />
     </Modal>
   );
 }

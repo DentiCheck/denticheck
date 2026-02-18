@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -61,5 +62,32 @@ public class CommunityImageUploadServiceImpl implements CommunityImageUploadServ
     private static String getExtension(String filename) {
         int i = filename.lastIndexOf('.');
         return i > 0 ? filename.substring(i) : ".jpg";
+    }
+
+    /** 파일명만 허용 (UUID.ext 형태, 경로 조작 방지) */
+    private static final Pattern SAFE_FILENAME = Pattern.compile("^[a-zA-Z0-9_.-]+\\.(jpg|jpeg|png|webp)$", Pattern.CASE_INSENSITIVE);
+
+    @Override
+    public void deleteByUrl(String url) {
+        if (url == null || url.isBlank()) return;
+        String fileName = null;
+        try {
+            int lastSlash = url.lastIndexOf('/');
+            if (lastSlash >= 0 && lastSlash < url.length() - 1) {
+                fileName = url.substring(lastSlash + 1).split("\\?")[0];
+            }
+        } catch (Exception ignored) {}
+        if (fileName == null || fileName.isBlank() || !SAFE_FILENAME.matcher(fileName).matches()) return;
+        try {
+            Path dir = Paths.get(localDir).toAbsolutePath().normalize();
+            Path path = dir.resolve(fileName).normalize();
+            if (!path.startsWith(dir)) return;
+            if (Files.exists(path)) {
+                Files.delete(path);
+                log.debug("Community image deleted: {}", path);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to delete community image by url: {}", url, e);
+        }
     }
 }

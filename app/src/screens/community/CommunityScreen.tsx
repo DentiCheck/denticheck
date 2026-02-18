@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,8 +7,10 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  Share,
+  Platform,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import {
   Search,
   Plus,
@@ -31,7 +33,7 @@ import { useColorTheme } from "../../shared/providers/ColorThemeProvider";
 import { useInfiniteScroll } from "../../shared/hooks/useInfiniteScroll";
 import { InfiniteScrollView } from "../../shared/components/InfiniteScrollView";
 import { PostFormModal, type PostFormSubmitPayload } from "./PostFormModal";
-import { BASE_URL } from "../../shared/lib/constants";
+import { BASE_URL, SHARE_WEB_BASE_URL } from "../../shared/lib/constants";
 import * as SecureStore from "expo-secure-store";
 
 type PostType = "all" | "product" | "hospital";
@@ -53,6 +55,11 @@ type Post = {
 
 export default function CommunityScreen() {
   const navigation = useNavigation<any>();
+  const route = useRoute();
+  const scrollToPostId = (route.params as { scrollToPostId?: string } | undefined)?.scrollToPostId;
+  const listRef = useRef<any>(null);
+  const didScrollToPostRef = useRef<string | null>(null);
+
   const { theme } = useColorTheme();
   const { colorScheme } = useColorScheme();
   const [searchQuery, setSearchQuery] = useState("");
@@ -94,6 +101,23 @@ export default function CommunityScreen() {
     resetKey: selectedTab,
   });
 
+  // refetch 함수를 ref로 저장하여 최신 함수 참조
+  const refetchPostsRef = useRef(refetchPosts);
+  useEffect(() => {
+    refetchPostsRef.current = refetchPosts;
+  }, [refetchPosts]);
+
+  // 탭에 다시 들어올 때 목록 새로고침 (추가/삭제 반영)
+  useFocusEffect(
+    React.useCallback(() => {
+      // 약간의 지연을 두어 화면이 완전히 포커스된 후 실행
+      const timer = setTimeout(() => {
+        refetchPostsRef.current();
+      }, 100);
+      return () => clearTimeout(timer);
+    }, [])
+  );
+
   const posts: Post[] = rawPosts.map((p) => {
     const over = likeOverrides[p.id];
     return {
@@ -125,13 +149,15 @@ export default function CommunityScreen() {
 
   const [createPost, { loading: createLoading }] = useMutation(CREATE_POST, {
     onCompleted: () => {
-      refetchPosts();
+      refetchPostsRef.current();
       setShowCreateDialog(false);
     },
   });
 
   const [deletePost, { loading: deleteLoading }] = useMutation(DELETE_POST, {
-    onCompleted: () => refetchPosts(),
+    onCompleted: () => {
+      refetchPostsRef.current();
+    },
   });
 
   const [togglePostLike] = useMutation<{
@@ -231,6 +257,23 @@ export default function CommunityScreen() {
     );
   });
 
+  // 공유 링크로 들어온 경우: 해당 게시글 위치로 스크롤
+  useEffect(() => {
+    if (!scrollToPostId || !filteredPosts.length || didScrollToPostRef.current === scrollToPostId) return;
+    const index = filteredPosts.findIndex((p) => p.id === scrollToPostId);
+    if (index < 0) return;
+    didScrollToPostRef.current = scrollToPostId;
+    const t = setTimeout(() => {
+      try {
+        listRef.current?.scrollToIndex?.({ index, animated: true, viewPosition: 0.2 });
+      } catch (_) {
+        // 레이아웃 미측정 시 등 실패해도 무시
+      }
+      navigation.setParams?.({ scrollToPostId: undefined });
+    }, 500);
+    return () => clearTimeout(t);
+  }, [scrollToPostId, filteredPosts, navigation]);
+
   const getTimeAgo = (date: Date | string) => {
     let d: Date;
     if (typeof date === "string") {
@@ -294,6 +337,42 @@ export default function CommunityScreen() {
         },
       ]
     );
+  };
+
+  const handleSharePost = async (post: Post) => {
+    try {
+      // 게시글 내용 요약 (최대 100자)
+      const contentPreview = post.content.length > 100 
+        ? post.content.substring(0, 100) + "..." 
+        : post.content;
+      
+      // 웹 URL 사용 (http/https라 메시지 앱에서 하이퍼링크로 인식됨)
+      const postUrl = `${SHARE_WEB_BASE_URL.replace(/\/$/, "")}/community/post/${post.id}`;
+      
+      // 공유할 메시지 구성
+      const shareMessage = `${post.author}님의 게시글\n\n${contentPreview}\n\n게시글 보기: ${postUrl}\n\n#DentiCheck`;
+      
+      const result = await Share.share(
+        Platform.OS === 'ios'
+          ? {
+              message: shareMessage,
+              url: postUrl,
+              title: "게시글 공유",
+            }
+          : {
+              message: shareMessage,
+              title: "게시글 공유",
+            }
+      );
+
+      if (result.action === Share.sharedAction) {
+        // 공유 성공
+      } else if (result.action === Share.dismissedAction) {
+        // 공유 취소
+      }
+    } catch (error) {
+      Alert.alert("공유 실패", "게시글을 공유하는 중 오류가 발생했습니다.");
+    }
   };
 
   const MAX_PREVIEW_LINES = 10;
@@ -509,7 +588,7 @@ export default function CommunityScreen() {
               <Trash2 size={20} color="#94a3b8" />
             </TouchableOpacity>
           )}
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => handleSharePost(post)}>
             <Share2 size={20} color="#94a3b8" />
           </TouchableOpacity>
         </View>
@@ -626,6 +705,7 @@ export default function CommunityScreen() {
           </View>
         ) : (
           <InfiniteScrollView<Post>
+            listRef={listRef}
             data={filteredPosts}
             keyExtractor={(item) => item.id}
             renderItem={({ item: post }) => (

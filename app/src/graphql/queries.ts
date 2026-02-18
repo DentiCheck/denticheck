@@ -26,6 +26,7 @@ export const GET_POSTS = gql`
       tags {
         type
         name
+        id
       }
       likes
       comments
@@ -33,6 +34,148 @@ export const GET_POSTS = gql`
       postType
       isMine
       isLiked
+    }
+  }
+`;
+
+export const GET_POST = gql`
+  query GetPost($id: ID!) {
+    post(id: $id) {
+      id
+      author
+      authorInitial
+      content
+      images
+      tags {
+        type
+        name
+        id
+      }
+      likes
+      comments
+      createdAt
+      postType
+      isMine
+      isLiked
+    }
+  }
+`;
+
+export const GET_COMMENTS = gql`
+  query GetComments($postId: ID!, $limit: Int, $offset: Int) {
+    comments(postId: $postId, limit: $limit, offset: $offset) {
+      id
+      author
+      content
+      images
+      tags {
+        type
+        name
+        id
+      }
+      createdAt
+      likes
+      isLiked
+      isMine
+      replyCount
+    }
+  }
+`;
+
+export const GET_REPLIES = gql`
+  query GetReplies($parentCommentId: ID!) {
+    replies(parentCommentId: $parentCommentId) {
+      id
+      author
+      content
+      images
+      tags {
+        type
+        name
+        id
+      }
+      createdAt
+      likes
+      isLiked
+      isMine
+      replyCount
+    }
+  }
+`;
+
+export const CREATE_COMMENT = gql`
+  mutation CreateComment($input: CreateCommentInput!) {
+    createComment(input: $input) {
+      id
+      author
+      content
+      images
+      tags {
+        type
+        name
+        id
+      }
+      createdAt
+      likes
+      isLiked
+      isMine
+    }
+  }
+`;
+
+export const CREATE_REPLY = gql`
+  mutation CreateReply($input: CreateReplyInput!) {
+    createReply(input: $input) {
+      id
+      author
+      content
+      images
+      tags {
+        type
+        name
+        id
+      }
+      createdAt
+      likes
+      isLiked
+      isMine
+      replyCount
+    }
+  }
+`;
+
+export const DELETE_COMMENT = gql`
+  mutation DeleteComment($id: ID!) {
+    deleteComment(id: $id)
+  }
+`;
+
+export const TOGGLE_COMMENT_LIKE = gql`
+  mutation ToggleCommentLike($commentId: ID!) {
+    toggleCommentLike(commentId: $commentId) {
+      id
+      likes
+      isLiked
+    }
+  }
+`;
+
+export const UPDATE_COMMENT = gql`
+  mutation UpdateComment($input: UpdateCommentInput!) {
+    updateComment(input: $input) {
+      id
+      author
+      content
+      images
+      tags {
+        type
+        name
+        id
+      }
+      createdAt
+      likes
+      isLiked
+      isMine
     }
   }
 `;
@@ -74,6 +217,7 @@ export const CREATE_POST = gql`
       tags {
         type
         name
+        id
       }
       likes
       comments

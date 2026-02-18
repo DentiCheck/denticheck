@@ -1,7 +1,7 @@
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "../global.css";
 import { registerRootComponent } from "expo";
-import { RootNavigator } from "./navigation/RootNavigator";
+import { RootNavigator, navigationRef } from "./navigation/RootNavigator";
 
 import { ColorThemeProvider } from "./shared/providers/ColorThemeProvider";
 import { AuthProvider } from "./shared/providers/AuthProvider";
@@ -20,7 +20,7 @@ function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <NavigationContainer>
+        <NavigationContainer ref={navigationRef}>
           <ColorThemeProvider>
             <AuthProvider>
               <ApolloProvider client={client}>

@@ -2,6 +2,8 @@
 type PostTag {
   type: String!
   name: String!
+  """병원 태그인 경우 병원 ID, 상품 태그인 경우 상품 ID"""
+  id: ID
 }
 
 type Post {
@@ -22,12 +24,60 @@ type Post {
   isLiked: Boolean!
 }
 
+"""커뮤니티 게시글 댓글"""
+type Comment {
+  id: ID!
+  author: String!
+  content: String!
+  """이미지 URL 목록 (댓글당 최대 1장)"""
+  images: [String!]!
+  """태그 목록 (병원/상품)"""
+  tags: [PostTag!]!
+  """ISO-8601 또는 상대 시간 문자열"""
+  createdAt: String
+  likes: Int!
+  """현재 로그인 사용자가 좋아요 눌렀는지 (추후 구현 시 사용)"""
+  isLiked: Boolean!
+  """현재 로그인 사용자가 작성한 댓글인지 (수정/삭제 버튼 노출용)"""
+  isMine: Boolean!
+  """답글 개수 (최상위 댓글만, 답글 달기 UI용)"""
+  replyCount: Int!
+}
+
 input CreatePostInput {
   content: String!
   postType: String
   dentalIds: [ID!]
   """이미지 URL 목록 (최대 4장, 업로드 후 받은 URL 전달)"""
   imageUrls: [String!]
+}
+
+"""댓글 작성 입력 (게시글 ID + 내용, 이미지 1장 선택)"""
+input CreateCommentInput {
+  postId: ID!
+  content: String!
+  """업로드 후 받은 이미지 URL (1장만)"""
+  imageUrl: String
+  """병원 태그 ID 목록 (최대 3개)"""
+  dentalIds: [ID!]
+}
+
+"""답글 작성 입력 (부모 댓글 ID + 내용, 이미지, 태그)"""
+input CreateReplyInput {
+  parentCommentId: ID!
+  content: String!
+  imageUrl: String
+  dentalIds: [ID!]
+}
+
+"""댓글 수정 입력 (댓글 ID + 내용, 이미지 변경 선택)"""
+input UpdateCommentInput {
+  id: ID!
+  content: String!
+  """이미지 URL (1장만, 비우면 이미지 제거)"""
+  imageUrl: String
+  """병원 태그 ID 목록 (null이면 변경 없음, 빈 배열이면 태그 제거)"""
+  dentalIds: [ID!]
 }
 
 # 치과(병원) - load_dentals.py로 적재된 데이터
@@ -41,6 +91,12 @@ type Dental {
 extend type Query {
   """최신순. limit 기본 10, offset 기본 0 (페이징). postType 있으면 해당 종류만 (product | hospital)"""
   posts(limit: Int, offset: Int, postType: String): [Post!]!
+  """단일 게시글 조회 (공유 링크용). 없으면 null"""
+  post(id: ID!): Post
+  """게시글별 댓글 목록 (최상위만, 작성일 오름차순). limit 기본 10, offset 기본 0 (페이징)"""
+  comments(postId: ID!, limit: Int, offset: Int): [Comment!]!
+  """특정 댓글의 답글 목록 (작성일 오름차순)"""
+  replies(parentCommentId: ID!): [Comment!]!
   dentals(name: String, limit: Int): [Dental!]!
 }
 
@@ -56,4 +112,14 @@ extend type Mutation {
   deletePost(id: ID!): Boolean!
   """게시글 좋아요 토글 (로그인 필요)"""
   togglePostLike(postId: ID!): PostLikeResult!
+  """댓글 작성 (로그인 필요)"""
+  createComment(input: CreateCommentInput!): Comment!
+  """답글 작성 (로그인 필요, 부모 댓글에 대한 답글)"""
+  createReply(input: CreateReplyInput!): Comment!
+  """본인 댓글만 삭제 가능"""
+  deleteComment(id: ID!): Boolean!
+  """본인 댓글만 수정 가능"""
+  updateComment(input: UpdateCommentInput!): Comment!
+  """댓글 좋아요 토글 (한 번 더 누르면 취소, 1인 1댓글당 1회만 저장)"""
+  toggleCommentLike(commentId: ID!): Comment!
 }

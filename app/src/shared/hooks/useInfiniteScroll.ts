@@ -41,12 +41,14 @@ export function useInfiniteScroll<TData, TItem>({
 }: UseInfiniteScrollOptions<TData, TItem>): UseInfiniteScrollResult<TItem> {
   const [items, setItems] = useState<TItem[]>([]);
   const [hasMore, setHasMore] = useState(true);
-  const initialDone = useRef(false);
   const isFirstMount = useRef(true);
+  const parseItemsRef = useRef(parseItems);
+  parseItemsRef.current = parseItems;
 
   const { data, loading, error, refetch: refetchQuery } = useQuery<TData>(query, {
     variables: { ...baseVariables, limit: pageSize, offset: 0 },
     notifyOnNetworkStatusChange: true,
+    fetchPolicy: "cache-and-network", // 캐시로 즉시 그리기, 백그라운드에서 최신 데이터 갱신
   });
 
   // 필터(탭)이 바뀌면 목록 초기화. useQuery 변수 변경으로 자동 재조회됨
@@ -55,7 +57,6 @@ export function useInfiniteScroll<TData, TItem>({
       isFirstMount.current = false;
       return;
     }
-    initialDone.current = false;
     setItems([]);
     setHasMore(true);
   }, [resetKey]);
@@ -64,13 +65,13 @@ export function useInfiniteScroll<TData, TItem>({
     fetchPolicy: "network-only",
   });
 
+  // data가 바뀔 때만 items 동기화 (초기 로드 + refetch 완료 시). parseItems는 ref로 참조해 불필요한 재실행 방지
   useEffect(() => {
-    if (!data || initialDone.current) return;
-    const list = parseItems(data);
+    if (!data) return;
+    const list = parseItemsRef.current(data);
     setItems(list);
     if (list.length < pageSize) setHasMore(false);
-    initialDone.current = true;
-  }, [data, pageSize, parseItems]);
+  }, [data, pageSize]);
 
   const loadMore = () => {
     if (loadingMore || !hasMore || items.length === 0) return;
@@ -94,10 +95,9 @@ export function useInfiniteScroll<TData, TItem>({
   };
 
   const refetch = () => {
-    initialDone.current = false;
-    setItems([]);
     setHasMore(true);
-    refetchQuery();
+    refetchQuery({ fetchPolicy: "network-only" });
+    // 목록은 비우지 않음. 새 data 도착 시 위 useEffect에서 갱신됨 (깜빡임 방지)
   };
 
   return {
