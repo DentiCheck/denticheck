@@ -1,0 +1,139 @@
+> Task :compileJava UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :classes UP-TO-DATE
+
+> Task :compileTestJava FAILED
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\HospitalRepositoryIntegrationTest.java:3: error: package com.denticheck.api.domain.hospital.entity does not exist
+import com.denticheck.api.domain.hospital.entity.HospitalEntity;
+                                                ^
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\HospitalRepositoryIntegrationTest.java:20: error: cannot find symbol
+    private HospitalRepository hospitalRepository;
+            ^
+  symbol:   class HospitalRepository
+  location: class HospitalRepositoryIntegrationTest
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\UserHospitalRepositoryIntegrationTest.java:3: error: package com.denticheck.api.domain.hospital.entity does not exist
+import com.denticheck.api.domain.hospital.entity.HospitalEntity;
+                                                ^
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\UserHospitalRepositoryIntegrationTest.java:4: error: package com.denticheck.api.domain.hospital.entity does not exist
+import com.denticheck.api.domain.hospital.entity.UserHospitalEntity;
+                                                ^
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\UserHospitalRepositoryIntegrationTest.java:23: error: cannot find symbol
+    private UserHospitalRepository userHospitalRepository;
+            ^
+  symbol:   class UserHospitalRepository
+  location: class UserHospitalRepositoryIntegrationTest
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\UserHospitalRepositoryIntegrationTest.java:29: error: cannot find symbol
+    private HospitalRepository hospitalRepository;
+            ^
+  symbol:   class HospitalRepository
+  location: class UserHospitalRepositoryIntegrationTest
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\dental\controller\DentalReviewControllerTest.java:38: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+    @MockBean
+     ^
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\HospitalRepositoryIntegrationTest.java:30: error: cannot find symbol
+        HospitalEntity cityHallHospital = HospitalEntity.builder()
+        ^
+  symbol:   class HospitalEntity
+  location: class HospitalRepositoryIntegrationTest
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\HospitalRepositoryIntegrationTest.java:30: error: cannot find symbol
+        HospitalEntity cityHallHospital = HospitalEntity.builder()
+                                          ^
+  symbol:   variable HospitalEntity
+  location: class HospitalRepositoryIntegrationTest
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\HospitalRepositoryIntegrationTest.java:37: error: cannot find symbol
+        HospitalEntity gangnamHospital = HospitalEntity.builder()
+        ^
+  symbol:   class HospitalEntity
+  location: class HospitalRepositoryIntegrationTest
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\HospitalRepositoryIntegrationTest.java:37: error: cannot find symbol
+        HospitalEntity gangnamHospital = HospitalEntity.builder()
+                                         ^
+  symbol:   variable HospitalEntity
+  location: class HospitalRepositoryIntegrationTest
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\HospitalRepositoryIntegrationTest.java:44: error: cannot find symbol
+        HospitalEntity busanHospital = HospitalEntity.builder()
+        ^
+  symbol:   class HospitalEntity
+  location: class HospitalRepositoryIntegrationTest
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\HospitalRepositoryIntegrationTest.java:44: error: cannot find symbol
+        HospitalEntity busanHospital = HospitalEntity.builder()
+                                       ^
+  symbol:   variable HospitalEntity
+  location: class HospitalRepositoryIntegrationTest
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\HospitalRepositoryIntegrationTest.java:53: error: cannot find symbol
+        List<HospitalEntity> nearbyHospitals = hospitalRepository.findNearbyHospitals(seoulStationLat, seoulStationLon,
+             ^
+  symbol:   class HospitalEntity
+  location: class HospitalRepositoryIntegrationTest
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\HospitalRepositoryIntegrationTest.java:61: error: cannot find symbol
+        List<HospitalEntity> withinRegion = hospitalRepository.findNearbyHospitals(seoulStationLat, seoulStationLon,
+             ^
+  symbol:   class HospitalEntity
+  location: class HospitalRepositoryIntegrationTest
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\UserHospitalRepositoryIntegrationTest.java:42: error: cannot find symbol
+        HospitalEntity hospital1 = HospitalEntity.builder().name("Hospital A").build();
+        ^
+  symbol:   class HospitalEntity
+  location: class UserHospitalRepositoryIntegrationTest
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\UserHospitalRepositoryIntegrationTest.java:42: error: cannot find symbol
+        HospitalEntity hospital1 = HospitalEntity.builder().name("Hospital A").build();
+                                   ^
+  symbol:   variable HospitalEntity
+  location: class UserHospitalRepositoryIntegrationTest
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\UserHospitalRepositoryIntegrationTest.java:43: error: cannot find symbol
+        HospitalEntity hospital2 = HospitalEntity.builder().name("Hospital B").build();
+        ^
+  symbol:   class HospitalEntity
+  location: class UserHospitalRepositoryIntegrationTest
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\UserHospitalRepositoryIntegrationTest.java:43: error: cannot find symbol
+        HospitalEntity hospital2 = HospitalEntity.builder().name("Hospital B").build();
+                                   ^
+  symbol:   variable HospitalEntity
+  location: class UserHospitalRepositoryIntegrationTest
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\UserHospitalRepositoryIntegrationTest.java:46: error: cannot find symbol
+        UserHospitalEntity fav1 = UserHospitalEntity.builder()
+        ^
+  symbol:   class UserHospitalEntity
+  location: class UserHospitalRepositoryIntegrationTest
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\UserHospitalRepositoryIntegrationTest.java:46: error: cannot find symbol
+        UserHospitalEntity fav1 = UserHospitalEntity.builder()
+                                  ^
+  symbol:   variable UserHospitalEntity
+  location: class UserHospitalRepositoryIntegrationTest
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\UserHospitalRepositoryIntegrationTest.java:52: error: cannot find symbol
+        UserHospitalEntity notFav = UserHospitalEntity.builder()
+        ^
+  symbol:   class UserHospitalEntity
+  location: class UserHospitalRepositoryIntegrationTest
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\UserHospitalRepositoryIntegrationTest.java:52: error: cannot find symbol
+        UserHospitalEntity notFav = UserHospitalEntity.builder()
+                                    ^
+  symbol:   variable UserHospitalEntity
+  location: class UserHospitalRepositoryIntegrationTest
+C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\UserHospitalRepositoryIntegrationTest.java:61: error: cannot find symbol
+        List<UserHospitalEntity> favorites = userHospitalRepository.findByUserIdAndIsFavoriteTrue(user.getId());
+             ^
+  symbol:   class UserHospitalEntity
+  location: class UserHospitalRepositoryIntegrationTest
+23 errors
+1 warning
+
+[Incubating] Problems report is available at: file:///C:/hackathon/denticheck/api/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileTestJava'.
+> Compilation failed; see the compiler output below.
+  C:\hackathon\denticheck\api\src\test\java\com\denticheck\api\domain\hospital\repository\HospitalRepositoryIntegrationTest.java:3: error: package com.denticheck.api.domain.hospital.entity does not exist
+  import com.denticheck.api.domain.hospital.entity.HospitalEntity;
+                                                  ^
+  23 errors
+  1 warning
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to generate a Build Scan (powered by Develocity).
+
+BUILD FAILED in 2s
+3 actionable tasks: 1 executed, 2 up-to-date

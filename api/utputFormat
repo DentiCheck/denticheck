@@ -1,16 +1,30 @@
+<<<<<<< HEAD
+HTTP/1.1 415 
+Vary: Origin
+Vary: Access-Control-Request-Method
+Vary: Access-Control-Request-Headers
+Accept: application/json
+=======
 HTTP/1.1 400 
 Vary: Origin
 Vary: Access-Control-Request-Method
 Vary: Access-Control-Request-Headers
+>>>>>>> origin/feature/api-service
 X-Content-Type-Options: nosniff
 X-XSS-Protection: 0
 Cache-Control: no-cache, no-store, max-age=0, must-revalidate
 Pragma: no-cache
 Expires: 0
 X-Frame-Options: DENY
+<<<<<<< HEAD
+Content-Length: 0
+Date: Wed, 18 Feb 2026 08:45:14 GMT
+
+=======
 Content-Type: text/plain;charset=UTF-8
 Content-Length: 26
 Date: Sun, 15 Feb 2026 10:30:22 GMT
 Connection: close
 
 잘못된 요청입니다.
+>>>>>>> origin/feature/api-service
