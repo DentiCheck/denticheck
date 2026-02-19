@@ -44,7 +44,7 @@ type SelectedImage = {
 };
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_SERVER_URL;
-const REQUEST_TIMEOUT_MS = 30_000;
+const REQUEST_TIMEOUT_MS = 180_000;
 
 export default function AICheckScreen() {
     const { token } = useAuth();
@@ -71,15 +71,15 @@ export default function AICheckScreen() {
 
         const picked = useCamera
             ? await ImagePicker.launchCameraAsync({
-                  mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                  allowsEditing: true,
-                  quality: 1,
-              })
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                quality: 1,
+            })
             : await ImagePicker.launchImageLibraryAsync({
-                  mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                  allowsEditing: true,
-                  quality: 1,
-              });
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                quality: 1,
+            });
 
         if (picked.canceled) return;
 
@@ -150,8 +150,8 @@ export default function AICheckScreen() {
                 e instanceof Error && e.name === "AbortError"
                     ? "빠른 검사 시간이 길어져 중단되었습니다."
                     : e instanceof Error
-                      ? e.message
-                      : "네트워크 오류";
+                        ? e.message
+                        : "네트워크 오류";
             setQuickState("error");
             setQuickError(message);
         } finally {
@@ -189,8 +189,8 @@ export default function AICheckScreen() {
                 e instanceof Error && e.name === "AbortError"
                     ? "AI 분석 시간이 길어져 중단되었습니다."
                     : e instanceof Error
-                      ? e.message
-                      : "네트워크 오류";
+                        ? e.message
+                        : "네트워크 오류";
             setAnalyzeState("error");
             setAnalyzeError(message);
         } finally {

@@ -66,7 +66,7 @@ export default function HomeScreen() {
 
               <TouchableOpacity
                 className="flex-1"
-                onPress={() => navigation.navigate("Hospitals")}
+                onPress={() => navigation.navigate("DentalSearch")}
                 activeOpacity={0.9}
               >
                 <LinearGradient
