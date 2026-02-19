@@ -74,13 +74,18 @@ class LlmClient:
             system_prompt = prompts.get_system_persona_doctor(language=language)
             
         try:
+            # 모델의 순응도를 높이기 위해 규칙을 메시지 뒤에 한 번 더 상기시킵니다.
+            instruction = "\n\n(반드시 지킬 것: 한글로만 답변, 영어 및 한자 사용 금지, 강조기호 ** 금지, 불렛은 • 사용)"
             messages = [
                 SystemMessage(content=system_prompt),
-                HumanMessage(content=user_message)
+                HumanMessage(content=user_message + instruction)
             ]
             # 비동기 호출로 변경 (ainvoke)
             response = await self.llm.ainvoke(messages)
-            return await self.parser.ainvoke(response)
+            content = await self.parser.ainvoke(response)
+            
+            # 최종 방어 코드: 혹시라도 포함된 ** 기호 제거
+            return content.replace("**", "")
         except Exception as e:
             return f"LLM 호출 중 오류 발생: {str(e)}"
 
@@ -99,13 +104,16 @@ class LlmClient:
         if system_prompt is None:
             system_prompt = prompts.get_system_persona_doctor(language=language)
             
+        # 모델의 순응도를 높이기 위해 규칙을 메시지 뒤에 한 번 더 상기시킵니다.
+        instruction = "\n\n(반드시 지킬 것: 한글로만 답변, 영어 및 한자 사용 금지, 강조기호 ** 금지, 불렛은 • 사용)"
         messages = [
             SystemMessage(content=system_prompt),
-            HumanMessage(content=user_message)
+            HumanMessage(content=user_message + instruction)
         ]
         # 비동기 스트림 (astream)
         async for chunk in (self.llm | self.parser).astream(messages):
-            yield chunk
+            # 스트리밍 중에도 강조 기호가 나오면 제거 (간단한 필터링)
+            yield chunk.replace("**", "")
 
     async def generate_report(self, data, context: str = "", language: str = "ko") -> dict:
         """

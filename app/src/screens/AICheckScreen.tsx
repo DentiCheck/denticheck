@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Image, Linking, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
 import { Camera, ImagePlus } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -186,10 +187,12 @@ export default function AICheckScreen() {
     const [quickResult, setQuickResult] = useState<QuickResponse | null>(null);
     const [analyzeResult, setAnalyzeResult] = useState<AnalyzeResponse | null>(null);
     const [quickError, setQuickError] = useState("");
+    const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
     const [analyzeError, setAnalyzeError] = useState("");
 
     const canRunQuick = useMemo(() => !!selectedImage && quickState !== "loading", [selectedImage, quickState]);
     const canRunAnalyze = useMemo(() => !!selectedImage && analyzeState !== "loading", [selectedImage, analyzeState]);
+    const canDownloadPdf = useMemo(() => !!analyzeResult?.pdfUrl && !isDownloadingPdf, [analyzeResult, isDownloadingPdf]);
 
     const pickImage = async (useCamera: boolean) => {
         const permission = useCamera
@@ -203,15 +206,15 @@ export default function AICheckScreen() {
 
         const picked = useCamera
             ? await ImagePicker.launchCameraAsync({
-                  mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                  allowsEditing: true,
-                  quality: 1,
-              })
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                quality: 1,
+            })
             : await ImagePicker.launchImageLibraryAsync({
-                  mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                  allowsEditing: true,
-                  quality: 1,
-              });
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                quality: 1,
+            });
 
         if (picked.canceled) return;
 
@@ -282,8 +285,8 @@ export default function AICheckScreen() {
                 e instanceof Error && e.name === "AbortError"
                     ? "빠른 검사 시간이 길어져 중단되었습니다."
                     : e instanceof Error
-                      ? e.message
-                      : "네트워크 오류";
+                        ? e.message
+                        : "네트워크 오류";
             setQuickState("error");
             setQuickError(message);
         } finally {
@@ -321,8 +324,8 @@ export default function AICheckScreen() {
                 e instanceof Error && e.name === "AbortError"
                     ? "AI 분석 시간이 길어져 중단되었습니다."
                     : e instanceof Error
-                      ? e.message
-                      : "네트워크 오류";
+                        ? e.message
+                        : "네트워크 오류";
             setAnalyzeState("error");
             setAnalyzeError(message);
         } finally {
@@ -331,11 +334,15 @@ export default function AICheckScreen() {
     };
 
     const downloadPdf = async () => {
+        if (isDownloadingPdf) return;
+
         const pdfUrl = analyzeResult?.pdfUrl?.trim();
         if (!pdfUrl) {
             Alert.alert("알림", "다운로드 가능한 PDF가 없습니다.");
             return;
         }
+
+        setIsDownloadingPdf(true);
         const safeSessionId = (analyzeResult?.sessionId ?? `${Date.now()}`).replace(/[^a-zA-Z0-9-_]/g, "");
         const filename = `denticheck-report-${safeSessionId}.pdf`;
         const targetFile = new FileSystem.File(FileSystem.Paths.document, filename);
@@ -344,21 +351,22 @@ export default function AICheckScreen() {
         try {
             const result = await FileSystem.File.downloadFileAsync(downloadUrl, targetFile, { idempotent: true });
 
-            Alert.alert("완료", `PDF가 기기에 저장되었습니다.\n${filename}`);
-
-            if (Platform.OS === "android") {
-                return;
+            // Sharing 라이브러리를 사용하여 파일을 열거나 다른 곳에 저장(공유)할 수 있게 합니다.
+            const isSharingAvailable = await Sharing.isAvailableAsync();
+            if (isSharingAvailable) {
+                await Sharing.shareAsync(result.uri, {
+                    mimeType: "application/pdf",
+                    dialogTitle: "PDF 리포트 저장 및 열기",
+                    UTI: "com.adobe.pdf",
+                });
+            } else {
+                Alert.alert("완료", `PDF가 기기 내부 저장소에 저장되었습니다.\n${filename}`);
             }
-
-            const canOpen = await Linking.canOpenURL(result.uri);
-            if (!canOpen) {
-                Alert.alert("알림", "저장은 완료됐지만 바로 열 수 있는 앱을 찾지 못했습니다.");
-                return;
-            }
-            await Linking.openURL(result.uri);
         } catch (e) {
             const message = e instanceof Error ? e.message : "PDF 다운로드를 시작하지 못했습니다.";
             Alert.alert("오류", message);
+        } finally {
+            setIsDownloadingPdf(false);
         }
     };
 
@@ -483,8 +491,10 @@ export default function AICheckScreen() {
                             </View>
 
                             <View className="pt-2">
-                                <Button className="rounded-xl" onPress={downloadPdf}>
-                                    <Text className="text-white font-semibold">PDF 다운로드</Text>
+                                <Button className="rounded-xl" onPress={downloadPdf} disabled={!canDownloadPdf}>
+                                    <Text className="text-white font-semibold">
+                                        {isDownloadingPdf ? "다운로드 중..." : "PDF 다운로드"}
+                                    </Text>
                                 </Button>
                             </View>
                         </View>
