@@ -31,6 +31,13 @@ ai:
         timeout: 3m
         enabled: true
 
+ollama:
+    enabled: ${OLLAMA_ENABLED:false}
+    base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+    model: ${OLLAMA_MODEL:llama3:8b}
+    generate:
+        timeout-ms: ${OLLAMA_GENERATE_TIMEOUT_MS:18000}
+
 upload:
     storage:
         local-dir: ${UPLOAD_LOCAL_DIR:./uploads/community}

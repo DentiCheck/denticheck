@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
     #    - keep_alive=-1이면 runner 유지되지만, 최초 1회 로딩은 필요
     #    - 워밍업 실패해도 서버는 살아있게(로그만 남김)
     try:
-        app.state.llm_client.warmup()
+        await app.state.llm_client.warmup()
     except Exception as e:
         # 워밍업 실패는 치명적이지 않게 로그만
         print(f"[WARN] Ollama warmup 실패: {e}")

@@ -60,7 +60,11 @@ class DetectionService:
         return tmp_path
 
     def _run_detection(self, image_path: Path) -> DetectResponse:
-        results = self.model.predict(source=str(image_path), conf=0.25, verbose=False)
+        results = self.model.predict(
+            source=str(image_path),
+            conf=settings.DETECT_CONF_THRESHOLD,
+            verbose=False,
+        )
 
         detections = []
         summary = {}

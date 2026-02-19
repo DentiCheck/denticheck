@@ -179,7 +179,7 @@ services:
             - DB_USERNAME=admin
             - DB_PASSWORD=admin_password
             - AI_SERVICE_URL=http://ai:8000
-            - OLLAMA_ENABLED=true
+            - OLLAMA_ENABLED=${OLLAMA_ENABLED:false}
             - OLLAMA_BASE_URL=http://ollama:11434
             - OLLAMA_MODEL=llama3.2:3b
             - OLLAMA_EMBEDDING_MODEL=nomic-embed-text

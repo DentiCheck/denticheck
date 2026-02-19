@@ -23,13 +23,14 @@ from langchain_ollama import ChatOllama
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser
 from denticheck_ai.pipelines.llm import prompts
+from denticheck_ai.core.settings import settings
 
 class LlmClient:
     """
     Ollama 엔진을 기반으로 다양한 언어 모델 작업을 수행하는 클라이언트 클래스입니다.
     """
 
-    def __init__(self, model_name: str = "llama3.2:3b"):
+    def __init__(self, model_name: str | None = None):
         """
         클라이언트 초기화: Ollama 주소 및 모델 설정
         
@@ -39,7 +40,7 @@ class LlmClient:
         # 서버 주소 설정 (Docker 환경 등 대응 가능하도록 환경변수 참조)
         base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         
-        self.model = model_name
+        self.model = model_name or os.getenv("OLLAMA_MODEL", settings.OLLAMA_MODEL)
         # ChatOllama 객체 생성 (온도를 0.2로 설정하여 일관된 전문 답변 유도)
         self.llm = ChatOllama(
             model=self.model,

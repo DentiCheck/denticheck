@@ -1,4 +1,4 @@
-import { ApolloClient, InMemoryCache, HttpLink, from } from '@apollo/client/core';
+import { ApolloClient, InMemoryCache, HttpLink, from } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import * as SecureStore from 'expo-secure-store';
 

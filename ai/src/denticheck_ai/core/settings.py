@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     
     # --- YOLO 모델 관련 설정 ---
     YOLO_MODEL_PATH: str = "models/yolo/weights/best.pt" # 학습된 YOLO 가중치 파일 경로
+    DETECT_CONF_THRESHOLD: float = 0.05 # 탐지 임계값(너무 높으면 검출 누락)
     
     # --- MinIO(오브젝트 스토리지) 관련 설정 ---
     MINIO_ENDPOINT: str = "localhost:9000" # MinIO 서버 주소
@@ -22,6 +23,9 @@ class Settings(BaseSettings):
     MINIO_SECRET_KEY: str = "minioadmin"   # 시크릿 키
     MINIO_BUCKET: str = "denticheck"       # 이미지가 저장된 버킷 이름
     MINIO_SECURE: bool = False             # SSL/TLS 사용 여부
+
+    # --- Ollama 관련 설정 ---
+    OLLAMA_MODEL: str = "llama3.2:3b"
     
     # .env 파일을 자동으로 로드하도록 설정
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding='utf-8', extra="ignore")

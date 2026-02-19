@@ -56,7 +56,8 @@ type ProblemCard = {
 };
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_SERVER_URL;
-const REQUEST_TIMEOUT_MS = 30_000;
+const QUICK_REQUEST_TIMEOUT_MS = 30_000;
+const ANALYZE_REQUEST_TIMEOUT_MS = 120_000;
 
 function resolvePdfDownloadUrl(rawUrl: string): string {
     if (!__DEV__ || Platform.OS !== "android") return rawUrl;
@@ -258,7 +259,7 @@ export default function AICheckScreen() {
         setQuickResult(null);
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+        const timeoutId = setTimeout(() => controller.abort(), QUICK_REQUEST_TIMEOUT_MS);
 
         try {
             const res = await fetch(`${API_BASE_URL}/api/ai-check/quick`, {
@@ -297,10 +298,10 @@ export default function AICheckScreen() {
         setAnalyzeResult(null);
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+        const timeoutId = setTimeout(() => controller.abort(), ANALYZE_REQUEST_TIMEOUT_MS);
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/ai-check/analyze`, {
+            const res = await fetch(`${API_BASE_URL}/api/ai-check/analyze?generatePdf=true`, {
                 method: "POST",
                 headers: buildHeaders(),
                 body: buildFormData(),

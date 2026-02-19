@@ -37,7 +37,7 @@ type AuthContextValue = {
   isLoading: boolean;
   error: string | null;
   signInWithGoogle: () => Promise<void>;
-  signInDev: () => Promise<void>;
+  signInDev: (role?: "user" | "admin") => Promise<void>;
   signOut: () => Promise<void>;
   fetchWithAuth: (url: string, options?: RequestInit) => Promise<Response>;
 };
@@ -82,7 +82,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const storedToken = await SecureStore.getItemAsync("accessToken");
       const storedUser = await SecureStore.getItemAsync("user");
 
-      if (storedToken) setToken(storedToken);
+      // Backward compatibility for old dev token format
+      const normalizedToken =
+        storedToken === "dev-access-token"
+          ? "devAccessToken-user"
+          : storedToken === "dev-access-token-admin"
+            ? "devAccessToken-admin"
+            : storedToken === "dev-access-token-user"
+              ? "devAccessToken-user"
+              : storedToken;
+
+      if (normalizedToken && normalizedToken !== storedToken) {
+        await SecureStore.setItemAsync("accessToken", normalizedToken);
+      }
+
+      if (normalizedToken) setToken(normalizedToken);
       if (storedUser) setUser(JSON.parse(storedUser));
     } catch (e) {
       console.error("Failed to load auth auth storage:", e);
@@ -174,17 +188,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signInDev = async () => {
+  const signInDev = async (role: "user" | "admin" = "user") => {
     setError(null);
     setIsLoading(true);
     try {
       const mockUser: AuthUser = {
         email: "dev@denticheck.com",
-        name: "Dev User",
+        name: role === "admin" ? "Dev Admin" : "Dev User",
         picture: "https://via.placeholder.com/150",
         provider: "dev",
       };
-      const mockAccessToken = "dev-access-token";
+      const mockAccessToken =
+        role === "admin" ? "devAccessToken-admin" : "devAccessToken-user";
       const mockRefreshToken = "dev-refresh-token";
 
       await saveSession(mockAccessToken, mockRefreshToken, mockUser);

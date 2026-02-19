@@ -18,7 +18,6 @@ public class AnalyzeResponse {
     private List<DetectionItem> detections;
     private RagSummary rag;
     private LlmResult llmResult;
-    private String pdfUrl;
 
     @Getter
     @Builder
