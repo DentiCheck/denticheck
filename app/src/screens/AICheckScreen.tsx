@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Image, Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Image, Linking, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
 import { Camera, ImagePlus } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -56,6 +57,33 @@ type ProblemCard = {
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_SERVER_URL;
 const REQUEST_TIMEOUT_MS = 30_000;
+
+function resolvePdfDownloadUrl(rawUrl: string): string {
+    if (!__DEV__ || Platform.OS !== "android") return rawUrl;
+
+    const hostRewritten = rawUrl
+        .replace("://localhost", "://10.0.2.2")
+        .replace("://127.0.0.1", "://10.0.2.2");
+
+    try {
+        if (!API_BASE_URL) return hostRewritten;
+        const pdf = new URL(hostRewritten);
+        const api = new URL(API_BASE_URL);
+        const isLocalLike = pdf.hostname === "10.0.2.2" || pdf.hostname === "localhost" || pdf.hostname === "127.0.0.1";
+
+        // local profile에서 pdfUrl이 19091로 내려와도 에뮬레이터에서는 API 포트(8080)로 맞춰 접근
+        if (isLocalLike && pdf.pathname.startsWith("/reports/")) {
+            pdf.protocol = api.protocol;
+            pdf.hostname = api.hostname;
+            pdf.port = api.port;
+            return pdf.toString();
+        }
+
+        return pdf.toString();
+    } catch {
+        return hostRewritten;
+    }
+}
 
 const fallbackActions = [
     "오늘부터 하루 2~3회, 2분씩 부드럽게 양치하세요.",
@@ -307,16 +335,29 @@ export default function AICheckScreen() {
             Alert.alert("알림", "다운로드 가능한 PDF가 없습니다.");
             return;
         }
+        const safeSessionId = (analyzeResult?.sessionId ?? `${Date.now()}`).replace(/[^a-zA-Z0-9-_]/g, "");
+        const filename = `denticheck-report-${safeSessionId}.pdf`;
+        const targetFile = new FileSystem.File(FileSystem.Paths.document, filename);
+        const downloadUrl = resolvePdfDownloadUrl(pdfUrl);
 
         try {
-            const canOpen = await Linking.canOpenURL(pdfUrl);
-            if (!canOpen) {
-                Alert.alert("오류", "PDF 링크를 열 수 없습니다.");
+            const result = await FileSystem.File.downloadFileAsync(downloadUrl, targetFile, { idempotent: true });
+
+            Alert.alert("완료", `PDF가 기기에 저장되었습니다.\n${filename}`);
+
+            if (Platform.OS === "android") {
                 return;
             }
-            await Linking.openURL(pdfUrl);
-        } catch {
-            Alert.alert("오류", "PDF 다운로드를 시작하지 못했습니다.");
+
+            const canOpen = await Linking.canOpenURL(result.uri);
+            if (!canOpen) {
+                Alert.alert("알림", "저장은 완료됐지만 바로 열 수 있는 앱을 찾지 못했습니다.");
+                return;
+            }
+            await Linking.openURL(result.uri);
+        } catch (e) {
+            const message = e instanceof Error ? e.message : "PDF 다운로드를 시작하지 못했습니다.";
+            Alert.alert("오류", message);
         }
     };
 

@@ -143,17 +143,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userInfo = await GoogleSignin.signIn();
       const user: AuthUser = {
         email: userInfo.data?.user.email,
-        name: userInfo.data?.user.name,
-        picture: userInfo.data?.user.photo,
+        name: userInfo.data?.user.name ?? undefined,
+        picture: userInfo.data?.user.photo ?? undefined,
       };
 
       // ✅ 이걸로 idToken 다시 요청 가능(가끔 signIn 결과에 없을 때가 있음)
       const tokens = await GoogleSignin.getTokens().catch(() => null);
 
-      const idToken =
-        userInfo?.idToken ||
-        (tokens as any)?.idToken || // 버전에 따라 형태가 다를 수 있음
-        null;
+      const signInIdToken =
+        userInfo.type === "success" ? userInfo.data.idToken : null;
+      const idToken = signInIdToken ?? tokens?.idToken ?? null;
 
       if (!idToken)
         throw new Error("No idToken. Check webClientId / console settings.");
