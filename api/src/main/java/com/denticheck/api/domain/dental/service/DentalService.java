@@ -3,6 +3,7 @@ package com.denticheck.api.domain.dental.service;
 import com.denticheck.api.domain.dental.entity.DentalEntity;
 
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface DentalService {
         List<DentalEntity> getAllDentals();
@@ -14,6 +15,12 @@ public interface DentalService {
         List<DentalEntity> searchDentals(String name, int limit);
 
         List<DentalEntity> getMyFavoriteDentals(String username);
+
+        @Transactional
+        boolean toggleDentalLike(String username, java.util.UUID dentalId);
+
+        @Transactional(readOnly = true)
+        boolean isLiked(String username, java.util.UUID dentalId);
 
         List<com.denticheck.api.domain.dental.entity.DentalReviewEntity> getReviews(java.util.UUID dentalId);
 

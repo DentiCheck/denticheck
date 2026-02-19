@@ -181,4 +181,38 @@ public class DentalServiceImpl implements DentalService {
         }
         return dentalRepository.findAllByOrderByNameAsc(pageable);
     }
+
+    @Override
+    @Transactional
+    public boolean toggleDentalLike(String username, java.util.UUID dentalId) {
+        UserEntity user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+
+        DentalEntity dental = dentalRepository.findById(dentalId)
+                .orElseThrow(() -> new IllegalArgumentException("Dental not found: " + dentalId));
+
+        DentalLikeEntity.DentalLikeId likeId = new DentalLikeEntity.DentalLikeId(user.getId(), dental.getId());
+
+        if (dentalLikeRepository.existsById(likeId)) {
+            dentalLikeRepository.deleteById(likeId);
+            return false; // Unliked
+        } else {
+            DentalLikeEntity like = DentalLikeEntity.builder()
+                    .userId(user.getId())
+                    .dentalId(dental.getId())
+                    .build();
+            dentalLikeRepository.save(like);
+            return true; // Liked
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isLiked(String username, java.util.UUID dentalId) {
+        UserEntity user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+
+        DentalLikeEntity.DentalLikeId likeId = new DentalLikeEntity.DentalLikeId(user.getId(), dentalId);
+        return dentalLikeRepository.existsById(likeId);
+    }
 }

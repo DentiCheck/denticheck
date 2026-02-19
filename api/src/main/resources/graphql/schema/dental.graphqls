@@ -9,6 +9,7 @@ type Dental {
   homepageUrl: String
   ratingAvg: Float
   ratingCount: Int
+  isLiked: Boolean
   createdAt: String
   updatedAt: String
 }
@@ -57,4 +58,6 @@ extend type Mutation {
         content: String!
         tags: [String]
     ): Review
+
+    toggleDentalLike(dentalId: ID!): Boolean
 }

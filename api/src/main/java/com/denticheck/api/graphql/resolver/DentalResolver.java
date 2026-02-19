@@ -72,11 +72,36 @@ public class DentalResolver {
         return dental.getRatingCount() != null ? dental.getRatingCount() : 0;
     }
 
+    @org.springframework.graphql.data.method.annotation.SchemaMapping(typeName = "Dental", field = "isLiked")
+    public Boolean isLiked(DentalEntity dental) {
+        try {
+            String username = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                    .getAuthentication().getName();
+            // System.out.println("DEBUG: isLiked check - username: " + username + ",
+            // dentalId: " + dental.getId());
+            if (username == null || username.equals("anonymousUser")) {
+                return false;
+            }
+            return dentalService.isLiked(username, dental.getId());
+        } catch (Exception e) {
+            // e.printStackTrace();
+            return false;
+        }
+    }
+
     @QueryMapping
     @PreAuthorize("hasRole('USER')")
     public List<DentalEntity> myFavoriteDentals() {
         String username = org.springframework.security.core.context.SecurityContextHolder.getContext()
                 .getAuthentication().getName();
         return dentalService.getMyFavoriteDentals(username);
+    }
+
+    @org.springframework.graphql.data.method.annotation.MutationMapping
+    @PreAuthorize("hasRole('USER')")
+    public boolean toggleDentalLike(@Argument java.util.UUID dentalId) {
+        String username = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getName();
+        return dentalService.toggleDentalLike(username, dentalId);
     }
 }

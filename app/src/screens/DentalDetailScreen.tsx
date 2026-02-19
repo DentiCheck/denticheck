@@ -8,6 +8,8 @@ import { ChevronLeft, MapPin, Phone, Clock, Star, Heart, Calendar, Share2, Info 
 import { useColorTheme } from '../shared/providers/ColorThemeProvider';
 import { Button } from '../shared/components/ui/Button';
 import { Badge } from '../shared/components/ui/Badge';
+import { useMutation } from '@apollo/client/react';
+import { TOGGLE_DENTAL_LIKE } from '../graphql/queries';
 
 export default function DentalDetailScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -28,6 +30,20 @@ export default function DentalDetailScreen() {
         features: ['야간진료', '주차가능', '임플란트'],
         description: '최신 장비와 친절한 의료진이 함께하는 스마일 치과입니다. 무통 마취 시스템으로 아프지 않은 치료를 약속드립니다.',
         images: ['#', '#', '#'] // Placeholders
+    };
+
+    const [isLiked, setIsLiked] = React.useState(dental.isLiked || false);
+    const [toggleDentalLike] = useMutation(TOGGLE_DENTAL_LIKE);
+
+    const handleToggleLike = async () => {
+        const previous = isLiked;
+        setIsLiked(!previous);
+        try {
+            await toggleDentalLike({ variables: { dentalId: dental.id } });
+        } catch (e) {
+            setIsLiked(previous);
+            console.error(e);
+        }
     };
 
     return (
@@ -51,8 +67,11 @@ export default function DentalDetailScreen() {
                             <TouchableOpacity className="w-10 h-10 bg-white/90 dark:bg-slate-900/90 rounded-full items-center justify-center shadow-sm backdrop-blur-md">
                                 <Share2 size={20} color="#1e293b" />
                             </TouchableOpacity>
-                            <TouchableOpacity className="w-10 h-10 bg-white/90 dark:bg-slate-900/90 rounded-full items-center justify-center shadow-sm backdrop-blur-md">
-                                <Heart size={20} color={theme.primary} />
+                            <TouchableOpacity
+                                onPress={handleToggleLike}
+                                className="w-10 h-10 bg-white/90 dark:bg-slate-900/90 rounded-full items-center justify-center shadow-sm backdrop-blur-md"
+                            >
+                                <Heart size={20} color={isLiked ? "#ef4444" : theme.primary} fill={isLiked ? "#ef4444" : "none"} />
                             </TouchableOpacity>
                         </View>
                     </View>

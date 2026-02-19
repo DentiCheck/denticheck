@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, Linking, ActivityIndicator } from 'react-native';
-import { useQuery } from '@apollo/client/react';
-import { SEARCH_DENTALS } from '../graphql/queries';
+import { useQuery, useMutation } from '@apollo/client/react';
+import { SEARCH_DENTALS, TOGGLE_DENTAL_LIKE } from '../graphql/queries';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
@@ -21,8 +21,10 @@ type Dental = {
     distance: string;
     ratingAvg: number;
     ratingCount: number;
-    phone: string;
+    phone?: string;
     isOpen: boolean;
+    description?: string;
+    isLiked?: boolean;
     openTime: string;
     features: string[];
     isAd?: boolean;
@@ -57,6 +59,9 @@ export default function DentalSearchScreen() {
     const { theme } = useColorTheme();
     const [searchQuery, setSearchQuery] = useState('');
     const [favorites, setFavorites] = useState<string[]>([]);
+
+
+
     const [page, setPage] = useState(0);
 
     // Get tab param from navigation
@@ -76,6 +81,8 @@ export default function DentalSearchScreen() {
         longitude: 126.9707,
     };
 
+    const [toggleDentalLike] = useMutation(TOGGLE_DENTAL_LIKE);
+
     const { data, loading, error, fetchMore } = useQuery<SearchDentalsData, SearchDentalsVars>(SEARCH_DENTALS, {
         variables: {
             latitude: defaultLocation.latitude,
@@ -86,21 +93,31 @@ export default function DentalSearchScreen() {
         },
     });
 
-    const dentalsData = data?.searchDentals?.content || [];
+    const dentalsData = React.useMemo(() => data?.searchDentals?.content || [], [data]);
 
-    const dentals: Dental[] = dentalsData.map((d: any) => ({
+    const dentals: Dental[] = React.useMemo(() => dentalsData.map((d: any) => ({
         id: d.id,
         name: d.name,
-        address: d.address || '주소 정보 없음',
-        distance: '0.0km', // TODO: Calculate distance
-        ratingAvg: d.ratingAvg || 0.0,
+        address: d.address || '',
+        ratingAvg: d.ratingAvg || 0,
         ratingCount: d.ratingCount || 0,
-        phone: d.phone || '',
+        latitude: d.latitude,
+        longitude: d.longitude,
+        phone: d.phone,
+        description: d.description,
+        isLiked: d.isLiked || false,
+        distance: '0.0km', // Mock
         isOpen: true, // Mock
         openTime: '09:00 - 18:00', // Mock
         features: [], // Mock
-        isAd: false,
-    }));
+    })), [dentalsData]);
+
+    useEffect(() => {
+        if (dentals) {
+            const likedIds = dentals.filter((d) => d.isLiked).map((d) => d.id);
+            setFavorites(likedIds);
+        }
+    }, [dentalsData]); // Depend on dentalsData to re-sync when data changes
 
     if (loading) {
         return (
@@ -118,10 +135,19 @@ export default function DentalSearchScreen() {
         );
     }
 
-    const toggleFavorite = (id: string) => {
-        setFavorites((prev) =>
-            prev.includes(id) ? prev.filter((fav) => fav !== id) : [...prev, id]
-        );
+
+
+    const toggleFavorite = async (id: string) => {
+        try {
+            const { data } = await toggleDentalLike({ variables: { dentalId: id } }) as { data: { toggleDentalLike: boolean } };
+            if (data?.toggleDentalLike) {
+                setFavorites((prev) => [...prev, id]);
+            } else {
+                setFavorites((prev) => prev.filter((fav) => fav !== id));
+            }
+        } catch (e) {
+            console.error("Failed to toggle like", e);
+        }
     };
 
     const filteredDentals = dentals.filter((dental) =>

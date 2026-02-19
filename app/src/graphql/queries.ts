@@ -13,6 +13,7 @@ export const GET_DENTALS_LIST = gql`
       homepageUrl
       ratingAvg
       ratingCount
+      isLiked
     }
   }
 `;
@@ -31,6 +32,7 @@ export const SEARCH_DENTALS = gql`
         homepageUrl
         ratingAvg
         ratingCount
+        isLiked
       }
       pageInfo {
         currentPage
@@ -254,5 +256,11 @@ export const CREATE_POST = gql`
       isMine
       isLiked
     }
+  }
+`;
+
+export const TOGGLE_DENTAL_LIKE = gql`
+  mutation ToggleDentalLike($dentalId: ID!) {
+    toggleDentalLike(dentalId: $dentalId)
   }
 `;
