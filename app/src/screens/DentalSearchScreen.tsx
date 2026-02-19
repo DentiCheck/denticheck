@@ -70,10 +70,13 @@ export default function DentalSearchScreen() {
 
     // Update activeTab if params change
     React.useEffect(() => {
+        console.log("DentalSearchScreen tab param:", tab);
         if (tab === 'favorites') {
             setActiveTab('favorites');
         }
     }, [tab]);
+
+    console.log("DentalSearchScreen activeTab:", activeTab);
 
     // Default location (Seoul Station) for search
     const defaultLocation = {

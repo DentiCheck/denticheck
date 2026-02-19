@@ -32,6 +32,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.hamcrest.Matchers.is;
 
 @WebMvcTest(DentalReviewController.class)
 public class DentalReviewControllerTest {
@@ -45,6 +46,12 @@ public class DentalReviewControllerTest {
         @Autowired
         private ObjectMapper objectMapper;
 
+        @MockBean
+        private com.denticheck.api.security.jwt.filter.JWTFilter jwtFilter;
+
+        @MockBean(name = "SocialSuccessHandler")
+        private org.springframework.security.web.authentication.AuthenticationSuccessHandler socialSuccessHandler;
+
         @Test
         @WithMockUser
         public void getReviews_ShouldReturnReviewList() throws Exception {
@@ -53,7 +60,7 @@ public class DentalReviewControllerTest {
                                 .id(UUID.randomUUID())
                                 .dental(DentalEntity.builder().id(dentalId).build())
                                 .user(UserEntity.builder().id(UUID.randomUUID()).username("testuser").build())
-                                .rating(5)
+                                .rating((short) 5)
                                 .content("Great service")
                                 .createdAt(ZonedDateTime.now())
                                 .tagsJson("[\"kind\", \"clean\"]")
@@ -63,8 +70,8 @@ public class DentalReviewControllerTest {
 
                 mockMvc.perform(get("/api/v1/dentals/{dentalId}/reviews", dentalId))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$[0].rating").value(5))
-                                .andExpect(jsonPath("$[0].content").value("Great service"));
+                                .andExpect(jsonPath("$[0].rating", is(5)))
+                                .andExpect(jsonPath("$[0].content", is("Great service")));
         }
 
         @Test
@@ -92,7 +99,7 @@ public class DentalReviewControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.rating").value(5))
-                                .andExpect(jsonPath("$.content").value("Excellent!"));
+                                .andExpect(jsonPath("$.rating", is(5)))
+                                .andExpect(jsonPath("$.content", is("Excellent!")));
         }
 }

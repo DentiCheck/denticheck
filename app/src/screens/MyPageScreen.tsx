@@ -235,7 +235,10 @@ export default function MyPageScreen() {
               label="찜한 병원"
               color="#ef4444"
               onPress={() =>
-                navigation.navigate("Dentals", { tab: "favorites" })
+                navigation.navigate("Main", {
+                  screen: "DentalSearch",
+                  params: { tab: "favorites" },
+                })
               }
             />
           </View>
