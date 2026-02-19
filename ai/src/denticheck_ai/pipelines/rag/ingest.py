@@ -29,6 +29,7 @@ from dotenv import load_dotenv
 from langchain_milvus import Milvus
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 # 환경 변수 로드
 load_dotenv()
@@ -71,9 +72,20 @@ def ingest_data():
         )
         documents.append(doc)
 
-    print(f"총 {len(documents)}건의 문서를 준비했습니다.")
+    print(f"원본 문서 총 {len(documents)}건을 로드했습니다.")
 
-    # 3. 로컬 임베딩 모델 설정
+    # 3. 문서 분할 (Chunking) 추가
+    # 긴 문서를 지정된 크기로 나누고, 문맥 유지를 위해 중복 구간(Overlap)을 설정합니다.
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=100,
+        length_function=len,
+        add_start_index=True,
+    )
+    split_docs = text_splitter.split_documents(documents)
+    print(f"청킹 완료: {len(documents)}건 -> {len(split_docs)}건의 청크로 분할되었습니다.")
+
+    # 4. 로컬 임베딩 모델 설정
     # 한국어 성능이 검증된 'jhgan/ko-sroberta-multitask' 모델을 사용하여 텍스트를 벡터로 수치화합니다.
     print("로컬 임베딩 모델 로드 중 (최초 실행 시 다운로드 진행)...")
     embeddings = HuggingFaceEmbeddings(
@@ -90,18 +102,24 @@ def ingest_data():
     print(f"Milvus 연결 및 데이터 적재 시작... (타겟: {milvus_uri})")
     
     try:
-        vector_db = Milvus.from_documents(
-            documents,
+        # Milvus 객체 초기화 (동기 방식)
+        vector_db = Milvus(
             embeddings,
             connection_args={
                 "uri": milvus_uri,
             },
             collection_name=collection_name,
-            drop_old=True # 색인이 중복되지 않도록 기존 데이터를 비우고 새로 생성
+            drop_old=True
         )
-        print(f"성공적으로 {len(documents)}건의 지식을 Milvus에 적재했습니다.")
+        
+        # 분할된 문서(청크)를 적재
+        vector_db.add_documents(split_docs)
+        
+        print(f"성공적으로 {len(split_docs)}건의 지식 청크를 Milvus에 적재했습니다.")
     except Exception as e:
+        import traceback
         print(f"[에러] Milvus 적재 실패: {e}")
+        traceback.print_exc()
 
 if __name__ == "__main__":
     ingest_data()
