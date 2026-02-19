@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
@@ -12,27 +11,24 @@ import {
 } from "react-native";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import {
-  Search,
-  Plus,
   Heart,
   MessageCircle,
   Share2,
   Package,
   Hospital as LucideHospital,
   Trash2,
+  Pencil,
 } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useMutation } from "@apollo/client/react";
-import { GET_POSTS, CREATE_POST, DELETE_POST, TOGGLE_POST_LIKE } from "../../graphql/queries";
-
-import { useColorScheme } from "nativewind";
+import { GET_POSTS, GET_POSTS_LIKED_BY_ME, GET_POSTS_BY_ME, CREATE_POST, UPDATE_POST, DELETE_POST, TOGGLE_POST_LIKE } from "../../graphql/queries";
 
 import { Button } from "../../shared/components/ui/Button";
-import { Tabs, TabsList, TabsTrigger } from "../../shared/components/ui/Tabs";
 import { useColorTheme } from "../../shared/providers/ColorThemeProvider";
 import { useInfiniteScroll } from "../../shared/hooks/useInfiniteScroll";
 import { InfiniteScrollView } from "../../shared/components/InfiniteScrollView";
-import { PostFormModal, type PostFormSubmitPayload } from "./PostFormModal";
+import { PostFormModal, type PostFormSubmitPayload, type PostFormInitialValues } from "./PostFormModal";
+import { CommunityHeader } from "./CommunityHeader";
 import { BASE_URL, SHARE_WEB_BASE_URL } from "../../shared/lib/constants";
 import * as SecureStore from "expo-secure-store";
 
@@ -44,7 +40,7 @@ type Post = {
   authorInitial: string;
   content: string;
   images?: string[];
-  tags: { type: "product" | "hospital"; name: string }[];
+  tags: { type: "product" | "hospital"; name: string; id?: string }[];
   likes: number;
   comments: number;
   createdAt: Date | string;
@@ -56,14 +52,20 @@ type Post = {
 export default function CommunityScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
-  const scrollToPostId = (route.params as { scrollToPostId?: string } | undefined)?.scrollToPostId;
+  const routeParams = route.params as { scrollToPostId?: string; view?: string } | undefined;
+  const scrollToPostId = routeParams?.scrollToPostId;
+  const viewMode = routeParams?.view;
+  const isLikedView = viewMode === "liked";
+  const isMyPostsView = viewMode === "myPosts";
+  const isSpecialView = isLikedView || isMyPostsView;
+
   const listRef = useRef<any>(null);
   const didScrollToPostRef = useRef<string | null>(null);
 
   const { theme } = useColorTheme();
-  const { colorScheme } = useColorScheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [selectedTab, setSelectedTab] = useState("all");
   const [likeOverrides, setLikeOverrides] = useState<Record<string, { isLiked: boolean; likeCount: number }>>({});
 
@@ -73,7 +75,7 @@ export default function CommunityScreen() {
     authorInitial: string;
     content: string;
     images?: string[];
-    tags: Array<{ type: string; name: string }>;
+    tags: Array<{ type: string; name: string; id?: string }>;
     likes: number;
     comments: number;
     createdAt: string | null;
@@ -90,15 +92,23 @@ export default function CommunityScreen() {
     loadMore,
     refetch: refetchPosts,
     error,
-  } = useInfiniteScroll<{ posts: RawPostItem[] }, RawPostItem>({
-    query: GET_POSTS,
+  } = useInfiniteScroll<
+    { posts: RawPostItem[]; postsLikedByMe?: RawPostItem[]; postsByMe?: RawPostItem[] },
+    RawPostItem
+  >({
+    query: isMyPostsView ? GET_POSTS_BY_ME : isLikedView ? GET_POSTS_LIKED_BY_ME : GET_POSTS,
     pageSize: 10,
-    parseItems: (data) => data.posts,
+    parseItems: (data) =>
+      isMyPostsView
+        ? (data.postsByMe ?? [])
+        : isLikedView
+          ? (data.postsLikedByMe ?? [])
+          : data.posts,
     getItemId: (item) => item.id,
-    baseVariables: {
-      postType: selectedTab === "all" ? null : selectedTab,
-    },
-    resetKey: selectedTab,
+    baseVariables: isSpecialView
+      ? {}
+      : { postType: selectedTab === "all" ? null : selectedTab },
+    resetKey: isMyPostsView ? "myPosts" : isLikedView ? "liked" : selectedTab,
   });
 
   // refetch 함수를 ref로 저장하여 최신 함수 참조
@@ -129,6 +139,7 @@ export default function CommunityScreen() {
       tags: (p.tags ?? []).map((t) => ({
         type: t.type as "product" | "hospital",
         name: t.name,
+        ...(t.id != null ? { id: t.id } : {}),
       })),
       likes: over?.likeCount ?? p.likes ?? 0,
       comments: p.comments ?? 0,
@@ -141,6 +152,33 @@ export default function CommunityScreen() {
 
   const [expandedPostIds, setExpandedPostIds] = useState<string[]>([]);
 
+  /** 게시글 → 수정 폼 초기값 (PostFormModal initialValues) */
+  /** 서버가 localhost URL 또는 상대 경로를 반환한 경우 앱에서 로드 가능한 절대 URL로 변환 */
+  const resolveImageUrl = (url: string): string => {
+    if (!url?.trim()) return url;
+    try {
+      const u = new URL(url);
+      if (u.hostname === "localhost" || u.hostname === "127.0.0.1") {
+        const base = new URL(BASE_URL);
+        return base.origin + u.pathname + (u.search || "");
+      }
+      return url;
+    } catch {
+      if (url.startsWith("/")) return BASE_URL.replace(/\/$/, "") + url;
+      return url;
+    }
+  };
+
+  const postToInitialValues = (post: Post): PostFormInitialValues => ({
+    content: post.content ?? "",
+    postType: (post.postType ?? "all") as "all" | "product" | "hospital",
+    dentalIds: (post.tags ?? [])
+      .filter((t): t is { type: "hospital"; name: string; id: string } => t.type === "hospital" && !!t.id)
+      .map((t) => t.id),
+    tags: (post.tags ?? []).map((t) => ({ type: t.type, name: t.name, id: t.id })),
+    images: (post.images ?? []).map((uri) => ({ uri: resolveImageUrl(uri) })),
+  });
+
   const togglePostExpand = (postId: string) => {
     setExpandedPostIds((prev) =>
       prev.includes(postId) ? prev.filter((id) => id !== postId) : [...prev, postId]
@@ -150,6 +188,14 @@ export default function CommunityScreen() {
   const [createPost, { loading: createLoading }] = useMutation(CREATE_POST, {
     onCompleted: () => {
       refetchPostsRef.current();
+      setShowCreateDialog(false);
+    },
+  });
+
+  const [updatePost, { loading: updateLoading }] = useMutation(UPDATE_POST, {
+    onCompleted: () => {
+      refetchPostsRef.current();
+      setEditingPost(null);
       setShowCreateDialog(false);
     },
   });
@@ -186,11 +232,12 @@ export default function CommunityScreen() {
     try {
       const res = await togglePostLike({ variables: { postId } });
       const result = res.data?.togglePostLike;
-      if (result)
+      if (result) {
         setLikeOverrides((prev) => ({ ...prev, [postId]: { isLiked: result.isLiked, likeCount: result.likeCount } }));
-    } catch (e) {
-      const msg = (e as { message?: string })?.message ?? "좋아요 처리에 실패했어요.";
-      Alert.alert("알림", msg);
+        if (isLikedView && !result.isLiked) refetchPostsRef.current();
+      }
+    } catch {
+      // ignore
     }
   };
 
@@ -233,7 +280,8 @@ export default function CommunityScreen() {
           input: {
             content: data.content,
             postType: data.postType,
-            dentalIds: data.dentalIds.length > 0 ? data.dentalIds : null,
+            dentalIds: data.dentalIds && data.dentalIds.length > 0 ? data.dentalIds : null,
+            productIds: data.productIds && data.productIds.length > 0 ? data.productIds : null,
             imageUrls,
           },
         },
@@ -245,6 +293,42 @@ export default function CommunityScreen() {
         (e instanceof Error ? e.message : null) ??
         "게시글 등록에 실패했습니다.";
       Alert.alert("등록 실패", message);
+    }
+  };
+
+  const handleUpdatePostForm = async (postId: string, data: PostFormSubmitPayload) => {
+    try {
+      let imageUrls: string[] = [];
+      if (data.images?.length) {
+        for (const img of data.images) {
+          const uri = img.uri;
+          if (uri.startsWith("http://") || uri.startsWith("https://")) {
+            imageUrls.push(uri);
+          } else {
+            const url = await uploadCommunityImage(uri);
+            imageUrls.push(url);
+          }
+        }
+      }
+      await updatePost({
+        variables: {
+          input: {
+            id: postId,
+            content: data.content,
+            postType: data.postType,
+            dentalIds: data.dentalIds && data.dentalIds.length > 0 ? data.dentalIds : null,
+            productIds: data.productIds && data.productIds.length > 0 ? data.productIds : null,
+            imageUrls,
+          },
+        },
+      });
+      Alert.alert("수정 완료", "게시글이 수정되었습니다.");
+    } catch (e: unknown) {
+      const message =
+        (e as { graphQLErrors?: Array<{ message?: string }> })?.graphQLErrors?.[0]?.message ??
+        (e instanceof Error ? e.message : null) ??
+        "게시글 수정에 실패했습니다.";
+      Alert.alert("수정 실패", message);
     }
   };
 
@@ -303,19 +387,6 @@ export default function CommunityScreen() {
     return null;
   };
 
-  /** 서버가 localhost URL을 반환한 경우 앱이 접근 가능한 BASE_URL로 치환 (에뮬/실기에서 이미지 로드용) */
-  const resolveImageUrl = (url: string): string => {
-    if (!url?.trim()) return url;
-    try {
-      const u = new URL(url);
-      if (u.hostname === "localhost" || u.hostname === "127.0.0.1") {
-        const base = new URL(BASE_URL);
-        return base.origin + u.pathname + (u.search || "");
-      }
-    } catch (_) {}
-    return url;
-  };
-
   const handleDeletePost = (postId: string) => {
     Alert.alert(
       "게시글 삭제",
@@ -328,6 +399,7 @@ export default function CommunityScreen() {
           onPress: async () => {
             try {
               await deletePost({ variables: { id: postId } });
+              if (isMyPostsView) refetchPostsRef.current();
               Alert.alert("삭제됨", "게시글이 삭제되었습니다.");
             } catch (e) {
               const msg = (e as { message?: string })?.message ?? "삭제에 실패했습니다.";
@@ -380,11 +452,13 @@ export default function CommunityScreen() {
   const PostCard = ({
     post,
     onDelete,
+    onEdit,
     isExpanded,
     onToggleExpand,
   }: {
     post: Post;
     onDelete: (postId: string) => void;
+    onEdit?: (post: Post) => void;
     isExpanded: boolean;
     onToggleExpand: () => void;
   }) => {
@@ -395,7 +469,16 @@ export default function CommunityScreen() {
       ? lines.slice(0, MAX_PREVIEW_LINES).join("\n")
       : post.content ?? "";
     return (
-    <View className="p-5 mb-4 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
+    <View
+      className="p-5 mb-4 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm"
+      style={{
+        elevation: 2,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+      }}
+    >
       <View className="flex-row items-center gap-3 mb-4">
         <View className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 items-center justify-center border border-slate-200 dark:border-slate-600">
           <Text className="font-bold text-slate-600 dark:text-slate-300">{post.authorInitial}</Text>
@@ -528,11 +611,11 @@ export default function CommunityScreen() {
       )}
 
       {post.tags.length > 0 && (
-        <View className="flex-row flex-wrap gap-2 mb-4">
+        <View className="mb-4">
           {post.tags.map((tag, idx) => (
             <View
               key={idx}
-              className={`flex-row items-center px-2 py-1 rounded-md ${
+              className={`flex-row items-center px-2 py-1.5 rounded-md mb-1 ${
                 tag.type === "product" ? "bg-indigo-50" : "bg-blue-50"
               }`}
             >
@@ -584,9 +667,16 @@ export default function CommunityScreen() {
         </View>
         <View className="flex-row items-center gap-3">
           {post.isMine && (
-            <TouchableOpacity onPress={() => onDelete(post.id)} disabled={deleteLoading}>
-              <Trash2 size={20} color="#94a3b8" />
-            </TouchableOpacity>
+            <>
+              {onEdit && (
+                <TouchableOpacity onPress={() => onEdit(post)}>
+                  <Pencil size={20} color="#94a3b8" />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={() => onDelete(post.id)} disabled={deleteLoading}>
+                <Trash2 size={20} color="#94a3b8" />
+              </TouchableOpacity>
+            </>
           )}
           <TouchableOpacity onPress={() => handleSharePost(post)}>
             <Share2 size={20} color="#94a3b8" />
@@ -598,85 +688,18 @@ export default function CommunityScreen() {
   };
 
   return (
-    <View className="flex-1 bg-gray-50 dark:bg-slate-900">
+    <View className="flex-1 bg-background dark:bg-slate-900">
       <SafeAreaView edges={["top"]} className="flex-1">
-        {/* Minimal Header */}
-        <View className="px-6 py-4 flex-row items-center justify-between border-b border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 z-10">
-          <Text className="text-2xl font-extrabold text-slate-800 dark:text-white">
-            커뮤니티
-          </Text>
-          <TouchableOpacity
-            onPress={() => setShowCreateDialog(true)}
-            className="w-9 h-9 bg-slate-900 dark:bg-white rounded-full items-center justify-center"
-            style={{
-              elevation: 10,
-              shadowColor: "#e2e8f0",
-              shadowOffset: { width: 0, height: 10 },
-              shadowOpacity: 0.5,
-              shadowRadius: 10,
-            }}
-          >
-            <Plus
-              size={20}
-              color={colorScheme === "dark" ? "black" : "white"}
-            />
-          </TouchableOpacity>
-        </View>
-
-        {/* Sub Header (Search & Tabs) */}
-        <View className="bg-gray-50 dark:bg-slate-900 pb-2">
-          <View className="px-6 py-2">
-            <View className="bg-white dark:bg-slate-800 h-11 rounded-2xl flex-row items-center px-4 border border-slate-200 dark:border-slate-700">
-              <Search size={18} color="#94a3b8" />
-              <TextInput
-                placeholder="관심있는 내용을 검색해보세요"
-                placeholderTextColor="#94a3b8"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                className="flex-1 ml-3 text-base text-slate-800 dark:text-white h-full"
-              />
-            </View>
-          </View>
-
-          <Tabs
-            value={selectedTab}
-            onValueChange={setSelectedTab}
-            className="px-6 mt-2"
-          >
-            <TabsList className="bg-slate-200/50 p-1 rounded-xl h-10 w-full flex-row">
-              <TabsTrigger
-                value="all"
-                className={`flex-1 rounded-lg ${selectedTab === "all" ? "bg-white" : ""}`}
-              >
-                <Text
-                  className={`text-xs font-bold ${selectedTab === "all" ? "text-slate-800" : "text-slate-500"}`}
-                >
-                  전체
-                </Text>
-              </TabsTrigger>
-              <TabsTrigger
-                value="product"
-                className={`flex-1 rounded-lg ${selectedTab === "product" ? "bg-white" : ""}`}
-              >
-                <Text
-                  className={`text-xs font-bold ${selectedTab === "product" ? "text-slate-800" : "text-slate-500"}`}
-                >
-                  상품후기
-                </Text>
-              </TabsTrigger>
-              <TabsTrigger
-                value="hospital"
-                className={`flex-1 rounded-lg ${selectedTab === "hospital" ? "bg-white" : ""}`}
-              >
-                <Text
-                  className={`text-xs font-bold ${selectedTab === "hospital" ? "text-slate-800" : "text-slate-500"}`}
-                >
-                  병원후기
-                </Text>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </View>
+        <CommunityHeader
+          isSpecialView={isSpecialView}
+          isMyPostsView={isMyPostsView}
+          isLikedView={isLikedView}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          selectedTab={selectedTab}
+          onTabChange={setSelectedTab}
+          onOpenCreate={() => setShowCreateDialog(true)}
+        />
 
         {/* Content */}
         {loading ? (
@@ -697,10 +720,10 @@ export default function CommunityScreen() {
           <View className="flex-1 items-center justify-center px-8 py-20">
             <MessageCircle size={48} color="#cbd5e1" />
             <Text className="mt-4 text-center text-slate-600 font-medium">
-              아직 게시글이 없어요
+              {isMyPostsView ? "작성한 게시글이 없어요" : isLikedView ? "좋아요한 게시글이 없어요" : "아직 게시글이 없어요"}
             </Text>
             <Text className="mt-2 text-center text-slate-400 text-sm">
-              첫 번째 글을 작성해 보세요.
+              {isMyPostsView ? "커뮤니티에서 글을 작성해 보세요." : isLikedView ? "마음에 드는 글에 좋아요를 눌러보세요." : "첫 번째 글을 작성해 보세요."}
             </Text>
           </View>
         ) : (
@@ -712,6 +735,7 @@ export default function CommunityScreen() {
               <PostCard
                 post={post}
                 onDelete={handleDeletePost}
+                onEdit={post.isMine ? (p) => setEditingPost(p) : undefined}
                 isExpanded={expandedPostIds.includes(post.id)}
                 onToggleExpand={() => togglePostExpand(post.id)}
               />
@@ -725,11 +749,21 @@ export default function CommunityScreen() {
         )}
 
         <PostFormModal
-          visible={showCreateDialog}
-          onClose={() => setShowCreateDialog(false)}
-          onSubmit={handleSubmitPostForm}
-          submitLoading={createLoading}
-          title="글쓰기"
+          visible={showCreateDialog || !!editingPost}
+          onClose={() => {
+            setShowCreateDialog(false);
+            setEditingPost(null);
+          }}
+          onSubmit={(data) => {
+            if (editingPost) {
+              handleUpdatePostForm(editingPost.id, data);
+              return;
+            }
+            handleSubmitPostForm(data);
+          }}
+          submitLoading={(editingPost ? updateLoading : createLoading)}
+          title={editingPost ? "글 수정" : "글쓰기"}
+          initialValues={editingPost ? postToInitialValues(editingPost) : null}
         />
       </SafeAreaView>
     </View>

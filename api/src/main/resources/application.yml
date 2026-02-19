@@ -2,6 +2,10 @@ spring:
     profiles:
         active: local
         include: oauth, secret
+    servlet:
+        multipart:
+            max-file-size: 10MB
+            max-request-size: 10MB
     graphql:
         graphiql:
             enabled: true

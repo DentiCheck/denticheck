@@ -20,6 +20,9 @@ public interface CommunityPostRepository extends JpaRepository<CommunityPostEnti
     @Query("SELECT p.id FROM CommunityPostEntity p WHERE (:postType IS NULL OR p.postType = :postType) ORDER BY p.createdAt DESC")
     List<UUID> findIdsOrderByCreatedAtDescWithPostType(Pageable pageable, @Param("postType") String postType);
 
+    @Query("SELECT p.id FROM CommunityPostEntity p WHERE p.authorName = :authorName ORDER BY p.createdAt DESC")
+    List<UUID> findIdsByAuthorNameOrderByCreatedAtDesc(Pageable pageable, @Param("authorName") String authorName);
+
     @Query("SELECT DISTINCT p FROM CommunityPostEntity p LEFT JOIN FETCH p.dentalLinks d LEFT JOIN FETCH d.dental WHERE p.id IN :ids")
     List<CommunityPostEntity> findAllWithDentalsByIdIn(@Param("ids") List<UUID> ids);
 

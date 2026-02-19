@@ -48,7 +48,19 @@ input CreatePostInput {
   content: String!
   postType: String
   dentalIds: [ID!]
+  """상품 태그 ID 목록 (최대 3개)"""
+  productIds: [ID!]
   """이미지 URL 목록 (최대 4장, 업로드 후 받은 URL 전달)"""
+  imageUrls: [String!]
+}
+
+"""게시글 수정 입력 (본인 글만 수정 가능)"""
+input UpdatePostInput {
+  id: ID!
+  content: String!
+  postType: String
+  dentalIds: [ID!]
+  productIds: [ID!]
   imageUrls: [String!]
 }
 
@@ -60,6 +72,8 @@ input CreateCommentInput {
   imageUrl: String
   """병원 태그 ID 목록 (최대 3개)"""
   dentalIds: [ID!]
+  """상품 태그 ID 목록 (최대 3개)"""
+  productIds: [ID!]
 }
 
 """답글 작성 입력 (부모 댓글 ID + 내용, 이미지, 태그)"""
@@ -68,6 +82,7 @@ input CreateReplyInput {
   content: String!
   imageUrl: String
   dentalIds: [ID!]
+  productIds: [ID!]
 }
 
 """댓글 수정 입력 (댓글 ID + 내용, 이미지 변경 선택)"""
@@ -78,14 +93,27 @@ input UpdateCommentInput {
   imageUrl: String
   """병원 태그 ID 목록 (null이면 변경 없음, 빈 배열이면 태그 제거)"""
   dentalIds: [ID!]
+  """상품 태그 ID 목록 (null이면 변경 없음, 빈 배열이면 태그 제거)"""
+  productIds: [ID!]
 }
 
 # 치과(병원) - load_dentals.py로 적재된 데이터
 # Dental type is defined in dental.graphqls
 
+# 제휴 상품 (커뮤니티 태그용 목록 조회)
+type Product {
+  id: ID!
+  name: String!
+  category: String
+}
+
 extend type Query {
   """최신순. limit 기본 10, offset 기본 0 (페이징). postType 있으면 해당 종류만 (product | hospital)"""
   posts(limit: Int, offset: Int, postType: String): [Post!]!
+  """현재 로그인 사용자가 좋아요한 게시글만 최신순 (로그인 필요). limit 기본 10, offset 기본 0"""
+  postsLikedByMe(limit: Int, offset: Int): [Post!]!
+  """현재 로그인 사용자가 작성한 게시글만 최신순 (로그인 필요). limit 기본 10, offset 기본 0"""
+  postsByMe(limit: Int, offset: Int): [Post!]!
   """단일 게시글 조회 (공유 링크용). 없으면 null"""
   post(id: ID!): Post
   """게시글별 댓글 목록 (최상위만, 작성일 오름차순). limit 기본 10, offset 기본 0 (페이징)"""
@@ -93,6 +121,8 @@ extend type Query {
   """특정 댓글의 답글 목록 (작성일 오름차순)"""
   replies(parentCommentId: ID!): [Comment!]!
   dentals(name: String, limit: Int): [Dental!]!
+  """제휴 상품 목록 (커뮤니티 상품 태그용). limit 기본 50"""
+  products(limit: Int): [Product!]!
 }
 
 """좋아요 토글 결과"""
@@ -103,6 +133,8 @@ type PostLikeResult {
 
 extend type Mutation {
   createPost(input: CreatePostInput!): Post!
+  """본인 게시글만 수정 가능"""
+  updatePost(input: UpdatePostInput!): Post!
   """본인 게시글만 삭제 가능"""
   deletePost(id: ID!): Boolean!
   """게시글 좋아요 토글 (로그인 필요)"""

@@ -27,6 +27,7 @@ export type PostFormSubmitPayload = {
   content: string;
   postType: string | null;
   dentalIds: string[];
+  productIds: string[];
   images: { uri: string }[];
 };
 
@@ -141,10 +142,15 @@ export function PostFormModal({
       .filter((t): t is { type: "hospital"; name: string; id: string } => t.type === "hospital" && !!t.id)
       .map((t) => t.id)
       .filter((id): id is string => id != null && id !== "");
+    const productIds = formData.tags
+      .filter((t): t is { type: "product"; name: string; id: string } => t.type === "product" && !!t.id)
+      .map((t) => t.id)
+      .filter((id): id is string => id != null && id !== "");
     await onSubmit({
       content,
       postType: formData.postType === "all" ? null : formData.postType,
       dentalIds,
+      productIds,
       images: formData.images,
     });
   };
@@ -293,11 +299,27 @@ export function PostFormModal({
               <Text className="text-sm font-bold text-slate-500 mb-3 ml-1">태그 추가</Text>
               <View className="flex-row gap-3 mb-2">
                 <TouchableOpacity
-                  disabled
-                  className="flex-row items-center bg-slate-100 dark:bg-slate-700 border border-slate-200 px-3 py-2 rounded-xl opacity-60"
+                  onPress={() => setShowTagPicker(true)}
+                  className={`flex-row items-center border px-3 py-2 rounded-xl ${
+                    formData.tags.filter((t) => t.type === "product").length > 0
+                      ? "bg-indigo-100 dark:bg-indigo-900/30 border-indigo-400"
+                      : "bg-white dark:bg-slate-800 border-slate-200"
+                  }`}
                 >
-                  <Package size={16} color="#94a3b8" style={{ marginRight: 6 }} />
-                  <Text className="text-sm font-medium text-slate-400">상품 태그 (준비 중)</Text>
+                  <Package
+                    size={16}
+                    color={formData.tags.filter((t) => t.type === "product").length > 0 ? "#4338ca" : "#475569"}
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text
+                    className={`text-sm font-medium ${
+                      formData.tags.filter((t) => t.type === "product").length > 0
+                        ? "text-indigo-700 dark:text-indigo-300"
+                        : "text-slate-600 dark:text-slate-300"
+                    }`}
+                  >
+                    상품 태그
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setShowTagPicker(true)}
@@ -385,7 +407,7 @@ export function PostFormModal({
         onSelectTag={handleSelectTag}
         onRemoveTag={handleRemoveTag}
         maxHospitalTags={3}
-        enableProductTags={false}
+        enableProductTags={true}
       />
     </Modal>
   );

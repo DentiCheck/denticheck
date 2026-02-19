@@ -28,6 +28,10 @@ public class CommunityPostEntity extends BaseTimeEntity {
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    public void setContent(String content) {
+        this.content = content != null ? content : "";
+    }
+
     @Column(name = "like_count", nullable = false)
     @Builder.Default
     private Integer likeCount = 0;
@@ -48,9 +52,17 @@ public class CommunityPostEntity extends BaseTimeEntity {
     @Column(name = "post_type", length = 20)
     private String postType;
 
+    public void setPostType(String postType) {
+        this.postType = postType;
+    }
+
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<CommunityPostDentalEntity> dentalLinks = new ArrayList<>();
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<CommunityPostProductEntity> productLinks = new ArrayList<>();
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("sortOrder ASC")

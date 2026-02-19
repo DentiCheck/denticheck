@@ -163,6 +163,8 @@ export function CommentInputBar({
         selectedTags={selectedTags}
         onSelectTag={onSelectTag || (() => {})}
         onRemoveTag={onRemoveTag || (() => {})}
+        maxHospitalTags={3}
+        enableProductTags={true}
       />
     </KeyboardAvoidingView>
   );

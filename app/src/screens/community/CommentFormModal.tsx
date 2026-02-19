@@ -40,7 +40,7 @@ export type CommentFormModalProps = {
   /** 초기 태그 (edit 시 기존 태그, reply 시 []) */
   initialTags: Tag[];
   /** 저장 버튼 클릭 시. 이미지 업로드는 호출 전에 처리됨. */
-  onSave: (payload: { content: string; imageUrl: string; dentalIds: string[] }) => Promise<void>;
+  onSave: (payload: { content: string; imageUrl: string; dentalIds: string[]; productIds: string[] }) => Promise<void>;
   /** 저장 중 여부 (버튼 비활성/로딩 문구) */
   saving: boolean;
   /** 이미지 선택 시 (갤러리 등). 선택된 uri 또는 null 반환. */
@@ -95,7 +95,10 @@ export function CommentFormModal({
       const dentalIds = tags
         .filter((t): t is Tag & { id: string } => t.type === 'hospital' && !!t.id)
         .map((t) => t.id);
-      await onSave({ content: trimmed, imageUrl: finalImageUrl, dentalIds });
+      const productIds = tags
+        .filter((t): t is Tag & { id: string } => t.type === 'product' && !!t.id)
+        .map((t) => t.id);
+      await onSave({ content: trimmed, imageUrl: finalImageUrl, dentalIds, productIds });
       onClose();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -166,7 +169,7 @@ export function CommentFormModal({
               className="mt-3 flex-row items-center justify-center px-4 py-2 bg-gray-100 dark:bg-slate-700 rounded-lg"
             >
               <LucideHospital size={16} color="#64748b" />
-              <Text className="ml-2 text-sm text-slate-600 dark:text-slate-300">치과 선택</Text>
+              <Text className="ml-2 text-sm text-slate-600 dark:text-slate-300">태그 선택 (치과/상품)</Text>
             </TouchableOpacity>
             <View className="mt-3 flex-row items-center gap-3">
               {newImageUri ? (
@@ -234,8 +237,8 @@ export function CommentFormModal({
           }
         }}
         onRemoveTag={(index) => setTags(tags.filter((_, i) => i !== index))}
-        maxHospitalTags={5}
-        enableProductTags={false}
+        maxHospitalTags={3}
+        enableProductTags={true}
       />
     </>
   );

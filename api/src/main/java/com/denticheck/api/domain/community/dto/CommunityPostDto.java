@@ -41,6 +41,6 @@ public class CommunityPostDto {
     public static class PostTagDto {
         private String type; // "product" | "hospital"
         private String name;
-        private UUID id; // 병원/상품 ID
+        private String id; // 병원(UUID 문자열) 또는 상품(Long 문자열) ID
     }
 }
