@@ -61,4 +61,9 @@ public class CommunityCommentEntity extends BaseTimeEntity {
     @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<CommunityCommentDentalEntity> dentalLinks = new ArrayList<>();
+
+    /** 상품 태그 링크 */
+    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<CommunityCommentProductEntity> productLinks = new ArrayList<>();
 }

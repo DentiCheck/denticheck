@@ -67,6 +67,52 @@ export const GET_POSTS = gql`
   }
 `;
 
+export const GET_POSTS_LIKED_BY_ME = gql`
+  query GetPostsLikedByMe($limit: Int, $offset: Int) {
+    postsLikedByMe(limit: $limit, offset: $offset) {
+      id
+      author
+      authorInitial
+      content
+      images
+      tags {
+        type
+        name
+        id
+      }
+      likes
+      comments
+      createdAt
+      postType
+      isMine
+      isLiked
+    }
+  }
+`;
+
+export const GET_POSTS_BY_ME = gql`
+  query GetPostsByMe($limit: Int, $offset: Int) {
+    postsByMe(limit: $limit, offset: $offset) {
+      id
+      author
+      authorInitial
+      content
+      images
+      tags {
+        type
+        name
+        id
+      }
+      likes
+      comments
+      createdAt
+      postType
+      isMine
+      isLiked
+    }
+  }
+`;
+
 export const GET_POST = gql`
   query GetPost($id: ID!) {
     post(id: $id) {
@@ -237,6 +283,16 @@ export const GET_DENTALS = gql`
   }
 `;
 
+export const GET_PRODUCTS = gql`
+  query GetProducts($limit: Int) {
+    products(limit: $limit) {
+      id
+      name
+      category
+    }
+  }
+`;
+
 export const CREATE_POST = gql`
   mutation CreatePost($input: CreatePostInput!) {
     createPost(input: $input) {
@@ -263,5 +319,28 @@ export const CREATE_POST = gql`
 export const TOGGLE_DENTAL_LIKE = gql`
   mutation ToggleDentalLike($dentalId: ID!) {
     toggleDentalLike(dentalId: $dentalId)
+  }
+`;
+
+export const UPDATE_POST = gql`
+  mutation UpdatePost($input: UpdatePostInput!) {
+    updatePost(input: $input) {
+      id
+      author
+      authorInitial
+      content
+      images
+      tags {
+        type
+        name
+        id
+      }
+      likes
+      comments
+      createdAt
+      postType
+      isMine
+      isLiked
+    }
   }
 `;

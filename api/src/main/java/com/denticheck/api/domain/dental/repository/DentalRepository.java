@@ -35,11 +35,11 @@ public interface DentalRepository extends JpaRepository<DentalEntity, UUID> {
 
     List<DentalEntity> findAllByOrderByNameAsc(Pageable pageable);
 
+    long countByIdIn(Iterable<UUID> ids);
+
     List<DentalEntity> findByNameContaining(String name);
 
     List<DentalEntity> findByAddressContaining(String address);
 
     List<DentalEntity> findByNameContainingOrAddressContaining(String name, String address);
-
-    long countByIdIn(Iterable<UUID> ids);
 }

@@ -15,6 +15,8 @@ import {
   Palette,
   FileText,
   Settings,
+  MessageSquare,
+  ThumbsUp,
 } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../shared/providers/AuthProvider";
@@ -239,6 +241,22 @@ export default function MyPageScreen() {
                   screen: "DentalSearch",
                   params: { tab: "favorites" },
                 })
+              }
+            />
+            <MenuItem
+              icon={MessageSquare}
+              label="내 게시글 관리"
+              color="#0ea5e9"
+              onPress={() =>
+                navigation.navigate("Community", { view: "myPosts" })
+              }
+            />
+            <MenuItem
+              icon={ThumbsUp}
+              label="좋아요한 게시글 보기"
+              color="#f59e0b"
+              onPress={() =>
+                navigation.navigate("Community", { view: "liked" })
               }
             />
           </View>

@@ -12,14 +12,12 @@ public interface DentalService {
                         double radiusKm,
                         org.springframework.data.domain.Pageable pageable);
 
-        List<DentalEntity> searchDentals(String name, int limit);
-
         List<DentalEntity> getMyFavoriteDentals(String username);
 
-        @Transactional
+        List<DentalEntity> searchDentals(String name, int limit);
+
         boolean toggleDentalLike(String username, java.util.UUID dentalId);
 
-        @Transactional(readOnly = true)
         boolean isLiked(String username, java.util.UUID dentalId);
 
         List<com.denticheck.api.domain.dental.entity.DentalReviewEntity> getReviews(java.util.UUID dentalId);

@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { X, Hospital as LucideHospital, Package } from 'lucide-react-native';
 import { useQuery } from '@apollo/client/react';
-import { GET_DENTALS } from '../../graphql/queries';
+import { GET_DENTALS, GET_PRODUCTS } from '../../graphql/queries';
 
 export type TagType = 'product' | 'hospital';
 
@@ -59,8 +59,23 @@ export function TagPickerModal({
   });
   const dentals = dentalsData?.dentals ?? [];
 
+  const {
+    data: productsData,
+    loading: productsLoading,
+    error: productsError,
+  } = useQuery<{
+    products: Array<{ id: string; name: string; category?: string }>;
+  }>(GET_PRODUCTS, {
+    variables: { limit: 50 },
+    skip: !visible || activeTab !== 'product' || !enableProductTags,
+    fetchPolicy: 'network-only',
+  });
+  const products = productsData?.products ?? [];
+
   const hospitalTags = selectedTags.filter((t) => t.type === 'hospital');
+  const productTags = selectedTags.filter((t) => t.type === 'product');
   const canAddMoreHospital = hospitalTags.length < maxHospitalTags;
+  const canAddMoreProduct = productTags.length < maxHospitalTags;
 
   const handleClose = () => {
     setDentalSearch('');
@@ -70,8 +85,15 @@ export function TagPickerModal({
   const handleSelectDental = (dental: { id: string; name: string }) => {
     if (!canAddMoreHospital) return;
     const tag: Tag = { type: 'hospital', name: dental.name, id: dental.id };
-    // 이미 선택된 태그인지 확인
     if (!selectedTags.find((t) => t.type === 'hospital' && t.id === dental.id)) {
+      onSelectTag(tag);
+    }
+  };
+
+  const handleSelectProduct = (product: { id: string; name: string }) => {
+    if (!canAddMoreProduct) return;
+    const tag: Tag = { type: 'product', name: product.name, id: product.id };
+    if (!selectedTags.find((t) => t.type === 'product' && t.id === product.id)) {
       onSelectTag(tag);
     }
   };
@@ -229,7 +251,64 @@ export function TagPickerModal({
 
           {activeTab === 'product' && enableProductTags && (
             <View className="mb-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-600">
-              <Text className="text-slate-400 text-sm py-2">상품 태그 기능은 준비 중입니다.</Text>
+              {productTags.length > 0 && (
+                <View className="flex-row flex-wrap gap-2 mb-3">
+                  {selectedTags.map(
+                    (tag, idx) =>
+                      tag.type === 'product' && (
+                        <TouchableOpacity
+                          key={idx}
+                          onPress={() => onRemoveTag(idx)}
+                          className="flex-row items-center pl-3 pr-2 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50"
+                        >
+                          <Text className="text-xs font-bold mr-1 text-indigo-700 dark:text-indigo-300">
+                            {tag.name}
+                          </Text>
+                          <X size={12} color="#4338ca" />
+                        </TouchableOpacity>
+                      )
+                  )}
+                </View>
+              )}
+              {productTags.length >= maxHospitalTags && (
+                <Text className="text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">
+                  상품은 최대 {maxHospitalTags}개까지 선택할 수 있어요.
+                </Text>
+              )}
+              <Text className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                제휴 상품 목록이에요. 선택하면 게시글에 태그로 붙어요.
+              </Text>
+              <ScrollView style={{ maxHeight: 400 }} nestedScrollEnabled>
+                {productsLoading ? (
+                  <Text className="text-slate-400 text-sm py-2">상품 목록을 불러오는 중...</Text>
+                ) : productsError ? (
+                  <Text className="text-amber-600 dark:text-amber-400 text-sm py-2">
+                    목록을 불러오지 못했어요. 네트워크를 확인해 주세요.
+                  </Text>
+                ) : products.length === 0 ? (
+                  <Text className="text-slate-400 text-sm py-2">등록된 상품이 없어요.</Text>
+                ) : (
+                  products.map((p) => (
+                    <TouchableOpacity
+                      key={p.id}
+                      onPress={() => handleSelectProduct(p)}
+                      disabled={!canAddMoreProduct}
+                      className={`py-2.5 px-2 border-b border-slate-100 dark:border-slate-700 last:border-b-0 ${
+                        !canAddMoreProduct ? 'opacity-50' : ''
+                      }`}
+                    >
+                      <Text className="text-slate-800 dark:text-white font-medium" numberOfLines={1}>
+                        {p.name}
+                      </Text>
+                      {p.category ? (
+                        <Text className="text-xs text-slate-500 mt-0.5" numberOfLines={1}>
+                          {p.category}
+                        </Text>
+                      ) : null}
+                    </TouchableOpacity>
+                  ))
+                )}
+              </ScrollView>
             </View>
           )}
         </View>

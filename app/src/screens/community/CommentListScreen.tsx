@@ -254,13 +254,19 @@ export default function CommentListScreen() {
       const dentalIds = tagsToSend
         .filter((t): t is Tag & { id: string } => t.type === 'hospital' && !!t.id)
         .map((t) => t.id);
-      
-      console.log('[댓글 작성] 프론트엔드 - dentalIds:', dentalIds);
-      console.log('[댓글 작성] 프론트엔드 - tagsToSend:', tagsToSend);
+      const productIds = tagsToSend
+        .filter((t): t is Tag & { id: string } => t.type === 'product' && !!t.id)
+        .map((t) => t.id);
       
       const result = await createComment({
         variables: {
-          input: { postId, content, imageUrl, dentalIds: dentalIds.length > 0 ? dentalIds : null },
+          input: {
+            postId,
+            content,
+            imageUrl,
+            dentalIds: dentalIds.length > 0 ? dentalIds : null,
+            productIds: productIds.length > 0 ? productIds : null,
+          },
         },
       });
       
@@ -335,7 +341,7 @@ export default function CommentListScreen() {
         }))
       : [];
 
-  const handleFormModalSave = async (payload: { content: string; imageUrl: string; dentalIds: string[] }) => {
+  const handleFormModalSave = async (payload: { content: string; imageUrl: string; dentalIds: string[]; productIds: string[] }) => {
     if (editingCommentId) {
       const parentId = editingParentId;
       await updateComment({
@@ -345,6 +351,7 @@ export default function CommentListScreen() {
             content: payload.content,
             imageUrl: payload.imageUrl,
             dentalIds: payload.dentalIds,
+            productIds: payload.productIds,
           },
         },
       });
@@ -368,6 +375,7 @@ export default function CommentListScreen() {
             content: payload.content,
             imageUrl: payload.imageUrl || undefined,
             dentalIds: payload.dentalIds.length > 0 ? payload.dentalIds : undefined,
+            productIds: payload.productIds.length > 0 ? payload.productIds : undefined,
           },
         },
       });
@@ -405,10 +413,10 @@ export default function CommentListScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white dark:bg-slate-900">
+    <View className="flex-1 bg-background dark:bg-slate-900">
       <SafeAreaView className="flex-1" edges={['top']}>
         {/* 헤더 */}
-        <View className="px-4 py-3 flex-row items-center border-b border-gray-100 dark:border-slate-800">
+        <View className="px-4 py-3 flex-row items-center border-b border-border dark:border-slate-800 bg-background dark:bg-slate-900">
           <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4 p-1">
             <ChevronLeft size={24} color="#1e293b" />
           </TouchableOpacity>

@@ -54,7 +54,16 @@ function postTypeLabel(postType: string | null | undefined) {
 
 export function CommentPostCard({ post }: CommentPostCardProps) {
   return (
-    <View className="mb-6 p-5 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700">
+    <View
+      className="mb-6 p-5 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm"
+      style={{
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+      }}
+    >
       <View className="flex-row items-center gap-3 mb-4">
         <View className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 items-center justify-center">
           <Text className="font-bold text-slate-600 dark:text-slate-300">

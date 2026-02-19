@@ -6,17 +6,21 @@ import com.denticheck.api.domain.community.dto.PostLikeResultDto;
 import com.denticheck.api.domain.community.entity.CommunityCommentEntity;
 import com.denticheck.api.domain.community.entity.CommunityCommentDentalEntity;
 import com.denticheck.api.domain.community.entity.CommunityCommentImageEntity;
+import com.denticheck.api.domain.community.entity.CommunityCommentProductEntity;
 import com.denticheck.api.domain.community.entity.CommunityCommentLikeEntity;
 import com.denticheck.api.domain.community.entity.CommunityPostLikeEntity;
 import com.denticheck.api.domain.community.entity.CommunityPostEntity;
 import com.denticheck.api.domain.community.repository.CommunityCommentDentalRepository;
 import com.denticheck.api.domain.community.repository.CommunityCommentLikeRepository;
+import com.denticheck.api.domain.community.repository.CommunityCommentProductRepository;
 import com.denticheck.api.domain.community.repository.CommunityCommentRepository;
 import com.denticheck.api.domain.community.repository.CommunityPostLikeRepository;
 import com.denticheck.api.domain.community.repository.CommunityPostRepository;
 import com.denticheck.api.domain.community.service.CommunityCommentService;
 import com.denticheck.api.domain.community.service.CommunityImageUploadService;
 import com.denticheck.api.domain.community.service.CommunityPostService;
+import com.denticheck.api.domain.admin.entity.PartnerProduct;
+import com.denticheck.api.domain.admin.repository.PartnerProductRepository;
 import com.denticheck.api.domain.dental.entity.DentalEntity;
 import com.denticheck.api.domain.dental.repository.DentalRepository;
 import com.denticheck.api.domain.user.repository.UserRepository;
@@ -25,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -58,11 +63,22 @@ public class CommunityResolver {
     private final CommunityPostLikeRepository communityPostLikeRepository;
     private final CommunityCommentRepository communityCommentRepository;
     private final CommunityCommentDentalRepository communityCommentDentalRepository;
+    private final CommunityCommentProductRepository communityCommentProductRepository;
     private final CommunityCommentLikeRepository communityCommentLikeRepository;
     private final CommunityPostRepository communityPostRepository;
     private final CommunityImageUploadService communityImageUploadService;
     private final UserRepository userRepository;
     private final DentalRepository dentalRepository;
+    private final PartnerProductRepository partnerProductRepository;
+
+    @QueryMapping
+    public List<ProductDto> products(@Argument("limit") Integer limit) {
+        int max = (limit != null && limit > 0 && limit <= 100) ? limit : 50;
+        List<PartnerProduct> list = partnerProductRepository.findAll(PageRequest.of(0, max)).getContent();
+        return list.stream()
+                .map(p -> new ProductDto(String.valueOf(p.getId()), p.getName(), p.getCategory()))
+                .collect(Collectors.toList());
+    }
 
     @QueryMapping
     public List<CommunityPostDto> posts(
@@ -81,6 +97,51 @@ public class CommunityResolver {
                 : Collections.emptySet();
         list.forEach(dto -> {
             dto.setIsMine(currentAuthorName != null && currentAuthorName.equals(dto.getAuthor()));
+            dto.setIsLiked(likedPostIds.contains(dto.getId()));
+        });
+        return list;
+    }
+
+    @QueryMapping
+    @PreAuthorize("hasRole('USER')")
+    public List<CommunityPostDto> postsLikedByMe(
+            @Argument("limit") Integer limit,
+            @Argument("offset") Integer offset) {
+        UUID currentUserId = getCurrentUserIdOrNull();
+        if (currentUserId == null) {
+            return Collections.emptyList();
+        }
+        String currentAuthorName = getCurrentUserDisplayNameOrNull();
+        int limitVal = limit != null && limit > 0 ? limit : 10;
+        int offsetVal = offset != null && offset >= 0 ? offset : 0;
+        List<CommunityPostDto> list = communityPostService.findLikedByUser(currentUserId, limitVal, offsetVal);
+        list.forEach(dto -> {
+            dto.setIsMine(currentAuthorName != null && currentAuthorName.equals(dto.getAuthor()));
+            dto.setIsLiked(true);
+        });
+        return list;
+    }
+
+    @QueryMapping
+    @PreAuthorize("hasRole('USER')")
+    public List<CommunityPostDto> postsByMe(
+            @Argument("limit") Integer limit,
+            @Argument("offset") Integer offset) {
+        String currentAuthorName = getCurrentUserDisplayNameOrNull();
+        if (currentAuthorName == null || currentAuthorName.isBlank()) {
+            return Collections.emptyList();
+        }
+        UUID currentUserId = getCurrentUserIdOrNull();
+        int limitVal = limit != null && limit > 0 ? limit : 10;
+        int offsetVal = offset != null && offset >= 0 ? offset : 0;
+        List<CommunityPostDto> list = communityPostService.findByAuthorName(currentAuthorName, limitVal, offsetVal);
+        Set<UUID> likedPostIds = currentUserId != null
+                ? communityPostLikeRepository.findByUserId(currentUserId).stream()
+                        .map(CommunityPostLikeEntity::getPostId)
+                        .collect(Collectors.toSet())
+                : Collections.emptySet();
+        list.forEach(dto -> {
+            dto.setIsMine(true);
             dto.setIsLiked(likedPostIds.contains(dto.getId()));
         });
         return list;
@@ -113,6 +174,7 @@ public class CommunityResolver {
         log.info("[댓글 조회] 조회할 댓글 ID 개수: {}", commentIds.size());
         List<CommunityCommentEntity> entities = communityCommentRepository.findAllWithDentalsByIdIn(commentIds);
         log.info("[댓글 조회] 조회된 엔티티 개수: {}", entities.size());
+        attachProductLinksToComments(entities);
         
         // IN 조회는 순서 보장이 없어서, id 순서대로 정렬 (createdAt 순서 유지)
         java.util.Map<UUID, Integer> orderMap = new java.util.HashMap<>();
@@ -161,6 +223,7 @@ public class CommunityResolver {
             return Collections.emptyList();
         }
         List<CommunityCommentEntity> entities = communityCommentRepository.findAllWithDentalsByIdIn(replyIds);
+        attachProductLinksToComments(entities);
         java.util.Map<UUID, Integer> orderMap = new java.util.HashMap<>();
         for (int i = 0; i < replyIds.size(); i++) {
             orderMap.put(replyIds.get(i), i);
@@ -179,6 +242,22 @@ public class CommunityResolver {
         return entities.stream()
                 .map(e -> commentToDto(e, currentAuthorName, finalLikedIds.contains(e.getId()), 0))
                 .collect(Collectors.toList());
+    }
+
+    /** 댓글 엔티티 목록에 productLinks(product 포함)를 로드해 붙임 (commentToDto에서 tags에 상품 포함용) */
+    private void attachProductLinksToComments(List<CommunityCommentEntity> entities) {
+        if (entities == null || entities.isEmpty()) return;
+        List<UUID> ids = entities.stream().map(CommunityCommentEntity::getId).toList();
+        List<CommunityCommentProductEntity> productLinksList = communityCommentProductRepository.findByCommentIdInWithProduct(ids);
+        java.util.Map<UUID, List<CommunityCommentProductEntity>> byCommentId = productLinksList.stream()
+                .collect(Collectors.groupingBy(CommunityCommentProductEntity::getCommentId));
+        for (CommunityCommentEntity c : entities) {
+            List<CommunityCommentProductEntity> links = byCommentId.getOrDefault(c.getId(), Collections.emptyList());
+            for (CommunityCommentProductEntity pl : links) {
+                pl.setComment(c);
+                c.getProductLinks().add(pl);
+            }
+        }
     }
 
     private CommunityCommentDto commentToDto(CommunityCommentEntity e, String currentAuthorName, boolean isLiked, int replyCount) {
@@ -203,8 +282,16 @@ public class CommunityResolver {
                     .filter(d -> d != null)
                     .forEach(dental -> {
                         log.debug("[commentToDto] 태그 추가: {}", dental.getName());
-                        tags.add(new CommunityPostDto.PostTagDto("hospital", dental.getName() != null ? dental.getName() : "", dental.getId()));
+                        tags.add(new CommunityPostDto.PostTagDto("hospital", dental.getName() != null ? dental.getName() : "", dental.getId().toString()));
                     });
+        }
+        if (e.getProductLinks() != null && !e.getProductLinks().isEmpty()) {
+            e.getProductLinks().stream()
+                    .map(CommunityCommentProductEntity::getProduct)
+                    .filter(p -> p != null)
+                    .forEach(product -> tags.add(new CommunityPostDto.PostTagDto("product",
+                            product.getName() != null ? product.getName() : "",
+                            String.valueOf(product.getId()))));
         }
         log.info("[commentToDto] 댓글 ID: {}, 최종 tags 개수: {}", e.getId(), tags.size());
         return CommunityCommentDto.builder()
@@ -299,9 +386,15 @@ public class CommunityResolver {
         } catch (Exception e) {
             throw new IllegalArgumentException("치과 태그 ID 변환 실패: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), e);
         }
+        List<Long> productIds;
+        try {
+            productIds = parseProductIds(input.getProductIds());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("상품 태그 ID 변환 실패: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), e);
+        }
         List<String> imageUrls = input.getImageUrls() != null ? input.getImageUrls() : new ArrayList<>();
         try {
-            CommunityPostDto created = communityPostService.create(authorName, input.getContent(), input.getPostType(), dentalIds, imageUrls);
+            CommunityPostDto created = communityPostService.create(authorName, input.getContent(), input.getPostType(), dentalIds, productIds, imageUrls);
             created.setIsMine(true);
             created.setIsLiked(false);
             return created;
@@ -316,6 +409,54 @@ public class CommunityResolver {
             String message = (detail != null && !detail.isBlank())
                     ? detail
                     : "게시글 등록 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.";
+            throw new RuntimeException(message, e);
+        }
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasRole('USER')")
+    public CommunityPostDto updatePost(@Argument("input") UpdatePostInput input) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (username == null || username.isBlank()) {
+            throw new RuntimeException("로그인이 필요합니다.");
+        }
+        String authorName = userRepository.findByUsername(username)
+                .map(user -> (user.getNickname() != null && !user.getNickname().isBlank())
+                        ? user.getNickname()
+                        : user.getUsername())
+                .orElse(username);
+        UUID postId;
+        try {
+            postId = UUID.fromString(input.getId());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("잘못된 게시글 ID입니다.");
+        }
+        List<UUID> dentalIds = parseDentalIds(input.getDentalIds());
+        List<Long> productIds = parseProductIds(input.getProductIds());
+        List<String> imageUrls = input.getImageUrls() != null ? input.getImageUrls() : new ArrayList<>();
+        try {
+            CommunityPostDto updated = communityPostService.updateIfAuthor(
+                    postId, authorName, input.getContent(), input.getPostType(), dentalIds, productIds, imageUrls);
+            updated.setIsMine(true);
+            UUID currentUserId = getCurrentUserIdOrNull();
+            if (currentUserId != null) {
+                boolean isLiked = communityPostLikeRepository.findByUserId(currentUserId).stream()
+                        .anyMatch(like -> like.getPostId().equals(postId));
+                updated.setIsLiked(isLiked);
+            }
+            return updated;
+        } catch (AccessDeniedException e) {
+            throw e;
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception e) {
+            Throwable cause = e.getCause();
+            String detail = (cause != null && cause.getMessage() != null && !cause.getMessage().isBlank())
+                    ? cause.getMessage()
+                    : e.getMessage();
+            String message = (detail != null && !detail.isBlank())
+                    ? detail
+                    : "게시글 수정 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.";
             throw new RuntimeException(message, e);
         }
     }
@@ -399,12 +540,48 @@ public class CommunityResolver {
         } else {
             log.info("[댓글 작성] dentalIds가 비어있음");
         }
+        // 상품 태그 처리
+        List<Long> productIds;
+        try {
+            productIds = parseProductIds(input.getProductIds());
+        } catch (Exception e) {
+            log.error("[댓글 작성] productIds 파싱 실패", e);
+            throw new IllegalArgumentException("상품 태그 ID 변환 실패: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), e);
+        }
+        if (productIds != null && !productIds.isEmpty()) {
+            List<Long> distinctProductIds = productIds.stream().distinct().toList();
+            if (distinctProductIds.size() > 3) {
+                throw new IllegalArgumentException("상품 태그는 최대 3개까지 선택할 수 있어요.");
+            }
+            List<PartnerProduct> existingProducts = partnerProductRepository.findAllById(distinctProductIds);
+            Set<Long> existingIds = existingProducts.stream().map(PartnerProduct::getId).collect(Collectors.toSet());
+            if (existingIds.size() != distinctProductIds.size()) {
+                throw new IllegalArgumentException("선택한 상품 중 등록되지 않은 항목이 있어요. 상품 목록을 다시 불러온 뒤 다시 선택해 주세요.");
+            }
+            java.util.Map<Long, PartnerProduct> productMap = existingProducts.stream().collect(Collectors.toMap(PartnerProduct::getId, p -> p));
+            for (Long pid : distinctProductIds) {
+                PartnerProduct product = productMap.get(pid);
+                if (product == null) throw new IllegalArgumentException("상품을 찾을 수 없습니다: " + pid);
+                CommunityCommentProductEntity link = CommunityCommentProductEntity.builder()
+                        .commentId(comment.getId())
+                        .productId(pid)
+                        .build();
+                link.setComment(comment);
+                link.setProduct(product);
+                comment.getProductLinks().add(link);
+            }
+        }
         comment = communityCommentRepository.save(comment);
         log.info("[댓글 작성] 댓글 저장 완료. ID: {}, dentalLinks 개수: {}", comment.getId(), comment.getDentalLinks() != null ? comment.getDentalLinks().size() : 0);
         post.setCommentCount((post.getCommentCount() == null ? 0 : post.getCommentCount()) + 1);
         communityPostRepository.save(post);
-        // dentalLinks(dental 포함)까지 로드해서 응답에 tags가 나오게 함
+        // dentalLinks(dental 포함) + productLinks(product 포함) 로드해서 응답에 tags가 나오게 함
         comment = communityCommentRepository.findByIdWithDentals(comment.getId()).orElse(comment);
+        List<CommunityCommentProductEntity> productLinksList = communityCommentProductRepository.findByCommentIdInWithProduct(List.of(comment.getId()));
+        for (CommunityCommentProductEntity pl : productLinksList) {
+            pl.setComment(comment);
+            comment.getProductLinks().add(pl);
+        }
         log.info("[댓글 작성] 조회 후 dentalLinks 개수: {}, dentalLinks: {}", 
                 comment.getDentalLinks() != null ? comment.getDentalLinks().size() : 0,
                 comment.getDentalLinks() != null ? comment.getDentalLinks().stream()
@@ -515,10 +692,39 @@ public class CommunityResolver {
                 reply.getDentalLinks().add(link);
             }
         }
+        List<Long> replyProductIds = parseProductIds(input.getProductIds());
+        if (replyProductIds != null && !replyProductIds.isEmpty()) {
+            List<Long> distinctProductIds = replyProductIds.stream().distinct().toList();
+            if (distinctProductIds.size() > 3) {
+                throw new IllegalArgumentException("상품 태그는 최대 3개까지 선택할 수 있어요.");
+            }
+            List<PartnerProduct> existingProducts = partnerProductRepository.findAllById(distinctProductIds);
+            Set<Long> existingIds = existingProducts.stream().map(PartnerProduct::getId).collect(Collectors.toSet());
+            if (existingIds.size() != distinctProductIds.size()) {
+                throw new IllegalArgumentException("선택한 상품 중 등록되지 않은 항목이 있어요. 상품 목록을 다시 불러온 뒤 다시 선택해 주세요.");
+            }
+            java.util.Map<Long, PartnerProduct> productMap = existingProducts.stream().collect(Collectors.toMap(PartnerProduct::getId, p -> p));
+            for (Long pid : distinctProductIds) {
+                PartnerProduct product = productMap.get(pid);
+                if (product == null) throw new IllegalArgumentException("상품을 찾을 수 없습니다: " + pid);
+                CommunityCommentProductEntity link = CommunityCommentProductEntity.builder()
+                        .commentId(reply.getId())
+                        .productId(pid)
+                        .build();
+                link.setComment(reply);
+                link.setProduct(product);
+                reply.getProductLinks().add(link);
+            }
+        }
         reply = communityCommentRepository.save(reply);
         post.setCommentCount((post.getCommentCount() == null ? 0 : post.getCommentCount()) + 1);
         communityPostRepository.save(post);
         reply = communityCommentRepository.findByIdWithDentals(reply.getId()).orElse(reply);
+        List<CommunityCommentProductEntity> replyProductLinks = communityCommentProductRepository.findByCommentIdInWithProduct(List.of(reply.getId()));
+        for (CommunityCommentProductEntity pl : replyProductLinks) {
+            pl.setComment(reply);
+            reply.getProductLinks().add(pl);
+        }
         return commentToDto(reply, authorName, false, 0);
     }
 
@@ -617,8 +823,45 @@ public class CommunityResolver {
             log.info("[댓글 수정] 댓글 저장 완료. ID: {}, dentalLinks 개수: {}", comment.getId(), comment.getDentalLinks() != null ? comment.getDentalLinks().size() : 0);
         }
         
-        // dentalLinks(dental 포함)까지 로드해서 응답에 tags가 나오게 함
+        // 상품 태그 처리
+        if (input.getProductIds() != null) {
+            communityCommentProductRepository.deleteByCommentId(comment.getId());
+            entityManager.flush();
+            comment = communityCommentRepository.findByIdWithDentals(comment.getId()).orElse(comment);
+            List<Long> productIds = parseProductIds(input.getProductIds());
+            if (productIds != null && !productIds.isEmpty()) {
+                List<Long> distinctProductIds = productIds.stream().distinct().toList();
+                if (distinctProductIds.size() > 3) {
+                    throw new IllegalArgumentException("상품 태그는 최대 3개까지 선택할 수 있어요.");
+                }
+                List<PartnerProduct> existingProducts = partnerProductRepository.findAllById(distinctProductIds);
+                Set<Long> existingIds = existingProducts.stream().map(PartnerProduct::getId).collect(Collectors.toSet());
+                if (existingIds.size() != distinctProductIds.size()) {
+                    throw new IllegalArgumentException("선택한 상품 중 등록되지 않은 항목이 있어요.");
+                }
+                java.util.Map<Long, PartnerProduct> productMap = existingProducts.stream().collect(Collectors.toMap(PartnerProduct::getId, p -> p));
+                for (Long pid : distinctProductIds) {
+                    PartnerProduct product = productMap.get(pid);
+                    if (product == null) throw new IllegalArgumentException("상품을 찾을 수 없습니다: " + pid);
+                    CommunityCommentProductEntity link = CommunityCommentProductEntity.builder()
+                            .commentId(comment.getId())
+                            .productId(pid)
+                            .build();
+                    link.setComment(comment);
+                    link.setProduct(product);
+                    comment.getProductLinks().add(link);
+                }
+            }
+            comment = communityCommentRepository.save(comment);
+        }
+        
+        // dentalLinks(dental 포함) + productLinks 로드해서 응답에 tags가 나오게 함
         comment = communityCommentRepository.findByIdWithDentals(comment.getId()).orElse(comment);
+        List<CommunityCommentProductEntity> productLinksList = communityCommentProductRepository.findByCommentIdInWithProduct(List.of(comment.getId()));
+        for (CommunityCommentProductEntity pl : productLinksList) {
+            pl.setComment(comment);
+            comment.getProductLinks().add(pl);
+        }
         UUID currentUserId = getCurrentUserIdOrNull();
         boolean isLiked = currentUserId != null && communityCommentLikeRepository.existsByUserIdAndCommentId(currentUserId, comment.getId());
         int replyCount = (int) communityCommentRepository.countByParentComment_Id(comment.getId());
@@ -675,13 +918,40 @@ public class CommunityResolver {
         return result;
     }
 
+    /** GraphQL [ID!]는 문자열 배열로 바인딩되므로 Long으로 변환 (상품 ID) */
+    private List<Long> parseProductIds(List<String> raw) {
+        if (raw == null || raw.isEmpty()) return Collections.emptyList();
+        List<Long> result = new ArrayList<>(raw.size());
+        for (String s : raw) {
+            if (s == null || s.isBlank()) continue;
+            try {
+                result.add(Long.parseLong(s.trim()));
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("잘못된 상품 ID: " + s, e);
+            }
+        }
+        return result;
+    }
+
     @lombok.Data
     public static class CreatePostInput {
         private String content;
         private String postType;
         /** GraphQL [ID!] → List<String>으로 바인딩 */
         private List<String> dentalIds;
+        /** GraphQL [ID!] → List<String>으로 바인딩 (상품 태그) */
+        private List<String> productIds;
         /** 이미지 URL 목록 (최대 4장) */
+        private List<String> imageUrls;
+    }
+
+    @lombok.Data
+    public static class UpdatePostInput {
+        private String id;
+        private String content;
+        private String postType;
+        private List<String> dentalIds;
+        private List<String> productIds;
         private List<String> imageUrls;
     }
 
@@ -692,6 +962,8 @@ public class CommunityResolver {
         private String imageUrl;
         /** GraphQL [ID!] → List<String>으로 바인딩 */
         private List<String> dentalIds;
+        /** 상품 태그 ID (문자열로 전달, Long으로 파싱) */
+        private List<String> productIds;
     }
 
     @lombok.Data
@@ -700,6 +972,7 @@ public class CommunityResolver {
         private String content;
         private String imageUrl;
         private List<String> dentalIds;
+        private List<String> productIds;
     }
 
     @lombok.Data
@@ -708,5 +981,15 @@ public class CommunityResolver {
         private String content;
         private String imageUrl;
         private List<String> dentalIds;
+        private List<String> productIds;
+    }
+
+    /** GraphQL Product 타입 (커뮤니티 상품 태그용) */
+    @lombok.Data
+    @lombok.AllArgsConstructor
+    public static class ProductDto {
+        private String id;
+        private String name;
+        private String category;
     }
 }

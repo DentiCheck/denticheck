@@ -4,6 +4,7 @@ spring:
             on-profile: local
     flyway:
         clean-disabled: false
+        out-of-order: true
     datasource:
         url: jdbc:postgresql://localhost:5432/denticheck
         username: admin
