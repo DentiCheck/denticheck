@@ -71,10 +71,9 @@ function resolvePdfDownloadUrl(rawUrl: string): string {
         if (!API_BASE_URL) return hostRewritten;
         const pdf = new URL(hostRewritten);
         const api = new URL(API_BASE_URL);
-        const isLocalLike = pdf.hostname === "10.0.2.2" || pdf.hostname === "localhost" || pdf.hostname === "127.0.0.1";
 
         // local profile에서 pdfUrl이 19091로 내려와도 에뮬레이터에서는 API 포트(8080)로 맞춰 접근
-        if (isLocalLike && pdf.pathname.startsWith("/reports/")) {
+        if (pdf.pathname.startsWith("/reports/")) {
             pdf.protocol = api.protocol;
             pdf.hostname = api.hostname;
             pdf.port = api.port;
