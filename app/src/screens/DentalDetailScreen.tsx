@@ -20,8 +20,8 @@ export default function DentalDetailScreen() {
         id: '1',
         name: '스마일 치과의원',
         address: '서울특별시 강남구 테헤란로 123',
-        rating: 4.8,
-        reviewCount: 248,
+        ratingAvg: 4.8,
+        ratingCount: 248,
         phone: '02-1234-5678',
         isOpen: true,
         openTime: '09:00 - 18:00',
@@ -71,8 +71,8 @@ export default function DentalDetailScreen() {
                                     className="flex-row items-center gap-2"
                                 >
                                     <Star size={18} color="#eab308" fill="#eab308" />
-                                    <Text className="text-base font-bold text-slate-900 dark:text-white">{dental.rating}</Text>
-                                    <Text className="text-base text-slate-500 underline">({dental.reviewCount}개의 후기)</Text>
+                                    <Text className="text-base font-bold text-slate-900 dark:text-white">{dental.ratingAvg || 0}</Text>
+                                    <Text className="text-base text-slate-500 underline">({dental.ratingCount || 0}개의 후기)</Text>
                                 </TouchableOpacity>
                             </View>
                             {dental.isOpen && (

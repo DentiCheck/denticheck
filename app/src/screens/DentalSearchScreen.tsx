@@ -19,8 +19,8 @@ type Dental = {
     name: string;
     address: string;
     distance: string;
-    rating: number;
-    reviewCount: number;
+    ratingAvg: number;
+    ratingCount: number;
     phone: string;
     isOpen: boolean;
     openTime: string;
@@ -93,8 +93,8 @@ export default function DentalSearchScreen() {
         name: d.name,
         address: d.address || '주소 정보 없음',
         distance: '0.0km', // TODO: Calculate distance
-        rating: 0.0, // Mock
-        reviewCount: 0, // Mock
+        ratingAvg: d.ratingAvg || 0.0,
+        ratingCount: d.ratingCount || 0,
         phone: d.phone || '',
         isOpen: true, // Mock
         openTime: '09:00 - 18:00', // Mock
@@ -151,8 +151,8 @@ export default function DentalSearchScreen() {
                         <View className="flex-row items-center gap-2 mb-2">
                             <View className="flex-row items-center gap-1">
                                 <Star size={16} color="#eab308" fill="#eab308" />
-                                <Text className="font-medium text-sm text-foreground">{dental.rating}</Text>
-                                <Text className="text-sm text-muted-foreground">({dental.reviewCount})</Text>
+                                <Text className="font-medium text-sm text-foreground">{dental.ratingAvg}</Text>
+                                <Text className="text-sm text-muted-foreground">({dental.ratingCount})</Text>
                             </View>
                             <Text className="text-muted-foreground">•</Text>
                             <View className="flex-row items-center gap-1">

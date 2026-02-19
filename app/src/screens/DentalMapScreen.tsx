@@ -20,6 +20,8 @@ interface Dental {
     latitude: number;
     longitude: number;
     address?: string;
+    ratingAvg?: number;
+    ratingCount?: number;
 }
 
 interface SearchDentalsData {
@@ -84,8 +86,8 @@ export default function DentalMapScreen() {
             address: h.address || '주소 정보 없음',
             phone: h.phone || '',
             description: h.description || '',
-            rating: 0.0, // Mock for now
-            reviewCount: 0, // Mock for now
+            ratingAvg: h.ratingAvg || 0.0,
+            ratingCount: h.ratingCount || 0,
             isOpen: true, // Mock for now
             openTime: '09:00 - 18:00', // Mock for now
             features: [], // Mock for now
