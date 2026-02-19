@@ -15,8 +15,8 @@ import { ApolloProvider } from "@apollo/client/react";
 import client from "./graphql/client";
 
 enableScreens();
-
-function App() {
+  
+function App() { 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>

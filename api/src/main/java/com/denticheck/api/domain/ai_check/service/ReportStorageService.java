@@ -11,6 +11,8 @@ import java.io.ByteArrayInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -45,19 +47,20 @@ public class ReportStorageService {
         if (pdfBytes == null || pdfBytes.length == 0) {
             return "";
         }
+        String fileStem = buildFileStem(sessionId);
 
         if ("minio".equalsIgnoreCase(storageType)) {
-            return uploadToMinio(sessionId, pdfBytes);
+            return uploadToMinio(fileStem, pdfBytes);
         }
-        return uploadToLocal(sessionId, pdfBytes);
+        return uploadToLocal(fileStem, pdfBytes);
     }
 
-    private String uploadToLocal(String sessionId, byte[] pdfBytes) {
+    private String uploadToLocal(String fileStem, byte[] pdfBytes) {
         try {
             Path dir = Paths.get(localDir).toAbsolutePath().normalize();
             Files.createDirectories(dir);
 
-            String fileName = sessionId + ".pdf";
+            String fileName = fileStem + ".pdf";
             Path path = dir.resolve(fileName);
             Files.write(path, pdfBytes);
 
@@ -68,8 +71,8 @@ public class ReportStorageService {
         }
     }
 
-    private String uploadToMinio(String sessionId, byte[] pdfBytes) {
-        String objectName = minioReportPrefix + "/" + sessionId + ".pdf";
+    private String uploadToMinio(String fileStem, byte[] pdfBytes) {
+        String objectName = minioReportPrefix + "/" + fileStem + ".pdf";
         try {
             MinioClient client = MinioClient.builder()
                     .endpoint(minioEndpoint)
@@ -93,5 +96,10 @@ public class ReportStorageService {
             log.error("Failed to upload PDF to MinIO", e);
             return "";
         }
+    }
+
+    private String buildFileStem(String sessionId) {
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        return sessionId + "-" + timestamp;
     }
 }
