@@ -40,7 +40,8 @@ class MilvusRetriever:
         )
         
         # 2. Milvus 연결 정보 설정
-        self.milvus_uri = os.getenv("MILVUS_URI", "./data/milvus_dental.db")
+        # Default to Milvus server endpoint to avoid accidental milvus-lite mode.
+        self.milvus_uri = os.getenv("MILVUS_URI", "http://localhost:19530")
         self.collection_name = os.getenv("COLLECTION_NAME", "dental_knowledge")
         
         # 3. VectorStore 객체 생성 (기존 생성된 컬렉션에 연결)

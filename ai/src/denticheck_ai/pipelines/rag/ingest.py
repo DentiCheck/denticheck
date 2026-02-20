@@ -96,7 +96,8 @@ def ingest_data():
 
     # 4. Milvus 연결 및 데이터 저장
     # Milvus Lite(로컬 파일 방식) 또는 독립 실행형 서버에 연결합니다.
-    milvus_uri = os.getenv("MILVUS_URI", "./data/milvus_dental.db")
+    # Default to Milvus server endpoint to avoid accidental milvus-lite mode.
+    milvus_uri = os.getenv("MILVUS_URI", "http://localhost:19530")
     collection_name = os.getenv("COLLECTION_NAME", "dental_knowledge")
 
     print(f"Milvus 연결 및 데이터 적재 시작... (타겟: {milvus_uri})")
