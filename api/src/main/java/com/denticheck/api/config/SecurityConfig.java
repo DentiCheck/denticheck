@@ -89,6 +89,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/data/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/dentals/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/dentals/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/dentals/**").permitAll()
                         .requestMatchers("/jwt/exchange", "/jwt/refresh", "/jwt/logout", "/jwt/dev-login").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll() // REST 문서 기본 경로(springdoc)
                         .requestMatchers("/docs/api-docs/**", "/docs/swagger-ui/**").permitAll() // REST 문서 (springdoc)

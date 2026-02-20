@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, Linking, ActivityIndicator, Modal, Pressable, Alert } from 'react-native';
 import { useQuery, useMutation } from '@apollo/client/react';
 import { SEARCH_DENTALS, TOGGLE_DENTAL_LIKE } from '../graphql/queries';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { Search, MapPin, Star, Phone, Clock, Heart, Navigation, MapPinned } from 'lucide-react-native';
@@ -148,6 +148,13 @@ export default function DentalSearchScreen() {
         },
     });
 
+    // Refetch data when screen gains focus (e.g., after deleting a review)
+    useFocusEffect(
+        useCallback(() => {
+            refetch();
+        }, [refetch])
+    );
+
     const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
         const R = 6371; // km
         const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -186,11 +193,11 @@ export default function DentalSearchScreen() {
     }), [dentalsData, currentLocation]);
 
     useEffect(() => {
-        if (dentals) {
+        if (dentals && dentals.length > 0) {
             const likedIds = dentals.filter((d) => d.isLiked).map((d) => d.id);
             setFavorites(likedIds);
         }
-    }, [dentalsData]); // Depend on dentalsData to re-sync when data changes
+    }, [dentalsData]); // Re-sync favorites from server data whenever it changes
 
     if (loading) {
         return (
@@ -233,7 +240,7 @@ export default function DentalSearchScreen() {
     const DentalCard = ({ dental }: { dental: Dental }) => (
         <TouchableOpacity
             activeOpacity={0.9}
-            onPress={() => navigation.navigate('DentalDetail', { dental })}
+            onPress={() => navigation.navigate('DentalDetail', { dental: { ...dental, isLiked: favorites.includes(dental.id) } })}
         >
             <Card className="p-5 mb-4">
                 {dental.isAd && (

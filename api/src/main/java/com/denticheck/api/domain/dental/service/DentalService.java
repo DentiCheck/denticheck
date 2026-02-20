@@ -25,4 +25,6 @@ public interface DentalService {
         com.denticheck.api.domain.dental.entity.DentalReviewEntity createReview(java.util.UUID dentalId,
                         String username,
                         int rating, String content, java.util.List<String> tags, boolean isAnonymous);
+
+        void deleteReview(java.util.UUID reviewId, String username);
 }

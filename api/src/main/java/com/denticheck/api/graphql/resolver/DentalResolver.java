@@ -81,12 +81,19 @@ public class DentalResolver {
 
     @SchemaMapping(typeName = "Dental", field = "ratingAvg")
     public Double ratingAvg(DentalEntity dental) {
-        return dental.getRatingAvg() != null ? dental.getRatingAvg().doubleValue() : 0.0;
+        List<com.denticheck.api.domain.dental.entity.DentalReviewEntity> reviews = dentalService
+                .getReviews(dental.getId());
+        if (reviews == null || reviews.isEmpty())
+            return 0.0;
+        double sum = reviews.stream().mapToInt(r -> r.getRating().intValue()).sum();
+        return Math.round(sum / reviews.size() * 10.0) / 10.0;
     }
 
     @SchemaMapping(typeName = "Dental", field = "ratingCount")
     public Integer ratingCount(DentalEntity dental) {
-        return dental.getRatingCount() != null ? dental.getRatingCount() : 0;
+        List<com.denticheck.api.domain.dental.entity.DentalReviewEntity> reviews = dentalService
+                .getReviews(dental.getId());
+        return reviews != null ? reviews.size() : 0;
     }
 
     @SchemaMapping(typeName = "Dental", field = "isLiked")
@@ -124,5 +131,12 @@ public class DentalResolver {
     public boolean toggleDentalLike(@Argument java.util.UUID dentalId) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return dentalService.toggleDentalLike(username, dentalId);
+    }
+
+    @MutationMapping
+    public boolean deleteReview(@Argument java.util.UUID reviewId) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        dentalService.deleteReview(reviewId, username);
+        return true;
     }
 }

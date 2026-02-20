@@ -61,4 +61,6 @@ extend type Mutation {
     ): Review
 
     toggleDentalLike(dentalId: ID!): Boolean
+
+    deleteReview(reviewId: ID!): Boolean
 }

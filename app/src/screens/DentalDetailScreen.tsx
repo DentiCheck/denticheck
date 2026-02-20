@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Linking, Image } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Linking, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { ChevronLeft, MapPin, Phone, Clock, Star, Heart, Calendar, Share2, Info } from 'lucide-react-native';
@@ -10,6 +10,7 @@ import { Button } from '../shared/components/ui/Button';
 import { Badge } from '../shared/components/ui/Badge';
 import { useMutation } from '@apollo/client/react';
 import { TOGGLE_DENTAL_LIKE } from '../graphql/queries';
+import { fetchReviews } from '../shared/api/api';
 
 export default function DentalDetailScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -33,23 +34,48 @@ export default function DentalDetailScreen() {
     };
 
     const [isLiked, setIsLiked] = React.useState(dental.isLiked || false);
+    const [ratingAvg, setRatingAvg] = React.useState(dental.ratingAvg || 0);
+    const [ratingCount, setRatingCount] = React.useState(dental.ratingCount || 0);
     const [toggleDentalLike] = useMutation(TOGGLE_DENTAL_LIKE);
+
+    // Refresh ratings when screen gains focus (e.g., after deleting a review)
+    useFocusEffect(
+        useCallback(() => {
+            const refreshRating = async () => {
+                try {
+                    const data = await fetchReviews(dental.id);
+                    const reviews = data.content;
+                    setRatingCount(reviews.length);
+                    if (reviews.length > 0) {
+                        const avg = reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length;
+                        setRatingAvg(Math.round(avg * 10) / 10);
+                    } else {
+                        setRatingAvg(0);
+                    }
+                } catch (e) {
+                    // Keep existing values on error
+                }
+            };
+            refreshRating();
+        }, [dental.id])
+    );
 
     const handleToggleLike = async () => {
         const previous = isLiked;
         setIsLiked(!previous);
         try {
             await toggleDentalLike({ variables: { dentalId: dental.id } });
-        } catch (e) {
+        } catch (e: any) {
             setIsLiked(previous);
-            console.error(e);
+            console.error('Toggle like failed:', e);
+            Alert.alert('Error', e?.message || 'Failed to update like status. Please try again.');
         }
     };
 
     return (
         <View className="flex-1 bg-white dark:bg-slate-900">
             {/* Header Image Area (Placeholder) */}
-            <View className="h-64 bg-slate-200 dark:bg-slate-800 relative">
+            <View className="h-64 bg-slate-200 dark:bg-slate-800 relative" style={{ zIndex: 10 }}>
                 {/* Overlay Gradient could go here */}
                 <View className="absolute inset-0 flex items-center justify-center">
                     <Text className="text-slate-400 dark:text-slate-600 font-bold text-lg">Clinic Image</Text>
@@ -90,8 +116,8 @@ export default function DentalDetailScreen() {
                                     className="flex-row items-center gap-2"
                                 >
                                     <Star size={18} color="#eab308" fill="#eab308" />
-                                    <Text className="text-base font-bold text-slate-900 dark:text-white">{dental.ratingAvg || 0}</Text>
-                                    <Text className="text-base text-slate-500 underline">({dental.ratingCount || 0} reviews)</Text>
+                                    <Text className="text-base font-bold text-slate-900 dark:text-white">{ratingAvg}</Text>
+                                    <Text className="text-base text-slate-500 underline">({ratingCount} reviews)</Text>
                                 </TouchableOpacity>
                             </View>
                             {dental.isOpen && (

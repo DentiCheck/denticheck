@@ -84,3 +84,12 @@ export const createReview = async (dentalId: string, rating: number, content: st
         throw error;
     }
 };
+
+export const deleteReview = async (dentalId: string, reviewId: string): Promise<void> => {
+    try {
+        await api.delete(`/dentals/${dentalId}/reviews/${reviewId}`);
+    } catch (error) {
+        console.error('Error deleting review:', error);
+        throw error;
+    }
+};

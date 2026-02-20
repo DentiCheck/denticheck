@@ -215,4 +215,49 @@ public class DentalServiceImpl implements DentalService {
         DentalLikeEntity.DentalLikeId likeId = new DentalLikeEntity.DentalLikeId(user.getId(), dentalId);
         return dentalLikeRepository.existsById(likeId);
     }
+
+    @Override
+    @Transactional
+    public void deleteReview(java.util.UUID reviewId, String username) {
+        com.denticheck.api.domain.dental.entity.DentalReviewEntity review = dentalReviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("Review not found: " + reviewId));
+
+        // Allow deletion by owner or anonymous/unauthenticated users
+        if (!"anonymous".equals(username) && !"anonymousUser".equals(username)) {
+            UserEntity user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+            if (!review.getUser().getId().equals(user.getId())) {
+                throw new IllegalArgumentException("You can only delete your own reviews.");
+            }
+        }
+
+        java.util.UUID dentalId = review.getDental().getId();
+
+        // Save visit ID before deleting the review (to avoid lazy loading issues)
+        java.util.UUID visitId = review.getVisit() != null ? review.getVisit().getId() : null;
+
+        // Delete the review first (review has FK to visit)
+        dentalReviewRepository.delete(review);
+        dentalReviewRepository.flush();
+
+        // Then delete the associated visit
+        if (visitId != null) {
+            dentalVisitRepository.deleteById(visitId);
+        }
+
+        // Recalculate denormalized rating on dental entity
+        DentalEntity dental = dentalRepository.findById(dentalId)
+                .orElseThrow(() -> new IllegalArgumentException("Dental not found: " + dentalId));
+        List<com.denticheck.api.domain.dental.entity.DentalReviewEntity> remaining = dentalReviewRepository
+                .findByDentalId(dentalId);
+        if (remaining.isEmpty()) {
+            dental.setRatingAvg(java.math.BigDecimal.ZERO);
+            dental.setRatingCount(0);
+        } else {
+            double avg = remaining.stream().mapToInt(r -> r.getRating().intValue()).average().orElse(0.0);
+            dental.setRatingAvg(java.math.BigDecimal.valueOf(avg).setScale(2, java.math.RoundingMode.HALF_UP));
+            dental.setRatingCount(remaining.size());
+        }
+        dentalRepository.save(dental);
+    }
 }

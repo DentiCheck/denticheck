@@ -60,4 +60,18 @@ public class DentalReviewController {
 
         return ResponseEntity.ok(DentalReviewResponse.from(review, objectMapper));
     }
+
+    @DeleteMapping("/{dentalId}/reviews/{reviewId}")
+    @Operation(summary = "Delete a review", description = "Delete a review by its ID.")
+    public ResponseEntity<Void> deleteReview(
+            @PathVariable UUID dentalId,
+            @PathVariable UUID reviewId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String username = "anonymous";
+        if (userDetails != null) {
+            username = userDetails.getUsername();
+        }
+        dentalService.deleteReview(reviewId, username);
+        return ResponseEntity.noContent().build();
+    }
 }
