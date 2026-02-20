@@ -8,6 +8,8 @@ import java.util.List;
 
 @Repository
 public interface PartnerProductRepository extends JpaRepository<PartnerProduct, Long> {
-    List<PartnerProduct> findByCategoryContainingOrNameContainingOrderByCreatedAtDescIdDesc(String category, String name);
-    List<PartnerProduct> findAllByOrderByCreatedAtDescIdDesc();
+        List<PartnerProduct> findByCategoryContainingOrNameContainingOrderByCreatedAtDescIdDesc(String category,
+                        String name);
+
+        List<PartnerProduct> findAllByOrderByCreatedAtDescIdDesc();
 }

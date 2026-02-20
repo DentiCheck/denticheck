@@ -57,87 +57,55 @@ class LlmClient:
             raise RuntimeError(res)
         return res
 
-    async def simple_chat(self, user_message: str, language: str = "ko", system_prompt: str = None) -> str:
+    async def simple_chat(self, user_message: str, system_prompt: str = None) -> str:
         """
-        일반적인 챗봇 대화 수행 (한꺼번에 답변 반환) - Async
-
-        Args:
-            user_message (str): 사용자의 입력 메시지
-            language (str): 지원 언어 ('ko' 또는 'en')
-            system_prompt (str): 직접 지정할 시스템 페르소나 (기본값: 치과의사)
-
-        Returns:
-            str: 생성된 답변 텍스트
+        Performs general chatbot conversation (returns full answer) - Async
         """
         if system_prompt is None:
-            # 기본적으로 치과의사 페르소나 적용
-            system_prompt = prompts.get_system_persona_doctor(language=language)
+            system_prompt = prompts.get_system_persona_doctor()
             
         try:
-            # 모델의 순응도를 높이기 위해 규칙을 메시지 뒤에 한 번 더 상기시킵니다.
-            instruction = "\n\n(반드시 지킬 것: 한글로만 답변, 영어 및 한자 사용 금지, 강조기호 ** 금지, 불렛은 • 사용)"
+            # Model response rules reinforcement
+            instruction = "\n\n(Follow strictly: Answer ONLY in English, NO Korean, NO Markdown bold **)"
             messages = [
                 SystemMessage(content=system_prompt),
                 HumanMessage(content=user_message + instruction)
             ]
-            # 비동기 호출로 변경 (ainvoke)
             response = await self.llm.ainvoke(messages)
             content = await self.parser.ainvoke(response)
             
-            # 최종 방어 코드: 혹시라도 포함된 ** 기호 제거
             return content.replace("**", "")
         except Exception as e:
-            return f"LLM 호출 중 오류 발생: {str(e)}"
+            return f"LLM error: {str(e)}"
 
-    async def stream_chat(self, user_message: str, language: str = "ko", system_prompt: str = None):
+    async def stream_chat(self, user_message: str, system_prompt: str = None):
         """
-        글자 단위 실시간 스트리밍 대화 (Async Generator 반환)
-
-        Args:
-            user_message (str): 사용자의 입력 메시지
-            language (str): 지원 언어 ('ko' 또는 'en')
-            system_prompt (str): 직접 지정할 시스템 페르소나 (기본값: 치과의사)
-
-        Yields:
-            str: 실시간 생성되는 답변 텍스트 청크
+        Performs real-time streaming chat
         """
         if system_prompt is None:
-            system_prompt = prompts.get_system_persona_doctor(language=language)
+            system_prompt = prompts.get_system_persona_doctor()
             
-        # 모델의 순응도를 높이기 위해 규칙을 메시지 뒤에 한 번 더 상기시킵니다.
-        instruction = "\n\n(반드시 지킬 것: 한글로만 답변, 영어 및 한자 사용 금지, 강조기호 ** 금지, 불렛은 • 사용)"
+        instruction = "\n\n(Follow strictly: Answer ONLY in English, NO Korean, NO Markdown bold **)"
         messages = [
             SystemMessage(content=system_prompt),
             HumanMessage(content=user_message + instruction)
         ]
-        # 비동기 스트림 (astream)
         async for chunk in (self.llm | self.parser).astream(messages):
-            # 스트리밍 중에도 강조 기호가 나오면 제거 (간단한 필터링)
             yield chunk.replace("**", "")
 
-    async def generate_report(self, data, context: str = "", language: str = "ko") -> dict:
+    async def generate_report(self, data, context: str = "") -> dict:
         """
-        분석 데이터(YOLO, ML 등)와 RAG 지식을 결합하여 전문 소견서 생성 - Async
-
-        Args:
-            data (ReportRequest): 분석 결과 및 사용자 문진 데이터가 포함된 요청 객체
-            context (str): RAG를 통해 검색된 관련 의학 지식 텍스트
-            language (str): 소견서 생성 언어 ('ko' 또는 'en')
-
-        Returns:
-            dict: summary, details, disclaimer가 포함된 구조화된 소견서 결과
+        Generates professional dental report in English.
         """
-        # 1. 작성 가이드라인 및 서식 템플릿 가져오기
-        template = prompts.get_report_generation_template(language)
-        
-        # 2. 분석 결과 데이터를 LLM이 읽기 좋은 텍스트 형식으로 포맷팅 (데이터 투영)
+        template = prompts.get_report_generation_template()
         formatted_data = self._format_data_for_prompt(data, context)
+        system_prompt = prompts.get_system_persona_doctor()
         
-        # 3. 전체 시스템 프롬프트 구성
-        system_prompt = prompts.get_system_persona_doctor(language)
-        # 응답의 형식을 강제하기 위한 지시문
-        format_instruction = "\n\n반드시 아래 형식으로 답변하세요:\nSUMMARY: <한줄요약>\nDETAILS: <상세분석 및 가이드>\nDISCLAIMER: <면책고지>"
+        format_instruction = "\n\nRespond strictly in the following format (ALL IN ENGLISH):\nSUMMARY: <one-line summary>\nDETAILS: <detailed analysis>\nDISCLAIMER: <disclaimer>"
         user_prompt = template.format(context=formatted_data) + format_instruction
+        
+        raw_response = await self._call_ollama(system_prompt, user_prompt)
+        return self._parse_structured_report(raw_response)
         
         # 4. Ollama를 통해 결과 생성 (Async)
         raw_response = await self._call_ollama(system_prompt, user_prompt)

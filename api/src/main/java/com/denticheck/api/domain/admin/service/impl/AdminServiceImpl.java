@@ -150,7 +150,8 @@ public class AdminServiceImpl implements AdminService {
 
                 userEntities.sort((a, b) -> {
                         int cmp = b.getCreatedAt().compareTo(a.getCreatedAt());
-                        if (cmp != 0) return cmp;
+                        if (cmp != 0)
+                                return cmp;
                         return b.getId().compareTo(a.getId());
                 });
 
@@ -206,7 +207,8 @@ public class AdminServiceImpl implements AdminService {
                         if (a.getCreatedAt() == null || b.getCreatedAt() == null)
                                 return 0;
                         int cmp = b.getCreatedAt().compareTo(a.getCreatedAt());
-                        if (cmp != 0) return cmp;
+                        if (cmp != 0)
+                                return cmp;
                         return b.getId().compareTo(a.getId());
                 });
                 final List<DentalEntity> finalDentals = dentals;
@@ -237,18 +239,24 @@ public class AdminServiceImpl implements AdminService {
                 if (!hasCategory && !hasKeyword) {
                         products = partnerProductRepository.findAllByOrderByCreatedAtDescIdDesc();
                 } else if (hasCategory && hasKeyword) {
-                        products = partnerProductRepository.findByCategoryContainingOrNameContainingOrderByCreatedAtDescIdDesc(category, keyword)
+                        products = partnerProductRepository
+                                        .findByCategoryContainingOrNameContainingOrderByCreatedAtDescIdDesc(category,
+                                                        keyword)
                                         .stream()
-                                         .filter(p -> p.getCategory().contains(category)
-                                                         && p.getName().contains(keyword))
+                                        .filter(p -> p.getCategory().contains(category)
+                                                        && p.getName().contains(keyword))
                                         .collect(Collectors.toList());
                 } else if (hasCategory) {
-                        products = partnerProductRepository.findByCategoryContainingOrNameContainingOrderByCreatedAtDescIdDesc(category, "")
+                        products = partnerProductRepository
+                                        .findByCategoryContainingOrNameContainingOrderByCreatedAtDescIdDesc(category,
+                                                        "")
                                         .stream()
                                         .filter(p -> p.getCategory().contains(category))
                                         .collect(Collectors.toList());
                 } else {
-                        products = partnerProductRepository.findByCategoryContainingOrNameContainingOrderByCreatedAtDescIdDesc("", keyword);
+                        products = partnerProductRepository
+                                        .findByCategoryContainingOrNameContainingOrderByCreatedAtDescIdDesc("",
+                                                        keyword);
                 }
 
                 final List<PartnerProduct> finalProducts = products;
@@ -282,17 +290,23 @@ public class AdminServiceImpl implements AdminService {
                         products = insuranceProductRepository.findAllByOrderByCreatedAtDescIdDesc();
                 } else if (hasCategory && hasKeyword) {
                         products = insuranceProductRepository
-                                        .findByCategoryContainingOrNameContainingOrderByCreatedAtDescIdDesc(category, keyword).stream()
+                                        .findByCategoryContainingOrNameContainingOrderByCreatedAtDescIdDesc(category,
+                                                        keyword)
+                                        .stream()
                                         .filter(p -> p.getCategory().contains(category)
-                                                         && p.getName().contains(keyword))
+                                                        && p.getName().contains(keyword))
                                         .collect(Collectors.toList());
                 } else if (hasCategory) {
-                        products = insuranceProductRepository.findByCategoryContainingOrNameContainingOrderByCreatedAtDescIdDesc(category, "")
+                        products = insuranceProductRepository
+                                        .findByCategoryContainingOrNameContainingOrderByCreatedAtDescIdDesc(category,
+                                                        "")
                                         .stream()
                                         .filter(p -> p.getCategory().contains(category))
                                         .collect(Collectors.toList());
                 } else {
-                        products = insuranceProductRepository.findByCategoryContainingOrNameContainingOrderByCreatedAtDescIdDesc("", keyword);
+                        products = insuranceProductRepository
+                                        .findByCategoryContainingOrNameContainingOrderByCreatedAtDescIdDesc("",
+                                                        keyword);
                 }
 
                 final List<InsuranceProduct> finalProducts = products;
