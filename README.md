@@ -55,7 +55,8 @@ The project is built on a high-performance, decoupled architecture with a focus 
 
 ---
 **DentiCheck: Transforming Dental Care, One Byte at a Time.**
----
+
+#
 ## Getting Started (How to Run)
 
 ### Method 1: Docker (Recommended)
