@@ -65,6 +65,7 @@ export function InfiniteScrollView<T>({
       ListEmptyComponent={ListEmptyComponent}
       contentContainerStyle={contentContainerStyle}
       showsVerticalScrollIndicator={false}
+      removeClippedSubviews={false}
     />
   );
 }

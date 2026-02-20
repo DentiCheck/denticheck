@@ -456,7 +456,7 @@ export default function CommentListScreen() {
             loadingMore={commentsLoadingMore}
             onLoadMore={loadMoreComments}
             extraData={{ repliesMap, expandedReplyParentIds, loadingRepliesParentId }}
-            contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+            contentContainerStyle={{ padding: 16, paddingTop: 20, paddingBottom: 24 }}
             ListHeaderComponent={
               <>
                 {post ? <CommentPostCard post={post} /> : null}

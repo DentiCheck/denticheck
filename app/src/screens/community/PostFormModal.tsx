@@ -187,7 +187,7 @@ export function PostFormModal({
                 >
                   <Text
                     className={`text-sm font-medium ${formData.postType === "all" ? "text-slate-800 dark:text-white" : "text-slate-500"
-                      }`}
+                      } text-center`}
                   >
                     Not selected (General)
                   </Text>

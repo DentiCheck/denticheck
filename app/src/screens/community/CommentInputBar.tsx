@@ -8,6 +8,7 @@ import {
   Platform,
   Image,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ImagePlus, X, Hospital as LucideHospital, Package } from 'lucide-react-native';
 import { useAuth } from '../../shared/providers/AuthProvider';
 import { TagPickerModal, type Tag } from '../../shared/components/TagPickerModal';
@@ -49,6 +50,7 @@ export function CommentInputBar({
   onRemoveTag,
 }: CommentInputBarProps) {
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const canSend = value.trim().length > 0 && !sending;
   const canAddImage = !imageUri && onAddImage;
   const [showTagPicker, setShowTagPicker] = useState(false);
@@ -60,7 +62,8 @@ export function CommentInputBar({
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="absolute bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 px-4 py-3"
+      className="bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 px-4 pt-3"
+      style={{ paddingBottom: Math.max(insets.bottom, 12) }}
     >
       <View className="flex-row items-end gap-3">
         <View className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 items-center justify-center overflow-hidden">
@@ -118,11 +121,13 @@ export function CommentInputBar({
               <LucideHospital size={20} color="#64748b" />
             </TouchableOpacity>
             <TextInput
-              className="flex-1 h-9 text-sm text-slate-800 dark:text-white min-w-0"
+              className="flex-1 min-h-[36px] text-sm text-slate-800 dark:text-white min-w-0 py-0"
               placeholder={placeholder}
               placeholderTextColor="#94a3b8"
               value={value}
               onChangeText={onChangeText}
+              textAlignVertical="center"
+              style={{ includeFontPadding: false }}
             />
             <TouchableOpacity onPress={onSend} disabled={!canSend} className="ml-1">
               <Text
