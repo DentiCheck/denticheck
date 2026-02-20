@@ -24,11 +24,11 @@ class ChatRequest(BaseModel):
         language (str, optional): 답변을 받을 언어 (기본값: "ko")
     """
     content: str
-    language: str # "ko" 또는 "en" (필수)
+    language: str = "en"
 
 class AskResponse(BaseModel):
     answer: str
-    language: str = "ko"
+    language: str = "en"
 
 @router.post("/ask", response_model=AskResponse, summary="치과 지식 질문하기")
 async def ask_question(req: ChatRequest):
@@ -39,10 +39,10 @@ async def ask_question(req: ChatRequest):
     2. RagService를 통해 Milvus 검색 및 LLM 답변 생성
     3. 최종 답변 및 언어 정보 반환
     """
-    if not req.content:
-        raise HTTPException(status_code=400, detail="질문 내용(content)이 필요합니다.")
+    if not req.content or not req.content.strip():
+        raise HTTPException(status_code=400, detail="content is required.")
 
     # RAG 파이프라인 호출하여 답변 생성
-    answer = rag_service.ask(req.content, language=req.language)
-    
-    return AskResponse(answer=answer, language=req.language)
+    answer = rag_service.ask(req.content.strip(), language=req.language or "en")
+
+    return AskResponse(answer=answer, language=req.language or "en")

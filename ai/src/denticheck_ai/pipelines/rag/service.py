@@ -1,4 +1,4 @@
-"""
+﻿"""
 [파일 역할]
 RAG(Retrieval-Augmented Generation) 검색 결과와 Ollama(로컬 LLM)를 하나로 묶어 최종 답변을 생성하는 상위 서비스 레이어입니다.
 검색된 지식 조각들을 바탕으로 AI가 자연스러운 문장으로 답변을 구성합니다.
@@ -55,7 +55,7 @@ class RagService:
         # 답변 결과(Message 객체)를 문자열로 변환해주는 파서
         self.output_parser = StrOutputParser()
 
-    def _get_chain(self, language: str = "ko"):
+    def _get_chain(self, language: str = "en"):
         """
         언어별(한/영)로 최적화된 LangChain 랭체인(프롬프트 + 모델 + 파서)을 생성합니다.
         
@@ -70,18 +70,22 @@ class RagService:
 [검색된 지식]
 {{context}}
 
-{prompts.get_common_rules(language=language)}"""
+{prompts.get_common_rules()}"""
 
         # 영어일 경우 시스템 프롬프트 번역본 적용
+        if language not in {"ko", "en"}:
+            language = "en"
+
         if language == "en":
             system_prompt = f"""You are a friendly and professional dentist 'DentiCheck Bot'.
 Answer the user's question based ONLY on the [Retrieved Knowledge] provided below.
 If there is no direct answer in the [Retrieved Knowledge], answer with general oral health knowledge but ALWAYS state that a dental visit is required for a professional diagnosis.
+Always answer in English only.
 
 [Retrieved Knowledge]
 {{context}}
 
-{prompts.get_common_rules(language=language)}"""
+{prompts.get_common_rules()}"""
 
         # 프롬프트 템플릿 생성
         prompt = ChatPromptTemplate.from_messages([
@@ -92,7 +96,7 @@ If there is no direct answer in the [Retrieved Knowledge], answer with general o
         # 체인 연결 (선언적 프로그래밍)
         return prompt | self.llm | self.output_parser
 
-    def ask(self, content: str, language: str = "ko") -> str:
+    def ask(self, content: str, language: str = "en") -> str:
         """
         사용자 질문에 대해 RAG 파이프라인 전 과정을 실행하여 최종 답변을 반환합니다.
         

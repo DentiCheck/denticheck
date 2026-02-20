@@ -72,6 +72,12 @@ public class ChatServiceImpl implements ChatService {
                 : ChatMessageType.TEXT;
         Map<String, Object> payload = request.getPayload();
 
+        if (content == null || content.trim().isEmpty()) {
+            content = "Please provide a valid message.";
+        } else {
+            content = content.trim();
+        }
+
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
@@ -84,7 +90,7 @@ public class ChatServiceImpl implements ChatService {
                 .content(content)
                 .messageType(messageType)
                 .payload(payload)
-                .language("ko") // TODO: 나중에 App에서 받아야함.
+                .language("en")
                 .build();
         aiChatMessageRepository.save(userMessage);
 
@@ -96,19 +102,19 @@ public class ChatServiceImpl implements ChatService {
         try {
             String rawResponse = aiClient.askChat(AiChatAskRequest.builder()
                     .content(content)
-                    .language("ko")
+                    .language("en")
                     .build());
 
             // Null 또는 빈 문자열인 경우 기본 메시지 할당
             if (rawResponse == null || rawResponse.trim().isEmpty()) {
                 log.warn("AI 서버로부터 빈 응답을 받았습니다. sessionId: {}", session.getId());
-                aiContent = "AI가 답변을 생성하지 못했습니다. 질문을 조금 더 구체적으로 말씀해 주시겠어요?";
+                aiContent = "I could not generate a response. Could you ask with a bit more detail?";
             } else {
                 aiContent = rawResponse;
             }
         } catch (Exception e) {
             log.error("AI 서버 호출 중 오류가 발생했습니다: {}", e.getMessage());
-            aiContent = "죄송합니다. 현재 AI 서비스를 이용할 수 없습니다. 잠시 후 다시 시도해 주세요.";
+            aiContent = "Sorry, the AI service is temporarily unavailable. Please try again shortly.";
         }
 
         ChatMessageType aiMessageType = ChatMessageType.TEXT;
@@ -121,7 +127,7 @@ public class ChatServiceImpl implements ChatService {
                 .content(aiContent)
                 .messageType(aiMessageType)
                 .payload(aiPayload)
-                .language("ko")
+                .language("en")
                 .build();
         AiChatMessageEntity savedAiMessage = aiChatMessageRepository.save(aiMessage);
 
