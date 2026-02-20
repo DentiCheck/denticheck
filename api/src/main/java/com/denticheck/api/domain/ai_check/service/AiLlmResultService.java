@@ -26,25 +26,15 @@ public class AiLlmResultService {
             List<AiCheckRunResponse.DetectionItem> detections,
             boolean qualityPass,
             double qualityScore,
-            List<String> contexts // Changed from RagContext to String or ignored
+            List<String> contexts
     ) {
         List<AiCheckRunResponse.DetectionItem> safeDetections = detections == null ? List.of() : detections;
-        // Contexts are now handled by Python, so we largely ignore them here or pass
-        // empty strings if needed for rule-based fallback text generation
-
         AiCheckRunResponse.LlmResult fallback = buildRuleBased(safeDetections);
         if (!aiEnabled) {
             return fallback;
         }
 
         try {
-            // For backward compatibility or legacy checks, we might still call ollama here
-            // if configured,
-            // but the main path is now via AiAnalyzeLlmService -> Python.
-            // If this service is strictly for "Quick Check" or fallback, rule-based might
-            // be sufficient.
-            // Let's keep it simple and return fallback/rule-based for now as the Python
-            // side does the heavy lifting.
             return fallback;
         } catch (Exception e) {
             log.warn("Legacy LLM generation failed. Using rule-based fallback", e);
@@ -52,27 +42,27 @@ public class AiLlmResultService {
         }
     }
 
-    public AiCheckRunResponse.LlmResult forQualityFailed(List<?> contexts) { // Generic list to avoid dependency
+    public AiCheckRunResponse.LlmResult forQualityFailed(List<?> contexts) {
         AiCheckRunResponse.LlmResult result = buildRuleBased(List.of());
         return AiCheckRunResponse.LlmResult.builder()
                 .overall(AiCheckRunResponse.Overall.builder()
                         .level("GREEN")
                         .badgeText("위험도 낮음")
-                        .oneLineSummary("이미지 품질이 낮아 정확한 분석이 어려웠습니다.")
+                        .oneLineSummary("이미지 품질 이슈로 정확한 분석이 어려웠습니다.")
                         .build())
                 .findings(result.getFindings())
                 .careGuide(List.of(
-                        "밝은 환경에서 입안을 선명하게 촬영해 주세요.",
+                        "밝은 조명에서 입안을 다시 촬영해 주세요.",
                         "카메라 초점을 맞추고 흔들림 없이 촬영해 주세요.",
                         "치아와 잇몸이 함께 보이도록 촬영 범위를 조정해 주세요.",
-                        "통증이나 출혈이 있으면 치과 상담을 권장합니다."))
+                        "통증이나 출혈이 있으면 치과 상담을 권장합니다."
+                ))
                 .disclaimer(result.getDisclaimer())
                 .ragCitations(result.getRagCitations())
                 .build();
     }
 
-    private AiCheckRunResponse.LlmResult buildRuleBased(
-            List<AiCheckRunResponse.DetectionItem> detections) {
+    private AiCheckRunResponse.LlmResult buildRuleBased(List<AiCheckRunResponse.DetectionItem> detections) {
         Map<String, List<AiCheckRunResponse.DetectionItem>> grouped = detections.stream()
                 .filter(d -> d.getLabel() != null)
                 .map(this::normalizeDetectionLabel)
@@ -86,8 +76,8 @@ public class AiLlmResultService {
         };
 
         String oneLineSummary = switch (level) {
-            case "RED" -> "고위험 의심 소견이 있어 빠른 진료 상담이 필요합니다.";
-            case "YELLOW" -> "관리가 필요한 의심 소견이 확인되었습니다.";
+            case "RED" -> "고위험 소견이 있어 빠른 진료 상담이 필요합니다.";
+            case "YELLOW" -> "관리가 필요한 소견이 확인되었습니다.";
             default -> "특이 소견이 뚜렷하지 않습니다.";
         };
 
@@ -100,9 +90,10 @@ public class AiLlmResultService {
                 .findings(buildFindings(grouped))
                 .careGuide(buildCareGuide(level))
                 .disclaimer(List.of(
-                        "이 결과는 AI 스크리닝 참고 정보이며 의료 확진이 아닙니다.",
-                        "통증, 출혈, 궤양 등 증상이 있으면 치과 진료를 권장합니다."))
-                .ragCitations(List.of()) // No RAG contexts available here
+                        "이 결과는 AI 스크리닝 참고 정보이며 의료 진단을 대체하지 않습니다.",
+                        "통증, 출혈, 궤양 등 증상이 있으면 치과 진료를 권장합니다."
+                ))
+                .ragCitations(List.of())
                 .build();
     }
 
@@ -112,7 +103,6 @@ public class AiLlmResultService {
             case "caries", "cavity" -> "caries";
             case "tartar", "calculus", "plaque" -> "tartar";
             case "oral_cancer", "lesion", "mass", "ulcer" -> "oral_cancer";
-            case "normal" -> "normal";
             default -> "normal";
         };
 
@@ -134,15 +124,13 @@ public class AiLlmResultService {
         if (oralCancerMax >= 0.5) {
             return "RED";
         }
-        if (!grouped.getOrDefault("caries", List.of()).isEmpty()
-                || !grouped.getOrDefault("tartar", List.of()).isEmpty()) {
+        if (!grouped.getOrDefault("caries", List.of()).isEmpty() || !grouped.getOrDefault("tartar", List.of()).isEmpty()) {
             return "YELLOW";
         }
         return "GREEN";
     }
 
-    private List<AiCheckRunResponse.Finding> buildFindings(
-            Map<String, List<AiCheckRunResponse.DetectionItem>> grouped) {
+    private List<AiCheckRunResponse.Finding> buildFindings(Map<String, List<AiCheckRunResponse.DetectionItem>> grouped) {
         if (grouped.isEmpty() || (grouped.size() == 1 && grouped.containsKey("normal"))) {
             return List.of(defaultNormalFinding());
         }
@@ -152,12 +140,8 @@ public class AiLlmResultService {
 
         for (String label : ordered) {
             List<AiCheckRunResponse.DetectionItem> items = grouped.getOrDefault(label, List.of());
-            if (items.isEmpty()) {
-                continue;
-            }
-            if ("normal".equals(label) && grouped.size() > 1) {
-                continue;
-            }
+            if (items.isEmpty()) continue;
+            if ("normal".equals(label) && grouped.size() > 1) continue;
 
             double maxConfidence = items.stream()
                     .map(AiCheckRunResponse.DetectionItem::getConfidence)
@@ -180,9 +164,7 @@ public class AiLlmResultService {
                             .build())
                     .build());
 
-            if (findings.size() >= 3) {
-                break;
-            }
+            if (findings.size() >= 3) break;
         }
         return findings;
     }
@@ -206,14 +188,7 @@ public class AiLlmResultService {
         double y = detection.getBbox().getY() == null ? 0.5 : detection.getBbox().getY();
 
         String upperLower = y < 0.5 ? "상악" : "하악";
-        String side;
-        if (x < 0.33) {
-            side = "좌측";
-        } else if (x > 0.67) {
-            side = "우측";
-        } else {
-            side = "전치부";
-        }
+        String side = x < 0.33 ? "좌측" : (x > 0.67 ? "우측" : "중앙부");
         return upperLower + " " + side;
     }
 
@@ -229,23 +204,26 @@ public class AiLlmResultService {
     private List<String> buildCareGuide(String level) {
         if ("RED".equals(level)) {
             return List.of(
-                    "가능한 빠르게 치과 또는 구강악안면외과 상담을 받아 주세요.",
-                    "해당 부위를 자극하는 음식과 흡연, 음주를 피해주세요.",
-                    "통증, 출혈, 궤양 지속 여부를 관찰하고 기록해 주세요.",
-                    "증상이 지속되면 지체하지 말고 대면 진료를 받으세요.");
+                    "가능하면 빠르게 치과 또는 구강외과 상담을 받으세요.",
+                    "해당 부위를 자극하는 음식과 흡연·음주는 피하세요.",
+                    "통증, 출혈, 궤양 변화를 관찰하고 기록하세요.",
+                    "증상이 악화되면 지체하지 말고 대면 진료를 받으세요."
+            );
         }
         if ("YELLOW".equals(level)) {
             return List.of(
-                    "하루 2~3회 불소치약으로 꼼꼼히 양치해 주세요.",
-                    "치실이나 치간칫솔을 함께 사용해 치면 세정을 강화해 주세요.",
-                    "당 섭취 빈도를 줄이고 식후 구강 관리를 해주세요.",
-                    "3~6개월 내 스케일링 또는 검진 일정을 권장합니다.");
+                    "하루 2~3회, 불소 치약으로 양치하세요.",
+                    "치실/치간칫솔을 함께 사용하세요.",
+                    "당류 섭취를 줄이고 식후 구강 관리를 습관화하세요.",
+                    "3~6개월 내 스케일링 또는 검진을 권장합니다."
+            );
         }
         return List.of(
-                "현재 구강 위생 습관을 유지해 주세요.",
-                "정기 검진(6~12개월)을 통해 상태를 확인해 주세요.",
-                "치실 또는 치간칫솔 사용을 병행하면 도움이 됩니다.",
-                "새로운 증상이 생기면 조기에 상담을 받아 주세요.");
+                "현재 구강 위생 습관을 유지하세요.",
+                "6~12개월 주기 정기 검진을 받으세요.",
+                "치실/치간칫솔 사용을 병행하면 예방에 도움이 됩니다.",
+                "새로운 증상이 생기면 조기에 치과 상담을 받으세요."
+        );
     }
 
     private AiCheckRunResponse.Finding defaultNormalFinding() {

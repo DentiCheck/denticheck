@@ -27,35 +27,27 @@ import java.util.Objects;
 public class AiAnalyzeLlmService {
 
     private static final String SYSTEM_PROMPT = """
-            너는 치과 검진 보조 AI다. 이 결과는 진단이 아니다.
-            제공된 detections와 RAG 근거만 사용하라.
-            반드시 유효한 JSON만 출력하고, 스키마를 정확히 지켜라.
-            마크다운, 코드펜스, 설명 문장 등 JSON 이외 텍스트를 출력하지 마라.
-            summary/findings/careGuide/disclaimer는 반드시 한국어로 작성하라.
+            You are a dental screening assistant.
+            Use only provided detections and rag evidence.
+            Return strict JSON only.
             """;
 
     private static final String USER_PROMPT_TEMPLATE = """
-            입력:
+            Input:
             {
               "detections": %s,
               "summary": %s,
               "rag": %s
             }
 
-            다음 필드로 JSON만 반환:
+            Return JSON only:
             {
               "riskLevel": "GREEN|YELLOW|RED",
-              "summary": "문자열 (1~3줄, 한국어)",
-              "findings": [{"title":"string","detail":"string","evidence":["rag:sourceId or short citation"]}],
-              "careGuide": ["string","string"],
+              "summary": "string",
+              "findings": [{"title":"string","detail":"string","evidence":["rag:id"]}],
+              "careGuide": ["string"],
               "disclaimer": ["string"]
             }
-
-            규칙:
-            - riskLevel: oral_cancer confidence >= 0.5면 RED, caries/tartar가 있으면 YELLOW, 그 외 GREEN.
-            - findings는 가능하면 RAG source를 근거로 인용한다.
-            - 결과 문구는 한국어로 작성한다.
-            - JSON 외 텍스트 금지.
             """;
 
     private final ObjectMapper objectMapper;
@@ -75,7 +67,8 @@ public class AiAnalyzeLlmService {
     public AnalyzeResponse.LlmResult generate(
             List<AnalyzeResponse.DetectionItem> detections,
             Map<String, Object> summary,
-            List<AnalyzeResponse.RagSource> ragSources) {
+            List<AnalyzeResponse.RagSource> ragSources
+    ) {
         List<AnalyzeResponse.DetectionItem> safeDetections = detections == null ? List.of() : detections;
         List<AnalyzeResponse.RagSource> safeRagSources = ragSources == null ? List.of() : ragSources;
         Map<String, Object> safeSummary = summary == null ? Map.of() : summary;
@@ -94,12 +87,10 @@ public class AiAnalyzeLlmService {
                 return fallback;
             }
             AnalyzeResponse.LlmResult validated = enforceSchema(llm, fallback);
-            long elapsed = System.currentTimeMillis() - startedAt;
-            log.info("Ollama analyze response parsed successfully in {}ms", elapsed);
+            log.info("Ollama analyze response parsed successfully in {}ms", System.currentTimeMillis() - startedAt);
             return validated;
         } catch (Exception e) {
-            long elapsed = System.currentTimeMillis() - startedAt;
-            log.warn("Ollama analyze failed in {}ms. Using fallback", elapsed, e);
+            log.warn("Ollama analyze failed in {}ms. Using fallback", System.currentTimeMillis() - startedAt, e);
             return fallback;
         }
     }
@@ -107,7 +98,8 @@ public class AiAnalyzeLlmService {
     private AnalyzeResponse.LlmResult callOllama(
             List<AnalyzeResponse.DetectionItem> detections,
             Map<String, Object> summary,
-            List<AnalyzeResponse.RagSource> ragSources) throws Exception {
+            List<AnalyzeResponse.RagSource> ragSources
+    ) throws Exception {
         String detectionsJson = objectMapper.writeValueAsString(detections);
         String summaryJson = objectMapper.writeValueAsString(summary);
         String ragJson = objectMapper.writeValueAsString(ragSources);
@@ -124,31 +116,20 @@ public class AiAnalyzeLlmService {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         String url = ollamaBaseUrl + "/api/generate";
-        long requestStart = System.currentTimeMillis();
-        ResponseEntity<Map> response = ollamaRestTemplate().postForEntity(url, new HttpEntity<>(body, headers),
-                Map.class);
-        long elapsed = System.currentTimeMillis() - requestStart;
-        log.info("Ollama generate request completed in {}ms", elapsed);
+        ResponseEntity<Map> response = ollamaRestTemplate().postForEntity(url, new HttpEntity<>(body, headers), Map.class);
 
         Map<String, Object> responseBody = response.getBody();
-        if (responseBody == null) {
-            return null;
-        }
+        if (responseBody == null) return null;
 
         String json = Objects.toString(responseBody.get("response"), "").trim();
-        if (json.isBlank()) {
-            return null;
-        }
+        if (json.isBlank()) return null;
 
-        Map<String, Object> parsed = objectMapper.readValue(json, new TypeReference<>() {
-        });
+        Map<String, Object> parsed = objectMapper.readValue(json, new TypeReference<>() {});
         return objectMapper.convertValue(parsed, AnalyzeResponse.LlmResult.class);
     }
 
     private AnalyzeResponse.LlmResult enforceSchema(AnalyzeResponse.LlmResult llm, AnalyzeResponse.LlmResult fallback) {
-        if (llm == null) {
-            return fallback;
-        }
+        if (llm == null) return fallback;
 
         String riskLevel = sanitizeRiskLevel(llm.getRiskLevel(), fallback.getRiskLevel());
         String summary = hasText(llm.getSummary()) ? llm.getSummary() : fallback.getSummary();
@@ -159,18 +140,13 @@ public class AiAnalyzeLlmService {
         } else {
             findings = findings.stream().limit(3).map(v -> AnalyzeResponse.Finding.builder()
                     .title(hasText(v.getTitle()) ? v.getTitle() : "소견")
-                    .detail(hasText(v.getDetail()) ? v.getDetail() : "치과 진료를 통해 확인이 필요합니다.")
-                    .evidence(
-                            (v.getEvidence() == null || v.getEvidence().isEmpty()) ? List.of("rag:0") : v.getEvidence())
+                    .detail(hasText(v.getDetail()) ? v.getDetail() : "치과 검진으로 정확한 확인이 필요합니다.")
+                    .evidence((v.getEvidence() == null || v.getEvidence().isEmpty()) ? List.of("rag:0") : v.getEvidence())
                     .build()).toList();
         }
 
-        List<String> careGuide = (llm.getCareGuide() == null || llm.getCareGuide().isEmpty())
-                ? fallback.getCareGuide()
-                : llm.getCareGuide();
-        List<String> disclaimer = (llm.getDisclaimer() == null || llm.getDisclaimer().isEmpty())
-                ? fallback.getDisclaimer()
-                : llm.getDisclaimer();
+        List<String> careGuide = (llm.getCareGuide() == null || llm.getCareGuide().isEmpty()) ? fallback.getCareGuide() : llm.getCareGuide();
+        List<String> disclaimer = (llm.getDisclaimer() == null || llm.getDisclaimer().isEmpty()) ? fallback.getDisclaimer() : llm.getDisclaimer();
 
         return AnalyzeResponse.LlmResult.builder()
                 .riskLevel(riskLevel)
@@ -183,12 +159,13 @@ public class AiAnalyzeLlmService {
 
     private AnalyzeResponse.LlmResult buildRuleBasedFallback(
             List<AnalyzeResponse.DetectionItem> detections,
-            List<AnalyzeResponse.RagSource> ragSources) {
+            List<AnalyzeResponse.RagSource> ragSources
+    ) {
         String riskLevel = computeRiskLevel(detections);
         String summary = switch (riskLevel) {
-            case "RED" -> "고위험 의심 소견이 감지되었습니다. 가능한 빠르게 치과 또는 구강내과 진료를 권장합니다.";
-            case "YELLOW" -> "주의가 필요한 소견이 감지되었습니다. 비응급 치과 검진과 위생 관리 강화를 권장합니다.";
-            default -> "고위험 패턴은 감지되지 않았습니다. 정기 검진과 기본 구강 관리를 유지하세요.";
+            case "RED" -> "고위험 소견이 감지되어 빠른 치과 진료가 필요합니다.";
+            case "YELLOW" -> "주의가 필요한 소견이 있어 조기 검진을 권장합니다.";
+            default -> "현재 고위험 신호는 크지 않지만 정기 관리를 유지하세요.";
         };
 
         List<AnalyzeResponse.Finding> findings = buildFindings(detections, ragSources);
@@ -198,23 +175,26 @@ public class AiAnalyzeLlmService {
                 .summary(summary)
                 .findings(findings)
                 .careGuide(List.of(
-                        "불소 치약으로 하루 2~3회 양치하세요.",
-                        "하루 1회 치실 또는 치간칫솔을 사용하세요.",
-                        "당분 섭취를 줄이고 흡연은 피하세요.",
-                        "증상이 지속되면 치과 진료를 예약하세요."))
+                        "하루 2~3회, 불소 치약으로 양치하세요.",
+                        "치실/치간칫솔을 하루 1회 사용하세요.",
+                        "당류 섭취를 줄이고 식후 구강 관리를 하세요.",
+                        "증상이 지속되면 치과 진료를 예약하세요."
+                ))
                 .disclaimer(List.of(
-                        "이 결과는 AI 보조 스크리닝 참고 정보이며 의학적 진단이 아닙니다.",
-                        "통증, 출혈, 궤양, 부종 또는 증상 악화가 지속되면 전문 진료를 받으세요."))
+                        "이 결과는 AI 보조 스크리닝 정보이며 의학적 진단을 대체하지 않습니다.",
+                        "통증, 출혈, 궤양, 부종이 지속되면 전문 진료를 받으세요."
+                ))
                 .build();
     }
 
     private List<AnalyzeResponse.Finding> buildFindings(
             List<AnalyzeResponse.DetectionItem> detections,
-            List<AnalyzeResponse.RagSource> ragSources) {
+            List<AnalyzeResponse.RagSource> ragSources
+    ) {
         if (detections == null || detections.isEmpty()) {
             return List.of(AnalyzeResponse.Finding.builder()
-                    .title("뚜렷한 병변 신호 없음")
-                    .detail("이 이미지에서는 높은 신뢰도의 병변 소견이 확인되지 않았습니다.")
+                    .title("특이 소견 없음")
+                    .detail("현재 이미지에서 뚜렷한 이상 소견은 확인되지 않았습니다.")
                     .evidence(defaultEvidence(ragSources))
                     .build());
         }
@@ -229,40 +209,33 @@ public class AiAnalyzeLlmService {
         List<AnalyzeResponse.Finding> findings = new ArrayList<>();
         for (String label : ordered) {
             List<AnalyzeResponse.DetectionItem> items = grouped.getOrDefault(label, List.of());
-            if (items.isEmpty()) {
-                continue;
-            }
+            if (items.isEmpty()) continue;
+
             double maxConfidence = items.stream()
                     .map(AnalyzeResponse.DetectionItem::getConfidence)
                     .filter(Objects::nonNull)
                     .mapToDouble(Double::doubleValue)
                     .max()
                     .orElse(0.0);
+
             findings.add(AnalyzeResponse.Finding.builder()
                     .title(titleFor(label))
                     .detail(detailFor(label, items.size(), maxConfidence))
                     .evidence(defaultEvidence(ragSources))
                     .build());
-            if (findings.size() >= 3) {
-                break;
-            }
+
+            if (findings.size() >= 3) break;
         }
-        return findings.isEmpty() ? List.of(AnalyzeResponse.Finding.builder()
-                .title("뚜렷한 병변 신호 없음")
-                .detail("이 이미지에서는 높은 신뢰도의 병변 소견이 확인되지 않았습니다.")
-                .evidence(defaultEvidence(ragSources))
-                .build()) : findings;
+
+        return findings;
     }
 
     private String detailFor(String label, int count, double maxConfidence) {
         return switch (label) {
-            case "oral_cancer" -> "구강 병변 의심 소견이 감지되었습니다 (" + count + "개 영역, 최대 신뢰도 "
-                    + String.format(Locale.ROOT, "%.2f", maxConfidence) + "). 빠른 대면 진료를 권장합니다.";
-            case "caries" -> "충치 의심 소견이 감지되었습니다 (" + count + "개 영역, 최대 신뢰도 "
-                    + String.format(Locale.ROOT, "%.2f", maxConfidence) + "). 치과 검진과 위생 관리 강화가 필요합니다.";
-            case "tartar" -> "치석/치태 의심 소견이 감지되었습니다 (" + count + "개 영역, 최대 신뢰도 "
-                    + String.format(Locale.ROOT, "%.2f", maxConfidence) + "). 스케일링 등 전문 관리가 도움이 될 수 있습니다.";
-            default -> "중요 병변 범주의 감지 소견은 없습니다.";
+            case "oral_cancer" -> "구강 병변 의심 소견이 있습니다 (" + count + "개, 최대 신뢰도 " + String.format(Locale.ROOT, "%.2f", maxConfidence) + ").";
+            case "caries" -> "충치 의심 소견이 있습니다 (" + count + "개, 최대 신뢰도 " + String.format(Locale.ROOT, "%.2f", maxConfidence) + ").";
+            case "tartar" -> "치석/플라그 축적 소견이 있습니다 (" + count + "개, 최대 신뢰도 " + String.format(Locale.ROOT, "%.2f", maxConfidence) + ").";
+            default -> "중요 이상 소견이 감지되지 않았습니다.";
         };
     }
 
@@ -271,7 +244,7 @@ public class AiAnalyzeLlmService {
             case "oral_cancer" -> "구강 병변 의심";
             case "caries" -> "충치 의심";
             case "tartar" -> "치석 의심";
-            default -> "정상 패턴";
+            default -> "정상";
         };
     }
 
@@ -291,12 +264,8 @@ public class AiAnalyzeLlmService {
         for (AnalyzeResponse.DetectionItem d : detections) {
             String label = normalizeLabel(d.getLabel());
             double confidence = d.getConfidence() == null ? 0.0 : d.getConfidence();
-            if ("oral_cancer".equals(label) && confidence >= 0.5) {
-                return "RED";
-            }
-            if ("caries".equals(label) || "tartar".equals(label)) {
-                hasCariesOrTartar = true;
-            }
+            if ("oral_cancer".equals(label) && confidence >= 0.5) return "RED";
+            if ("caries".equals(label) || "tartar".equals(label)) hasCariesOrTartar = true;
         }
         return hasCariesOrTartar ? "YELLOW" : "GREEN";
     }
@@ -312,9 +281,7 @@ public class AiAnalyzeLlmService {
     }
 
     private String sanitizeRiskLevel(String level, String fallback) {
-        if (!hasText(level)) {
-            return fallback;
-        }
+        if (!hasText(level)) return fallback;
         String upper = level.toUpperCase(Locale.ROOT).trim();
         return switch (upper) {
             case "GREEN", "YELLOW", "RED" -> upper;
