@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useCallback } from "react";
+﻿import React, { createContext, useContext, useState, ReactNode, useCallback } from "react";
 import { AlertModal } from "@/shared/components/AlertModal";
 
 interface AlertOptions {
@@ -16,14 +16,14 @@ const AlertContext = createContext<AlertContextType | undefined>(undefined);
 export function AlertProvider({ children }: { children: ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
     const [message, setMessage] = useState("");
-    const [title, setTitle] = useState("알림");
-    const [buttonLabel, setButtonLabel] = useState("확인");
+    const [title, setTitle] = useState("Notice");
+    const [buttonLabel, setButtonLabel] = useState("OK");
     const [onOk, setOnOk] = useState<(() => void) | undefined>(undefined);
 
     const showAlert = useCallback((msg: string, options?: AlertOptions) => {
         setMessage(msg);
-        setTitle(options?.title || "알림");
-        setButtonLabel(options?.buttonLabel || "확인");
+        setTitle(options?.title || "Notice");
+        setButtonLabel(options?.buttonLabel || "OK");
         setOnOk(() => options?.onOk);
         setIsOpen(true);
     }, []);

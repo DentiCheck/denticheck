@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Frontend File: Partner Products Page
  * Path: console/src/features/products/pages/ProductsPage.tsx
  * Description: [관리자 기능] 제휴 상품 관리 페이지
@@ -77,11 +77,11 @@ export function ProductsPage() {
         const { id } = deleteConfirm;
         try {
             await graphqlRequest(DELETE_PRODUCT_MUTATION, { id });
-            showAlert(t("msg_delete_success"), { title: t("title_success") });
+            showAlert("Deleted successfully.", { title: "Success" });
             fetchProducts();
         } catch (error) {
             console.error(error);
-            showAlert(t("msg_delete_fail"), { title: "오류" });
+            showAlert("Failed to delete.", { title: "Error" });
         } finally {
             setDeleteConfirm({ isOpen: false, id: "", name: "" });
         }
@@ -205,7 +205,7 @@ export function ProductsPage() {
                                                             fetchProducts(true);
                                                         } catch (error) {
                                                             console.error(error);
-                                                            showAlert("상태 변경에 실패했습니다.", { title: "오류" });
+                                                            showAlert("Failed to change status.", { title: "Error" });
                                                         }
                                                     }}
                                                 >
@@ -241,7 +241,7 @@ export function ProductsPage() {
                 onClose={() => setIsModalOpen(false)}
                 onSuccess={() => {
                     fetchProducts(true);
-                    showAlert("상품이 추가되었습니다.", { title: "성공" });
+                    showAlert("Product added successfully.", { title: "Success" });
                 }}
             />
 
@@ -261,10 +261,10 @@ export function ProductsPage() {
                 isOpen={deleteConfirm.isOpen}
                 onClose={() => setDeleteConfirm((prev) => ({ ...prev, isOpen: false }))}
                 onConfirm={handleConfirmDelete}
-                title={t("title_confirm")}
-                message={t("msg_confirm_delete", { name: deleteConfirm.name })}
+                title="Confirm"
+                message={`Are you sure you want to delete '${deleteConfirm.name}'?`}
                 isDestructive={true}
-                confirmLabel={t("btn_delete")}
+                confirmLabel="Delete"
             />
         </div>
     );

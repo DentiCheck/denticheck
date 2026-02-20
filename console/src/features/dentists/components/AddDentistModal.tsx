@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { Modal } from "@/shared/components/Modal";
 import { graphqlRequest } from "@/shared/lib/api";
 import { useLanguage } from "@/features/dashboard/context/LanguageContext";
@@ -41,7 +41,7 @@ export function AddDentistModal({ isOpen, onClose, onSuccess }: AddDentistModalP
             setFormData({ name: "", address: "", phone: "", description: "", homepageUrl: "" }); // Reset
         } catch (error) {
             console.error(error);
-            showAlert(t("msg_save_fail"), { title: "오류" });
+            showAlert("Failed to save.", { title: "Error" });
         } finally {
             setLoading(false);
         }

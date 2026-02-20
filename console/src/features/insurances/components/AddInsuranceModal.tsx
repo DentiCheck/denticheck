@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Frontend Component: AddInsuranceModal
  * Path: console/src/features/insurances/components/AddInsuranceModal.tsx
  * Description: [관리자 기능] 제휴 보험 상품 추가 모달
@@ -54,7 +54,7 @@ export function AddInsuranceModal({ isOpen, onClose, onSuccess }: AddInsuranceMo
             setFormData({ category: CATEGORIES[0], name: "", price: 0, company: "" });
         } catch (error) {
             console.error(error);
-            showAlert(t("msg_save_fail"), { title: "오류" });
+            showAlert("Failed to save.", { title: "Error" });
         } finally {
             setLoading(false);
         }

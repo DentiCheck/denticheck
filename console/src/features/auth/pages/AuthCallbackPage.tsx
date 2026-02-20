@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+﻿import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAlert } from "@/shared/context/AlertContext";
 import { useAuth } from "@/features/auth/context/AuthContext";
@@ -44,7 +44,7 @@ export function AuthCallbackPage() {
                 navigate("/dashboard");
             } catch (err) {
                 console.error(err);
-                showAlert("소셜 로그인에 실패했습니다. 다시 시도해주세요.", { title: "로그인 실패" });
+                showAlert("Social login failed. Please try again.", { title: "Login Failed" });
                 navigate("/login");
             }
         };
@@ -56,8 +56,8 @@ export function AuthCallbackPage() {
         <div className="min-h-screen flex items-center justify-center bg-slate-50">
             <div className="text-center">
                 <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <h2 className="text-xl font-semibold text-slate-700">로그인 처리 중입니다...</h2>
-                <p className="text-slate-500 mt-2">잠시만 기다려주세요.</p>
+                <h2 className="text-xl font-semibold text-slate-700">Signing you in...</h2>
+                <p className="text-slate-500 mt-2">Please wait a moment.</p>
             </div>
         </div>
     );

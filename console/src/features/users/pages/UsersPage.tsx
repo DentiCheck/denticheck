@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Frontend File: Users Management Page
  * Path: console/src/features/users/pages/UsersPage.tsx
  * Description: [관리자 기능] 회원 관리 페이지
@@ -79,11 +79,11 @@ export function UsersPage() {
 
         try {
             await graphqlRequest(UPDATE_USER_STATUS_MUTATION, { userId, status: newStatus });
-            showAlert(t("msg_status_changed"), { title: t("title_success") });
+            showAlert("Status has been changed.", { title: "Success" });
             fetchUsers();
         } catch (error) {
             console.error(error);
-            showAlert(t("msg_status_fail"), { title: t("title_error") });
+            showAlert("Failed to change status.", { title: "Error" });
         } finally {
             setStatusConfirm((prev) => ({ ...prev, isOpen: false }));
         }
@@ -199,13 +199,10 @@ export function UsersPage() {
                 isOpen={statusConfirm.isOpen}
                 onClose={() => setStatusConfirm((prev) => ({ ...prev, isOpen: false }))}
                 onConfirm={handleConfirmUpdate}
-                title={t("title_confirm")}
-                message={t("msg_confirm_status", {
-                    name: users.find((u) => u.id === statusConfirm.userId)?.nickname || "",
-                    status: statusConfirm.newStatus === "ACTIVE" ? t("btn_activate") : t("btn_suspend"),
-                })}
+                title="Confirm"
+                message={`Are you sure you want to change the status of '${users.find((u) => u.id === statusConfirm.userId)?.nickname || ""}' to ${statusConfirm.newStatus === "ACTIVE" ? "Activate" : "Suspend"}?`}
                 isDestructive={statusConfirm.newStatus === "SUSPENDED"}
-                confirmLabel={statusConfirm.newStatus === "ACTIVE" ? t("btn_activate") : t("btn_suspend")}
+                confirmLabel={statusConfirm.newStatus === "ACTIVE" ? "Activate" : "Suspend"}
             />
         </div>
     );

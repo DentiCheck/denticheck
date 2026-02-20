@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Modal } from "@/shared/components/Modal";
 import { graphqlRequest } from "@/shared/lib/api";
 import { useLanguage } from "@/features/dashboard/context/LanguageContext";
@@ -81,13 +81,13 @@ export function EditDentistModal({ isOpen, onClose, onSuccess, dentist }: EditDe
                 id: dentist.id,
                 input: formData,
             });
-            showAlert(t("msg_save_success"), { title: "성공" });
+            showAlert("Saved successfully.", { title: "Success" });
             onSuccess();
             onClose();
         } catch (error: any) {
             console.error(error);
             const errorMessage = error.message || t("msg_save_fail");
-            showAlert(errorMessage, { title: "오류" });
+            showAlert(errorMessage, { title: "Error" });
         } finally {
             setLoading(false);
         }

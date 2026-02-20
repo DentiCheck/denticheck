@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Frontend Component: AddProductModal
  * Path: console/src/features/products/components/AddProductModal.tsx
  * Description: [관리자 기능] 제휴 상품 추가 모달
@@ -57,7 +57,7 @@ export function AddProductModal({ isOpen, onClose, onSuccess }: AddProductModalP
             setFormData({ category: CATEGORIES[0], name: "", price: 0, manufacturer: "", imageUrl: "" });
         } catch (error) {
             console.error(error);
-            showAlert(t("msg_save_fail"), { title: "오류" });
+            showAlert("Failed to save.", { title: "Error" });
         } finally {
             setLoading(false);
         }
@@ -121,7 +121,7 @@ export function AddProductModal({ isOpen, onClose, onSuccess }: AddProductModalP
                         />
                         <button
                             type="button"
-                            onClick={() => showAlert(t("msg_upload_prepare"), { title: "알림" })}
+                            onClick={() => showAlert("File upload will be available soon.", { title: "Notice" })}
                             className="px-3 py-2 bg-slate-100 text-slate-600 rounded-md hover:bg-slate-200 transition-colors text-sm whitespace-nowrap"
                         >
                             {t("btn_file_attach")}

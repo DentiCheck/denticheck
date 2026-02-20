@@ -1,4 +1,4 @@
-import { useNavigate, useSearchParams } from "react-router-dom";
+﻿import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect } from "react";
 import { useAlert } from "@/shared/context/AlertContext";
 import { useAuth } from "@/features/auth/context/AuthContext";
@@ -20,7 +20,7 @@ export function LoginPage() {
     useEffect(() => {
         const error = searchParams.get("error");
         if (error === "forbidden") {
-            showAlert(t("login_error_forbidden"), { title: t("login_error_title") });
+            showAlert("Access denied. Please log in with an admin account.", { title: "Access Denied" });
             // 파라미터 제거 (URL 깔끔하게 유지)
             navigate("/login", { replace: true });
         }
@@ -48,11 +48,11 @@ export function LoginPage() {
             saveToken(data.accessToken);
             setMemoryToken(data.accessToken);
 
-            showAlert(t("login_success_dev"), { title: t("login_success_title") });
+            showAlert("Logged in with developer account.", { title: "Login Success" });
             navigate("/dashboard");
         } catch (error) {
             console.error(error);
-            showAlert("개발용 로그인에 실패했습니다.", { title: "로그인 실패" });
+            showAlert("Developer login failed.", { title: "Login Failed" });
         }
     };
 

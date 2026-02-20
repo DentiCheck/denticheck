@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Frontend File: Insurance Products Page
  * Path: console/src/features/insurances/pages/InsurancesPage.tsx
  * Description: [관리자 기능] 제휴 보험 관리 페이지
@@ -76,11 +76,11 @@ export function InsurancesPage() {
         const { id } = deleteConfirm;
         try {
             await graphqlRequest(DELETE_INSURANCE_MUTATION, { id });
-            showAlert(t("msg_delete_success"), { title: t("title_success") });
+            showAlert("Deleted successfully.", { title: "Success" });
             fetchInsurances();
         } catch (error) {
             console.error(error);
-            showAlert(t("msg_delete_fail"), { title: "오류" });
+            showAlert("Failed to delete.", { title: "Error" });
         } finally {
             setDeleteConfirm({ isOpen: false, id: "", name: "" });
         }
@@ -194,7 +194,7 @@ export function InsurancesPage() {
                                                             fetchInsurances(true);
                                                         } catch (error) {
                                                             console.error(error);
-                                                            showAlert("상태 변경에 실패했습니다.", { title: "오류" });
+                                                            showAlert("Failed to change status.", { title: "Error" });
                                                         }
                                                     }}
                                                 >
@@ -230,7 +230,7 @@ export function InsurancesPage() {
                 onClose={() => setIsModalOpen(false)}
                 onSuccess={() => {
                     fetchInsurances(true);
-                    showAlert("보험 상품이 추가되었습니다.", { title: "성공" });
+                    showAlert("Insurance product added successfully.", { title: "Success" });
                 }}
             />
 
@@ -250,10 +250,10 @@ export function InsurancesPage() {
                 isOpen={deleteConfirm.isOpen}
                 onClose={() => setDeleteConfirm((prev) => ({ ...prev, isOpen: false }))}
                 onConfirm={handleConfirmDelete}
-                title={t("title_confirm")}
-                message={t("msg_confirm_delete", { name: deleteConfirm.name })}
+                title="Confirm"
+                message={`Are you sure you want to delete '${deleteConfirm.name}'?`}
                 isDestructive={true}
-                confirmLabel={t("btn_delete")}
+                confirmLabel="Delete"
             />
         </div>
     );

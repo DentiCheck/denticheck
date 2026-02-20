@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Frontend Component: EditInsuranceModal
  * Path: console/src/features/insurances/components/EditInsuranceModal.tsx
  * Description: [관리자 기능] 제휴 보험 상품 수정 모달
@@ -72,12 +72,12 @@ export function EditInsuranceModal({ isOpen, onClose, onSuccess, insurance }: Ed
                 id: insurance.id,
                 input: formData,
             });
-            showAlert(t("msg_save_success"), { title: "성공" });
+            showAlert("Saved successfully.", { title: "Success" });
             onSuccess();
             onClose();
         } catch (error) {
             console.error(error);
-            showAlert(t("msg_save_fail"), { title: "오류" });
+            showAlert("Failed to save.", { title: "Error" });
         } finally {
             setLoading(false);
         }
