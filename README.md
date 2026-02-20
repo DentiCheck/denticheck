@@ -55,3 +55,49 @@ The project is built on a high-performance, decoupled architecture with a focus 
 
 ---
 **DentiCheck: Transforming Dental Care, One Byte at a Time.**
+---
+## Getting Started (How to Run)
+
+### Method 1: Docker (Recommended)
+
+This is the easiest way to run the service.
+
+```bash
+cd ..
+docker-compose -f docker-compose.local.yml up -d ai
+```
+
+- API Endpoint: `http://localhost:8000`
+
+---
+
+### Method 2: Local Development Environment (uvicorn)
+
+Useful when you want to modify the code and test changes immediately.
+
+**1. Run Infrastructure (Required)**  
+You must start the DB (Milvus) and LLM (Ollama) services that the AI service depends on.
+
+```bash
+cd ..
+docker-compose -f docker-compose.local.yml up -d postgres milvus ollama etcd minio
+```
+
+---
+
+**2. Install Dependencies**
+
+```bash
+cd ai
+pip install fastapi "uvicorn[standard]" pydantic pydantic-settings ultralytics torch torchvision python-multipart httpx openai langchain langchain-ollama langchain-milvus langchain-community sentence-transformers pymilvus python-dotenv loguru --user
+```
+
+---
+
+**3. Run the Service (PowerShell)**
+
+```powershell
+$env:PYTHONPATH="src"; $env:MILVUS_URI="http://localhost:19530"; python -m uvicorn denticheck_ai.api.main:app --reload --port 8001
+```
+
+- API Endpoint: `http://localhost:8001`
