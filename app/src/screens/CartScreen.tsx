@@ -14,7 +14,7 @@ export default function CartScreen() {
     const [cartItems, setCartItems] = useState([
         {
             id: 1,
-            name: '덴티마스터 치실',
+            name: 'DentiMaster Floss',
             price: 12900,
             quantity: 2,
             imageColor: 'bg-teal-50',
@@ -22,7 +22,7 @@ export default function CartScreen() {
         },
         {
             id: 2,
-            name: '센서티브 치약',
+            name: 'Sensitive Toothpaste',
             price: 8500,
             quantity: 1,
             imageColor: 'bg-rose-50',
@@ -59,7 +59,7 @@ export default function CartScreen() {
                     >
                         <ChevronLeft size={24} color="#1e293b" />
                     </TouchableOpacity>
-                    <Text className="text-xl font-bold text-slate-800">장바구니</Text>
+                    <Text className="text-xl font-bold text-slate-800">Cart</Text>
                 </View>
 
                 {/* Cart Items */}
@@ -76,7 +76,7 @@ export default function CartScreen() {
                                     <View>
                                         <Text className="font-bold text-base text-slate-800 mb-1">{item.name}</Text>
                                         <Text className="font-bold text-lg text-primary">
-                                            {(item.price * item.quantity).toLocaleString()}원
+                                            ₩{(item.price * item.quantity).toLocaleString()}
                                         </Text>
                                     </View>
 
@@ -104,7 +104,7 @@ export default function CartScreen() {
                         ))
                     ) : (
                         <View className="items-center justify-center py-20">
-                            <Text className="text-slate-400 text-lg">장바구니가 비어있습니다.</Text>
+                            <Text className="text-slate-400 text-lg">Your cart is empty.</Text>
                         </View>
                     )}
                 </ScrollView>
@@ -112,13 +112,13 @@ export default function CartScreen() {
                 {/* Footer */}
                 <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-6 safe-area-bottom">
                     <View className="flex-row justify-between mb-4">
-                        <Text className="text-slate-500 font-medium">총 결제 금액</Text>
+                        <Text className="text-slate-500 font-medium">Total amount</Text>
                         <Text className="text-xl font-bold text-slate-800">
-                            {totalPrice.toLocaleString()}원
+                            ₩{totalPrice.toLocaleString()}
                         </Text>
                     </View>
                     <Button size="lg" className="w-full rounded-2xl" disabled={cartItems.length === 0}>
-                        <Text className="font-bold text-white">구매하기</Text>
+                        <Text className="font-bold text-white">Checkout</Text>
                     </Button>
                 </View>
             </SafeAreaView>

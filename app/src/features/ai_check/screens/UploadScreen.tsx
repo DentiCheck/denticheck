@@ -4,7 +4,7 @@ import { View, Text, StyleSheet } from 'react-native';
 export function UploadScreen() {
     return (
         <View style={styles.container}>
-            <Text>치아 사진을 업로드해주세요.</Text>
+            <Text>Please upload a photo of your teeth.</Text>
         </View>
     );
 }

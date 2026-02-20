@@ -111,16 +111,16 @@ export default function CommunityScreen() {
     resetKey: isMyPostsView ? "myPosts" : isLikedView ? "liked" : selectedTab,
   });
 
-  // refetch 함수를 ref로 저장하여 최신 함수 참조
+  // Store refetch function in ref to reference the latest function
   const refetchPostsRef = useRef(refetchPosts);
   useEffect(() => {
     refetchPostsRef.current = refetchPosts;
   }, [refetchPosts]);
 
-  // 탭에 다시 들어올 때 목록 새로고침 (추가/삭제 반영)
+  // Refresh list when re-entering the tab (to reflect additions/deletions)
   useFocusEffect(
     React.useCallback(() => {
-      // 약간의 지연을 두어 화면이 완전히 포커스된 후 실행
+      // Execute after screen is fully focused with a slight delay
       const timer = setTimeout(() => {
         refetchPostsRef.current();
       }, 100);
@@ -152,8 +152,8 @@ export default function CommunityScreen() {
 
   const [expandedPostIds, setExpandedPostIds] = useState<string[]>([]);
 
-  /** 게시글 → 수정 폼 초기값 (PostFormModal initialValues) */
-  /** 서버가 localhost URL 또는 상대 경로를 반환한 경우 앱에서 로드 가능한 절대 URL로 변환 */
+  /** Post → Edit form initial values (PostFormModal initialValues) */
+  /** If the server returns localhost URL or relative path, convert to absolute URL loadable by the app */
   const resolveImageUrl = (url: string): string => {
     if (!url?.trim()) return url;
     try {
@@ -241,7 +241,7 @@ export default function CommunityScreen() {
     }
   };
 
-  /** 서버에 이미지 1장 업로드 후 접근 URL 반환 */
+  /** Upload 1 image to server and return the access URL */
   const uploadCommunityImage = async (localUri: string): Promise<string> => {
     const token = await SecureStore.getItemAsync("accessToken");
     const formData = new FormData();
@@ -259,7 +259,7 @@ export default function CommunityScreen() {
     });
     if (!res.ok) {
       const body = await res.text();
-      throw new Error(body || `업로드 실패 (${res.status})`);
+      throw new Error(body || `Upload failed (${res.status})`);
     }
     const json = (await res.json()) as { url: string };
     return json.url;
@@ -286,13 +286,13 @@ export default function CommunityScreen() {
           },
         },
       });
-      Alert.alert("작성 완료", "게시글이 성공적으로 등록되었습니다.");
+      Alert.alert("Success", "Post has been successfully registered.");
     } catch (e: unknown) {
       const message =
         (e as { graphQLErrors?: Array<{ message?: string }> })?.graphQLErrors?.[0]?.message ??
         (e instanceof Error ? e.message : null) ??
-        "게시글 등록에 실패했습니다.";
-      Alert.alert("등록 실패", message);
+        "Failed to register the post.";
+      Alert.alert("Failed", message);
     }
   };
 
@@ -322,17 +322,17 @@ export default function CommunityScreen() {
           },
         },
       });
-      Alert.alert("수정 완료", "게시글이 수정되었습니다.");
+      Alert.alert("Success", "Post has been updated.");
     } catch (e: unknown) {
       const message =
         (e as { graphQLErrors?: Array<{ message?: string }> })?.graphQLErrors?.[0]?.message ??
         (e instanceof Error ? e.message : null) ??
-        "게시글 수정에 실패했습니다.";
-      Alert.alert("수정 실패", message);
+        "Failed to edit the post.";
+      Alert.alert("Failed", message);
     }
   };
 
-  // 탭 필터는 서버에서 postType으로 조회함. 검색만 클라이언트 필터
+  // Tab filter is queried by postType from the server. Only search is client-side filtering.
   const filteredPosts = posts.filter((post) => {
     if (!searchQuery.trim()) return true;
     return (
@@ -341,7 +341,7 @@ export default function CommunityScreen() {
     );
   });
 
-  // 공유 링크로 들어온 경우: 해당 게시글 위치로 스크롤
+  // When entering via share link: scroll to the corresponding post position
   useEffect(() => {
     if (!scrollToPostId || !filteredPosts.length || didScrollToPostRef.current === scrollToPostId) return;
     const index = filteredPosts.findIndex((p) => p.id === scrollToPostId);
@@ -351,7 +351,7 @@ export default function CommunityScreen() {
       try {
         listRef.current?.scrollToIndex?.({ index, animated: true, viewPosition: 0.2 });
       } catch (_) {
-        // 레이아웃 미측정 시 등 실패해도 무시
+        // Ignore failures like when layout is not yet measured
       }
       navigation.setParams?.({ scrollToPostId: undefined });
     }, 500);
@@ -374,36 +374,36 @@ export default function CommunityScreen() {
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return "방금 전";
-    if (minutes < 60) return `${minutes}분 전`;
-    if (hours < 24) return `${hours}시간 전`;
-    return `${days}일 전`;
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    return `${days}d ago`;
   };
 
   const postTypeLabel = (postType: string | null | undefined) => {
     if (!postType || postType === "all") return null;
-    if (postType === "product") return { label: "상품후기", icon: Package, bg: "bg-indigo-50", text: "text-indigo-600" };
-    if (postType === "hospital") return { label: "병원후기", icon: LucideHospital, bg: "bg-blue-50", text: "text-blue-600" };
+    if (postType === "product") return { label: "Product Review", icon: Package, bg: "bg-indigo-50", text: "text-indigo-600" };
+    if (postType === "hospital") return { label: "Clinic Review", icon: LucideHospital, bg: "bg-blue-50", text: "text-blue-600" };
     return null;
   };
 
   const handleDeletePost = (postId: string) => {
     Alert.alert(
-      "게시글 삭제",
-      "이 게시글을 삭제할까요?",
+      "Delete Post",
+      "Do you want to delete this post?",
       [
-        { text: "취소", style: "cancel" },
+        { text: "Cancel", style: "cancel" },
         {
-          text: "삭제",
+          text: "Delete",
           style: "destructive",
           onPress: async () => {
             try {
               await deletePost({ variables: { id: postId } });
               if (isMyPostsView) refetchPostsRef.current();
-              Alert.alert("삭제됨", "게시글이 삭제되었습니다.");
+              Alert.alert("Deleted", "Post has been deleted.");
             } catch (e) {
-              const msg = (e as { message?: string })?.message ?? "삭제에 실패했습니다.";
-              Alert.alert("삭제 실패", msg);
+              const msg = (e as { message?: string })?.message ?? "Failed to delete post.";
+              Alert.alert("Delete Failed", msg);
             }
           },
         },
@@ -413,37 +413,37 @@ export default function CommunityScreen() {
 
   const handleSharePost = async (post: Post) => {
     try {
-      // 게시글 내용 요약 (최대 100자)
-      const contentPreview = post.content.length > 100 
-        ? post.content.substring(0, 100) + "..." 
+      // Post content summary (max 100 chars)
+      const contentPreview = post.content.length > 100
+        ? post.content.substring(0, 100) + "..."
         : post.content;
-      
-      // 웹 URL 사용 (http/https라 메시지 앱에서 하이퍼링크로 인식됨)
+
+      // Use web URL (recognized as hyperlink in messaging apps due to http/https)
       const postUrl = `${SHARE_WEB_BASE_URL.replace(/\/$/, "")}/community/post/${post.id}`;
-      
-      // 공유할 메시지 구성
-      const shareMessage = `${post.author}님의 게시글\n\n${contentPreview}\n\n게시글 보기: ${postUrl}\n\n#DentiCheck`;
-      
+
+      // Compose sharing message
+      const shareMessage = `${post.author}'s post\n\n${contentPreview}\n\nView post: ${postUrl}\n\n#DentiCheck`;
+
       const result = await Share.share(
         Platform.OS === 'ios'
           ? {
-              message: shareMessage,
-              url: postUrl,
-              title: "게시글 공유",
-            }
+            message: shareMessage,
+            url: postUrl,
+            title: "Share Post",
+          }
           : {
-              message: shareMessage,
-              title: "게시글 공유",
-            }
+            message: shareMessage,
+            title: "Share Post",
+          }
       );
 
       if (result.action === Share.sharedAction) {
-        // 공유 성공
+        // Share successful
       } else if (result.action === Share.dismissedAction) {
-        // 공유 취소
+        // Share cancelled
       }
     } catch (error) {
-      Alert.alert("공유 실패", "게시글을 공유하는 중 오류가 발생했습니다.");
+      Alert.alert("Share Failed", "An error occurred while sharing the post.");
     }
   };
 
@@ -469,222 +469,220 @@ export default function CommunityScreen() {
       ? lines.slice(0, MAX_PREVIEW_LINES).join("\n")
       : post.content ?? "";
     return (
-    <View
-      className="p-5 mb-4 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm"
-      style={{
-        elevation: 2,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-      }}
-    >
-      <View className="flex-row items-center gap-3 mb-4">
-        <View className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 items-center justify-center border border-slate-200 dark:border-slate-600">
-          <Text className="font-bold text-slate-600 dark:text-slate-300">{post.authorInitial}</Text>
-        </View>
-        <View className="flex-1">
-          <Text className="font-bold text-slate-800 dark:text-white text-[15px]">
-            {post.author}
-          </Text>
-          <Text className="text-xs text-slate-400 font-medium">
-            {getTimeAgo(post.createdAt)}
-          </Text>
-        </View>
-        {postTypeLabel(post.postType) && (() => {
-          const typeInfo = postTypeLabel(post.postType)!;
-          const Icon = typeInfo.icon;
-          return (
-            <View className={`flex-row items-center px-2.5 py-1 rounded-lg ${typeInfo.bg}`}>
-              <Icon size={12} color={post.postType === "product" ? "#4f46e5" : "#2563eb"} />
-              <Text className={`ml-1 text-xs font-bold ${typeInfo.text}`}>
-                {typeInfo.label}
-              </Text>
-            </View>
-          );
-        })()}
-      </View>
-
-      <TouchableOpacity
-        activeOpacity={isLong ? 0.7 : 1}
-        onPress={isLong ? onToggleExpand : undefined}
-        className="mb-4"
+      <View
+        className="p-5 mb-4 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm"
+        style={{
+          elevation: 2,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.05,
+          shadowRadius: 2,
+        }}
       >
-        <Text className="text-slate-700 dark:text-slate-200 leading-6 text-[15px] p-1">
-          {displayContent}
-        </Text>
-        {showPreview && (
-          <Text className="text-slate-500 dark:text-slate-400 text-[15px] p-1 mt-0.5 font-bold">
-            더보기...
-          </Text>
-        )}
-        {isLong && isExpanded && (
-          <Text className="text-slate-500 dark:text-slate-400 text-[14px] p-1 mt-1 font-bold">
-            접기
-          </Text>
-        )}
-      </TouchableOpacity>
-
-      {post.images && post.images.length > 0 && (
-        <View className="mt-3 mb-4 rounded-xl overflow-hidden gap-1">
-          {post.images.length === 1 && (
-            <Image
-              source={{ uri: resolveImageUrl(post.images[0]) }}
-              className="w-full rounded-xl bg-slate-100 dark:bg-slate-700"
-              style={{ aspectRatio: 4 / 3 }}
-              resizeMode="cover"
-            />
-          )}
-          {post.images.length === 2 && (
-            <View className="flex-row gap-1">
-              <Image
-                source={{ uri: resolveImageUrl(post.images[0]) }}
-                className="flex-1 rounded-l-xl bg-slate-100 dark:bg-slate-700"
-                style={{ aspectRatio: 1 }}
-                resizeMode="cover"
-              />
-              <Image
-                source={{ uri: resolveImageUrl(post.images[1]) }}
-                className="flex-1 rounded-r-xl bg-slate-100 dark:bg-slate-700"
-                style={{ aspectRatio: 1 }}
-                resizeMode="cover"
-              />
-            </View>
-          )}
-          {post.images.length === 3 && (
-            <View className="flex-row gap-1">
-              <Image
-                source={{ uri: resolveImageUrl(post.images[0]) }}
-                className="rounded-l-xl bg-slate-100 dark:bg-slate-700"
-                style={{ flex: 1, aspectRatio: 1 }}
-                resizeMode="cover"
-              />
-              <View className="flex-1 gap-1">
-                <Image
-                  source={{ uri: resolveImageUrl(post.images[1]) }}
-                  className="flex-1 rounded-tr-xl bg-slate-100 dark:bg-slate-700"
-                  style={{ aspectRatio: 1 }}
-                  resizeMode="cover"
-                />
-                <Image
-                  source={{ uri: resolveImageUrl(post.images[2]) }}
-                  className="flex-1 rounded-br-xl bg-slate-100 dark:bg-slate-700"
-                  style={{ aspectRatio: 1 }}
-                  resizeMode="cover"
-                />
+        <View className="flex-row items-center gap-3 mb-4">
+          <View className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 items-center justify-center border border-slate-200 dark:border-slate-600">
+            <Text className="font-bold text-slate-600 dark:text-slate-300">{post.authorInitial}</Text>
+          </View>
+          <View className="flex-1">
+            <Text className="font-bold text-slate-800 dark:text-white text-[15px]">
+              {post.author}
+            </Text>
+            <Text className="text-xs text-slate-400 font-medium">
+              {getTimeAgo(post.createdAt)}
+            </Text>
+          </View>
+          {postTypeLabel(post.postType) && (() => {
+            const typeInfo = postTypeLabel(post.postType)!;
+            const Icon = typeInfo.icon;
+            return (
+              <View className={`flex-row items-center px-2.5 py-1 rounded-lg ${typeInfo.bg}`}>
+                <Icon size={12} color={post.postType === "product" ? "#4f46e5" : "#2563eb"} />
+                <Text className={`ml-1 text-xs font-bold ${typeInfo.text}`}>
+                  {typeInfo.label}
+                </Text>
               </View>
-            </View>
+            );
+          })()}
+        </View>
+
+        <TouchableOpacity
+          activeOpacity={isLong ? 0.7 : 1}
+          onPress={isLong ? onToggleExpand : undefined}
+          className="mb-4"
+        >
+          <Text className="text-slate-700 dark:text-slate-200 leading-6 text-[15px] p-1">
+            {displayContent}
+          </Text>
+          {showPreview && (
+            <Text className="text-slate-500 dark:text-slate-400 text-[15px] p-1 mt-0.5 font-bold">
+              View more...
+            </Text>
           )}
-          {post.images.length === 4 && (
-            <View className="gap-1">
+          {isLong && isExpanded && (
+            <Text className="text-slate-500 dark:text-slate-400 text-[14px] p-1 mt-1 font-bold">
+              Hide
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        {post.images && post.images.length > 0 && (
+          <View className="mt-3 mb-4 rounded-xl overflow-hidden gap-1">
+            {post.images.length === 1 && (
+              <Image
+                source={{ uri: resolveImageUrl(post.images[0]) }}
+                className="w-full rounded-xl bg-slate-100 dark:bg-slate-700"
+                style={{ aspectRatio: 4 / 3 }}
+                resizeMode="cover"
+              />
+            )}
+            {post.images.length === 2 && (
               <View className="flex-row gap-1">
                 <Image
                   source={{ uri: resolveImageUrl(post.images[0]) }}
-                  className="flex-1 rounded-tl-xl bg-slate-100 dark:bg-slate-700"
+                  className="flex-1 rounded-l-xl bg-slate-100 dark:bg-slate-700"
                   style={{ aspectRatio: 1 }}
                   resizeMode="cover"
                 />
                 <Image
                   source={{ uri: resolveImageUrl(post.images[1]) }}
-                  className="flex-1 rounded-tr-xl bg-slate-100 dark:bg-slate-700"
+                  className="flex-1 rounded-r-xl bg-slate-100 dark:bg-slate-700"
                   style={{ aspectRatio: 1 }}
                   resizeMode="cover"
                 />
               </View>
+            )}
+            {post.images.length === 3 && (
               <View className="flex-row gap-1">
                 <Image
-                  source={{ uri: resolveImageUrl(post.images[2]) }}
-                  className="flex-1 rounded-bl-xl bg-slate-100 dark:bg-slate-700"
-                  style={{ aspectRatio: 1 }}
+                  source={{ uri: resolveImageUrl(post.images[0]) }}
+                  className="rounded-l-xl bg-slate-100 dark:bg-slate-700"
+                  style={{ flex: 1, aspectRatio: 1 }}
                   resizeMode="cover"
                 />
-                <Image
-                  source={{ uri: resolveImageUrl(post.images[3]) }}
-                  className="flex-1 rounded-br-xl bg-slate-100 dark:bg-slate-700"
-                  style={{ aspectRatio: 1 }}
-                  resizeMode="cover"
-                />
+                <View className="flex-1 gap-1">
+                  <Image
+                    source={{ uri: resolveImageUrl(post.images[1]) }}
+                    className="flex-1 rounded-tr-xl bg-slate-100 dark:bg-slate-700"
+                    style={{ aspectRatio: 1 }}
+                    resizeMode="cover"
+                  />
+                  <Image
+                    source={{ uri: resolveImageUrl(post.images[2]) }}
+                    className="flex-1 rounded-br-xl bg-slate-100 dark:bg-slate-700"
+                    style={{ aspectRatio: 1 }}
+                    resizeMode="cover"
+                  />
+                </View>
               </View>
-            </View>
-          )}
-        </View>
-      )}
+            )}
+            {post.images.length === 4 && (
+              <View className="gap-1">
+                <View className="flex-row gap-1">
+                  <Image
+                    source={{ uri: resolveImageUrl(post.images[0]) }}
+                    className="flex-1 rounded-tl-xl bg-slate-100 dark:bg-slate-700"
+                    style={{ aspectRatio: 1 }}
+                    resizeMode="cover"
+                  />
+                  <Image
+                    source={{ uri: resolveImageUrl(post.images[1]) }}
+                    className="flex-1 rounded-tr-xl bg-slate-100 dark:bg-slate-700"
+                    style={{ aspectRatio: 1 }}
+                    resizeMode="cover"
+                  />
+                </View>
+                <View className="flex-row gap-1">
+                  <Image
+                    source={{ uri: resolveImageUrl(post.images[2]) }}
+                    className="flex-1 rounded-bl-xl bg-slate-100 dark:bg-slate-700"
+                    style={{ aspectRatio: 1 }}
+                    resizeMode="cover"
+                  />
+                  <Image
+                    source={{ uri: resolveImageUrl(post.images[3]) }}
+                    className="flex-1 rounded-br-xl bg-slate-100 dark:bg-slate-700"
+                    style={{ aspectRatio: 1 }}
+                    resizeMode="cover"
+                  />
+                </View>
+              </View>
+            )}
+          </View>
+        )}
 
-      {post.tags.length > 0 && (
-        <View className="mb-4">
-          {post.tags.map((tag, idx) => (
-            <View
-              key={idx}
-              className={`flex-row items-center px-2 py-1.5 rounded-md mb-1 ${
-                tag.type === "product" ? "bg-indigo-50" : "bg-blue-50"
-              }`}
-            >
-              {tag.type === "product" ? (
-                <Package size={12} color="#4f46e5" />
-              ) : (
-                <LucideHospital size={12} color="#2563eb" />
-              )}
-              <Text
-                className={`ml-1 text-xs font-bold ${
-                  tag.type === "product" ? "text-indigo-600" : "text-blue-600"
-                }`}
+        {post.tags.length > 0 && (
+          <View className="mb-4">
+            {post.tags.map((tag, idx) => (
+              <View
+                key={idx}
+                className={`flex-row items-center px-2 py-1.5 rounded-md mb-1 ${tag.type === "product" ? "bg-indigo-50" : "bg-blue-50"
+                  }`}
               >
-                {tag.name}
-              </Text>
-            </View>
-          ))}
-        </View>
-      )}
+                {tag.type === "product" ? (
+                  <Package size={12} color="#4f46e5" />
+                ) : (
+                  <LucideHospital size={12} color="#2563eb" />
+                )}
+                <Text
+                  className={`ml-1 text-xs font-bold ${tag.type === "product" ? "text-indigo-600" : "text-blue-600"
+                    }`}
+                >
+                  {tag.name}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
 
-      <View className="flex-row items-center justify-between pt-3 border-t border-slate-50">
-        <View className="flex-row gap-6">
-          <TouchableOpacity
-            onPress={() => handleToggleLike(post.id)}
-            className="flex-row items-center gap-1.5"
-          >
-            <Heart
-              size={20}
-              color={post.isLiked ? "#ef4444" : "#94a3b8"}
-              fill={post.isLiked ? "#ef4444" : "transparent"}
-            />
-            <Text
-              className={`text-sm font-medium ${post.isLiked ? "text-red-500" : "text-slate-500"}`}
+        <View className="flex-row items-center justify-between pt-3 border-t border-slate-50">
+          <View className="flex-row gap-6">
+            <TouchableOpacity
+              onPress={() => handleToggleLike(post.id)}
+              className="flex-row items-center gap-1.5"
             >
-              {post.likes}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className="flex-row items-center gap-1.5"
-            onPress={() =>
-              navigation.navigate("CommentList", { postId: post.id })
-            }
-          >
-            <MessageCircle size={20} color="#94a3b8" />
-            <Text className="text-sm font-medium text-slate-500">
-              {post.comments}
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <View className="flex-row items-center gap-3">
-          {post.isMine && (
-            <>
-              {onEdit && (
-                <TouchableOpacity onPress={() => onEdit(post)}>
-                  <Pencil size={20} color="#94a3b8" />
+              <Heart
+                size={20}
+                color={post.isLiked ? "#ef4444" : "#94a3b8"}
+                fill={post.isLiked ? "#ef4444" : "transparent"}
+              />
+              <Text
+                className={`text-sm font-medium ${post.isLiked ? "text-red-500" : "text-slate-500"}`}
+              >
+                {post.likes}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="flex-row items-center gap-1.5"
+              onPress={() =>
+                navigation.navigate("CommentList", { postId: post.id })
+              }
+            >
+              <MessageCircle size={20} color="#94a3b8" />
+              <Text className="text-sm font-medium text-slate-500">
+                {post.comments}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View className="flex-row items-center gap-3">
+            {post.isMine && (
+              <>
+                {onEdit && (
+                  <TouchableOpacity onPress={() => onEdit(post)}>
+                    <Pencil size={20} color="#94a3b8" />
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity onPress={() => onDelete(post.id)} disabled={deleteLoading}>
+                  <Trash2 size={20} color="#94a3b8" />
                 </TouchableOpacity>
-              )}
-              <TouchableOpacity onPress={() => onDelete(post.id)} disabled={deleteLoading}>
-                <Trash2 size={20} color="#94a3b8" />
-              </TouchableOpacity>
-            </>
-          )}
-          <TouchableOpacity onPress={() => handleSharePost(post)}>
-            <Share2 size={20} color="#94a3b8" />
-          </TouchableOpacity>
+              </>
+            )}
+            <TouchableOpacity onPress={() => handleSharePost(post)}>
+              <Share2 size={20} color="#94a3b8" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
   };
 
   return (
@@ -705,12 +703,12 @@ export default function CommunityScreen() {
         {loading ? (
           <View className="flex-1 items-center justify-center py-20">
             <ActivityIndicator size="large" color={theme?.primary ?? "#3b82f6"} />
-            <Text className="mt-3 text-slate-500">게시글을 불러오는 중...</Text>
+            <Text className="mt-3 text-slate-500">Loading posts...</Text>
           </View>
         ) : error ? (
           <View className="flex-1 items-center justify-center px-8 py-20">
             <Text className="text-center text-red-500">
-              게시글을 불러오지 못했어요.
+              Failed to load posts.
             </Text>
             <Text className="mt-2 text-center text-slate-500 text-sm">
               {error.message}
@@ -720,10 +718,10 @@ export default function CommunityScreen() {
           <View className="flex-1 items-center justify-center px-8 py-20">
             <MessageCircle size={48} color="#cbd5e1" />
             <Text className="mt-4 text-center text-slate-600 font-medium">
-              {isMyPostsView ? "작성한 게시글이 없어요" : isLikedView ? "좋아요한 게시글이 없어요" : "아직 게시글이 없어요"}
+              {isMyPostsView ? "No posts created yet" : isLikedView ? "No liked posts" : "No posts yet"}
             </Text>
             <Text className="mt-2 text-center text-slate-400 text-sm">
-              {isMyPostsView ? "커뮤니티에서 글을 작성해 보세요." : isLikedView ? "마음에 드는 글에 좋아요를 눌러보세요." : "첫 번째 글을 작성해 보세요."}
+              {isMyPostsView ? "Start a conversation in the community." : isLikedView ? "Like posts you are interested in." : "Be the first to post."}
             </Text>
           </View>
         ) : (
@@ -762,7 +760,7 @@ export default function CommunityScreen() {
             handleSubmitPostForm(data);
           }}
           submitLoading={(editingPost ? updateLoading : createLoading)}
-          title={editingPost ? "글 수정" : "글쓰기"}
+          title={editingPost ? "Edit Post" : "Write Post"}
           initialValues={editingPost ? postToInitialValues(editingPost) : null}
         />
       </SafeAreaView>

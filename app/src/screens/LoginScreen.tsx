@@ -32,7 +32,7 @@ export default function LoginScreen() {
                             <Smile size={48} color="white" />
                         </LinearGradient>
                         <Text className="text-3xl font-bold text-center text-slate-800 mb-2">DentiCheck</Text>
-                        <Text className="text-slate-500 text-center font-medium">스마트한 구강 관리의 시작</Text>
+                        <Text className="text-slate-500 text-center font-medium">Smart Oral Care Starts Here</Text>
                     </View>
 
                     {/* Google Login Button */}
@@ -43,7 +43,7 @@ export default function LoginScreen() {
                         activeOpacity={0.8}
                     >
                         {/* Google Icon Placeholder or Text */}
-                        <Text className="text-lg font-bold text-slate-700 ml-3">Google 계정으로 계속하기</Text>
+                        <Text className="text-lg font-bold text-slate-700 ml-3">Continue with Google</Text>
                     </TouchableOpacity>
 
                     {/* Dev Bypass Button (Only in Dev) */}
@@ -67,7 +67,7 @@ export default function LoginScreen() {
                     )}
 
                     <Text className="text-slate-400 text-xs text-center mt-8">
-                        로그인 시 이용약관 및 개인정보처리방침에 동의하게 됩니다.
+                        By logging in, you agree to our Terms and Privacy Policy.
                     </Text>
                 </View>
             </SafeAreaView>

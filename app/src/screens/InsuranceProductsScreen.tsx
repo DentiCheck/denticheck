@@ -26,28 +26,28 @@ export default function InsuranceProductsScreen() {
     const insurances: InsuranceItem[] = [
         {
             id: 1,
-            title: '덴티케어 스탠다드',
-            description: '기본적인 치과 치료를 보장하는 실속형 상품',
-            monthlyPremium: '15,000원',
-            benefits: ['충치 치료 100% 보장', '스케일링 연 1회 무료', '엑스레이 촬영 지원'],
+            title: 'DentiCare Standard',
+            description: 'A practical product that guarantees basic dental treatment',
+            monthlyPremium: '₩15,000',
+            benefits: ['100% coverage for cavity treatment', 'Free scaling once a year', 'X-ray support'],
             recommended: false,
             color: ['#3b82f6', '#1d4ed8']
         },
         {
             id: 2,
-            title: '덴티케어 프리미엄',
-            description: '임플란트, 교정까지 커버하는 종합 보장 상품',
-            monthlyPremium: '35,000원',
-            benefits: ['스탠다드 혜택 포함', '임플란트 최대 3개 지원', '치아 교정 50% 지원', '고급 잇몸 치료'],
+            title: 'DentiCare Premium',
+            description: 'Comprehensive coverage including implants and orthodontics',
+            monthlyPremium: '₩35,000',
+            benefits: ['Includes Standard benefits', 'Support for up to 3 implants', '50% support for orthodontics', 'Advanced gum treatment'],
             recommended: true,
             color: ['#8b5cf6', '#6d28d9']
         },
         {
             id: 3,
-            title: '키즈 튼튼 보험',
-            description: '우리아이 치아 건강을 위한 성장기 맞춤 보험',
-            monthlyPremium: '12,000원',
-            benefits: ['불소 도포 연 2회', '충치 예방 치료', '유치 발치 지원'],
+            title: 'Kids Strong Insurance',
+            description: 'Customized insurance for growing children\'s dental health',
+            monthlyPremium: '₩12,000',
+            benefits: ['Fluoride application twice a year', 'Cavity prevention treatment', 'Milk teeth extraction support'],
             recommended: false,
             color: ['#f43f5e', '#be123c']
         }
@@ -64,13 +64,13 @@ export default function InsuranceProductsScreen() {
                     >
                         <ChevronLeft size={24} color="#1e293b" />
                     </TouchableOpacity>
-                    <Text className="text-xl font-bold text-slate-800 dark:text-white">보험 상품</Text>
+                    <Text className="text-xl font-bold text-slate-800 dark:text-white">Insurance Products</Text>
                 </View>
 
                 <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 100 }}>
                     <View className="mb-6">
-                        <Text className="text-lg font-bold text-slate-800 dark:text-white mb-2">나에게 맞는 보험 찾기</Text>
-                        <Text className="text-slate-500 text-sm">치과 진료비 걱정 없이{'\n'}건강한 치아를 지키세요.</Text>
+                        <Text className="text-lg font-bold text-slate-800 dark:text-white mb-2">Find the right insurance for you</Text>
+                        <Text className="text-slate-500 text-sm">Protect your healthy teeth{'\n'}without worrying about dental costs.</Text>
                     </View>
 
                     <View className="space-y-6">
@@ -89,7 +89,7 @@ export default function InsuranceProductsScreen() {
                                                 {item.recommended && (
                                                     <View className="bg-white/20 self-start px-2 py-1 rounded-lg mb-3 flex-row items-center gap-1 backdrop-blur-md">
                                                         <Zap size={12} color="#fbbf24" fill="#fbbf24" />
-                                                        <Text className="text-amber-300 text-[10px] font-bold">MD 추천</Text>
+                                                        <Text className="text-amber-300 text-[10px] font-bold">MD Choice</Text>
                                                     </View>
                                                 )}
                                                 <Text className="text-white font-bold text-xl mb-1">{item.title}</Text>
@@ -116,11 +116,11 @@ export default function InsuranceProductsScreen() {
 
                                         <View className="flex-row items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700">
                                             <View>
-                                                <Text className="text-slate-400 text-xs">월 예상 납입료</Text>
+                                                <Text className="text-slate-400 text-xs">Estimated Monthly Premium</Text>
                                                 <Text className="text-slate-800 dark:text-white font-bold text-xl">{item.monthlyPremium}</Text>
                                             </View>
                                             <Button className="rounded-full px-6 bg-slate-900 dark:bg-white">
-                                                <Text className="text-white dark:text-slate-900 font-bold">상세보기</Text>
+                                                <Text className="text-white dark:text-slate-900 font-bold">View Details</Text>
                                             </Button>
                                         </View>
                                     </View>

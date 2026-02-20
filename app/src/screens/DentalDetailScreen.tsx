@@ -20,15 +20,15 @@ export default function DentalDetailScreen() {
     const params = route.params || {};
     const dental = params.dental || {
         id: '1',
-        name: '스마일 치과의원',
-        address: '서울특별시 강남구 테헤란로 123',
+        name: 'Smile Dental Clinic',
+        address: '123 Teheran-ro, Gangnam-gu, Seoul',
         ratingAvg: 4.8,
         ratingCount: 248,
         phone: '02-1234-5678',
         isOpen: true,
         openTime: '09:00 - 18:00',
-        features: ['야간진료', '주차가능', '임플란트'],
-        description: '최신 장비와 친절한 의료진이 함께하는 스마일 치과입니다. 무통 마취 시스템으로 아프지 않은 치료를 약속드립니다.',
+        features: ['Night Clinic', 'Parking', 'Implant'],
+        description: 'Smile Dental Clinic with the latest equipment and friendly medical staff. We promise painless treatment with our pain-free anesthesia system.',
         images: ['#', '#', '#'] // Placeholders
     };
 
@@ -52,7 +52,7 @@ export default function DentalDetailScreen() {
             <View className="h-64 bg-slate-200 dark:bg-slate-800 relative">
                 {/* Overlay Gradient could go here */}
                 <View className="absolute inset-0 flex items-center justify-center">
-                    <Text className="text-slate-400 dark:text-slate-600 font-bold text-lg">Dental Image</Text>
+                    <Text className="text-slate-400 dark:text-slate-600 font-bold text-lg">Clinic Image</Text>
                 </View>
 
                 <SafeAreaView edges={['top']} className="absolute inset-x-0 top-0">
@@ -91,12 +91,12 @@ export default function DentalDetailScreen() {
                                 >
                                     <Star size={18} color="#eab308" fill="#eab308" />
                                     <Text className="text-base font-bold text-slate-900 dark:text-white">{dental.ratingAvg || 0}</Text>
-                                    <Text className="text-base text-slate-500 underline">({dental.ratingCount || 0}개의 후기)</Text>
+                                    <Text className="text-base text-slate-500 underline">({dental.ratingCount || 0} reviews)</Text>
                                 </TouchableOpacity>
                             </View>
                             {dental.isOpen && (
                                 <Badge className="bg-green-100 dark:bg-green-900/30">
-                                    <Text className="text-green-700 dark:text-green-400 text-xs font-bold">진료중</Text>
+                                    <Text className="text-green-700 dark:text-green-400 text-xs font-bold">Open</Text>
                                 </Badge>
                             )}
                         </View>
@@ -117,7 +117,7 @@ export default function DentalDetailScreen() {
                                 <MapPin size={20} color={theme.primary} />
                             </View>
                             <View className="flex-1">
-                                <Text className="text-sm font-bold text-slate-900 dark:text-white mb-1">위치</Text>
+                                <Text className="text-sm font-bold text-slate-900 dark:text-white mb-1">Location</Text>
                                 <Text className="text-sm text-slate-500 leading-5">{dental.address}</Text>
                             </View>
                         </View>
@@ -127,9 +127,9 @@ export default function DentalDetailScreen() {
                                 <Clock size={20} color="#f97316" />
                             </View>
                             <View className="flex-1">
-                                <Text className="text-sm font-bold text-slate-900 dark:text-white mb-1">진료시간</Text>
+                                <Text className="text-sm font-bold text-slate-900 dark:text-white mb-1">Hours</Text>
                                 <Text className="text-sm text-slate-500 mb-1">{dental.openTime}</Text>
-                                <Text className="text-xs text-slate-400">점심시간 13:00 - 14:00</Text>
+                                <Text className="text-xs text-slate-400">Lunch break 13:00 - 14:00</Text>
                             </View>
                         </View>
 
@@ -138,9 +138,9 @@ export default function DentalDetailScreen() {
                                 <Info size={20} color="#a855f7" />
                             </View>
                             <View className="flex-1">
-                                <Text className="text-sm font-bold text-slate-900 dark:text-white mb-1">병원 소개</Text>
+                                <Text className="text-sm font-bold text-slate-900 dark:text-white mb-1">About</Text>
                                 <Text className="text-sm text-slate-500 leading-6">
-                                    {dental.description || '병원 소개글이 없습니다.'}
+                                    {dental.description || 'No clinic description available.'}
                                 </Text>
                             </View>
                         </View>
@@ -157,11 +157,11 @@ export default function DentalDetailScreen() {
                         onPress={() => Linking.openURL(`tel:${dental.phone}`)}
                     >
                         <Phone size={18} color={theme.primary} style={{ marginRight: 8 }} />
-                        <Text className="text-primary font-bold">전화하기</Text>
+                        <Text className="text-primary font-bold">Call</Text>
                     </Button>
                     <Button className="flex-[2] h-12 bg-blue-600">
                         <Calendar size={18} color="white" style={{ marginRight: 8 }} />
-                        <Text className="text-white font-bold">예약하기</Text>
+                        <Text className="text-white font-bold">Book Now</Text>
                     </Button>
                 </View>
             </View>

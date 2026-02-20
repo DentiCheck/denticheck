@@ -13,7 +13,7 @@ export default function ReviewWriteScreen() {
     const { theme } = useColorTheme();
 
     const dentalId = route.params?.dentalId;
-    const dentalName = route.params?.dentalName || '병원';
+    const dentalName = route.params?.dentalName || 'Clinic';
 
     const [rating, setRating] = useState(5);
     const [content, setContent] = useState('');
@@ -21,19 +21,19 @@ export default function ReviewWriteScreen() {
 
     const handleSubmit = async () => {
         if (!content.trim()) {
-            Alert.alert('알림', '후기 내용을 입력해주세요.');
+            Alert.alert('Notice', 'Please enter your review.');
             return;
         }
 
         try {
             setSubmitting(true);
             await createReview(dentalId, rating, content);
-            Alert.alert('성공', '후기가 등록되었습니다.', [
-                { text: '확인', onPress: () => navigation.goBack() }
+            Alert.alert('Success', 'Review has been posted.', [
+                { text: 'OK', onPress: () => navigation.goBack() }
             ]);
         } catch (error) {
             console.error(error);
-            Alert.alert('오류', '후기 등록에 실패했습니다.');
+            Alert.alert('Error', 'Failed to post review.');
         } finally {
             setSubmitting(false);
         }
@@ -66,7 +66,7 @@ export default function ReviewWriteScreen() {
                     >
                         <ChevronLeft size={24} color="#1e293b" />
                     </TouchableOpacity>
-                    <Text className="text-lg font-bold text-slate-900 dark:text-white">후기 작성</Text>
+                    <Text className="text-lg font-bold text-slate-900 dark:text-white">Write Review</Text>
                 </View>
 
                 <KeyboardAvoidingView
@@ -78,19 +78,19 @@ export default function ReviewWriteScreen() {
                             {dentalName}
                         </Text>
                         <Text className="text-center text-slate-500 dark:text-slate-400 mb-6">
-                            진료는 만족스러우셨나요?
+                            Were you satisfied with your visit?
                         </Text>
 
                         {renderStars()}
 
                         <Text className="text-center font-bold text-xl text-yellow-500 mb-8">
-                            {rating}점
+                            {rating} stars
                         </Text>
 
                         <View className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4 min-h-[200px]">
                             <TextInput
                                 className="flex-1 text-base text-slate-900 dark:text-white"
-                                placeholder="생생한 후기를 남겨주세요. (최소 10자 이상)"
+                                placeholder="Please leave a detailed review. (Min. 10 characters)"
                                 placeholderTextColor="#94a3b8"
                                 multiline
                                 textAlignVertical="top"
@@ -109,7 +109,7 @@ export default function ReviewWriteScreen() {
                         >
                             {submitting && <ActivityIndicator size="small" color="white" />}
                             <Text className="text-white font-bold text-lg">
-                                {submitting ? '등록 중...' : '등록하기'}
+                                {submitting ? 'Posting...' : 'Submit'}
                             </Text>
                         </TouchableOpacity>
                     </View>

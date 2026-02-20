@@ -52,10 +52,10 @@ export default function HomeScreen() {
                   </View>
                   <View>
                     <Text className="text-white font-bold text-lg leading-tight mb-1">
-                      AI 구강 체크
+                      AI Oral Check
                     </Text>
                     <Text className="text-white/80 text-xs font-medium">
-                      사진 촬영 한 번으로{"\n"}내 치아 상태 분석
+                      Analyze your dental status{"\n"}with a single photo
                     </Text>
                   </View>
                   <View className="absolute top-4 right-4 opacity-20 transform rotate-12">
@@ -87,10 +87,10 @@ export default function HomeScreen() {
                   </View>
                   <View>
                     <Text className="text-white font-bold text-lg leading-tight mb-1">
-                      병원 찾기
+                      Find Clinic
                     </Text>
                     <Text className="text-white/80 text-xs font-medium">
-                      내 위치 기반{"\n"}가까운 치과 검색
+                      Search nearby dentists{"\n"}based on your location
                     </Text>
                   </View>
                   <View className="absolute top-4 right-4 opacity-20 transform -rotate-12">
@@ -104,14 +104,14 @@ export default function HomeScreen() {
             <View>
               <View className="flex-row items-center justify-between mb-4 px-1">
                 <Text className="font-bold text-xl text-slate-800 dark:text-white">
-                  추천 상품
+                  Recommended Products
                 </Text>
                 <TouchableOpacity
                   className="flex-row items-center"
                   onPress={() => navigation.navigate("RecommendedProducts")}
                 >
                   <Text className="text-xs text-slate-500 font-medium mr-1">
-                    전체보기
+                    View All
                   </Text>
                   <ChevronRight size={14} color="#64748b" />
                 </TouchableOpacity>
@@ -125,25 +125,25 @@ export default function HomeScreen() {
               >
                 {[
                   {
-                    name: "덴티마스터 치실",
-                    detail: "치간 케어 필수품",
-                    price: "12,900원",
+                    name: "DentiMaster Floss",
+                    detail: "Interdental care essential",
+                    price: "₩12,900",
                     tag: "BEST",
                     color: "bg-teal-50",
                     iconColor: "text-teal-600",
                   },
                   {
-                    name: "센서티브 치약",
-                    detail: "시린이 완화 효과",
-                    price: "8,500원",
+                    name: "Sensitive Toothpaste",
+                    detail: "Soothing for sensitive teeth",
+                    price: "₩8,500",
                     tag: "SALE",
                     color: "bg-rose-50",
                     iconColor: "text-rose-600",
                   },
                   {
-                    name: "음파 전동 칫솔",
-                    detail: "분당 3만회 진동",
-                    price: "45,000원",
+                    name: "Sonic Electric Toothbrush",
+                    detail: "30,000 vibrations per minute",
+                    price: "₩45,000",
                     tag: "HOT",
                     color: "bg-indigo-50",
                     iconColor: "text-indigo-600",
@@ -191,7 +191,7 @@ export default function HomeScreen() {
             {/* 3. Insurance Banner (Modern Gradient) */}
             <View>
               <Text className="font-bold text-xl text-slate-800 dark:text-white mb-4 px-1">
-                보험 상품
+                Insurance Products
               </Text>
               <TouchableOpacity
                 activeOpacity={0.9}
@@ -215,15 +215,14 @@ export default function HomeScreen() {
                       </Text>
                     </View>
                     <Text className="text-white font-bold text-lg mb-1">
-                      치과 보험 완벽 가이드
+                      Dental Insurance Guide
                     </Text>
                     <Text className="text-slate-300 text-xs mb-4 max-w-[160px]">
-                      복잡한 보험 약관, 나에게 꼭 맞는{"\n"}혜택만 골라서
-                      확인하세요
+                      Complex terms, find the{"\n"}benefits that fit you perfectly.
                     </Text>
                     <View className="bg-white self-start px-4 py-2 rounded-full">
                       <Text className="text-slate-900 font-bold text-xs">
-                        확인하기
+                        Check Now
                       </Text>
                     </View>
                   </View>

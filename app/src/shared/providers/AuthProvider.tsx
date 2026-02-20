@@ -13,14 +13,14 @@ import axios from "axios";
 
 const API_SERVER_URL = process.env.EXPO_PUBLIC_API_SERVER_URL;
 const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
-// iOS까지 Dev Build로 네이티브 Sign-In 할 거면 보통 iosClientId도 필요할 수 있어(선택)
+// For iOS Dev Build native sign-in, iosClientId may also be needed (optional)
 const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 
 if (!API_SERVER_URL) throw new Error("EXPO_PUBLIC_API_SERVER_URL is missing");
 if (!GOOGLE_WEB_CLIENT_ID)
   throw new Error("EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID is missing");
 
-// Expo Go 여부 (deprecated appOwnership 대신)
+// Check for Expo Go (instead of deprecated appOwnership)
 const isExpoGo = Constants.executionEnvironment === "storeClient";
 
 export interface AuthUser {
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(u); // State update
       await SecureStore.setItemAsync("user", JSON.stringify(u));
     }
-    // u가 없으면 기존 User 유지 (토큰만 갱신하는 경우를 위해 삭제 로직 제거)
+    // Keep existing User if u is missing (remove deletion logic to allow token-only refresh)
   };
   const clearSession = async () => {
     setToken(null);
@@ -109,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const exchangeIdTokenToJwt = async (idToken: string, user: AuthUser) => {
-    // api 서버에서 idToken 검증 후 JWT(access/refresh) 발급
+    // Verify idToken on API server and issue JWT (access/refresh)
     const jwtRes = await axios.post(`${API_SERVER_URL}/auth/mobile/google`, {
       idToken,
     });
@@ -118,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (!accessToken) throw new Error("Server did not return accessToken");
 
-    // 서버가 user를 같이 주면 그걸 쓰고, 아니면 최소 provider만 저장
+    // If the server provides user info, use it; otherwise, store at least the provider
     const mergedUser: AuthUser = serverUser
       ? {
         email: serverUser.email,
@@ -132,12 +132,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
-    if (isLoading) return; // ✅ 연타 방지 + 로딩 시작
+    if (isLoading) return; // ✅ Prevent multiple clicks + start loading
     setIsLoading(true);
     setError(null);
 
     try {
-      // Dev Build에서만 동작하도록 동적 import
+      // Dynamic import to work only in Dev Build
       const mod = await import("@react-native-google-signin/google-signin");
       const { GoogleSignin, statusCodes } = mod;
       if (!googleConfiguredRef.current) {
@@ -174,18 +174,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const mod = await import("@react-native-google-signin/google-signin");
         const { statusCodes } = mod;
 
-        if (e?.code === statusCodes.IN_PROGRESS) return; // ✅ 진행 중이면 무시
+        if (e?.code === statusCodes.IN_PROGRESS) return; // ✅ Ignore if in progress
         if (e?.code === statusCodes.SIGN_IN_CANCELLED) return;
       } catch { }
 
-      // [NEW] 서버 커스텀 에러 처리 (1100 ~ 1103)
+      // [NEW] Server custom error handling (1100 ~ 1103)
       if (e?.response?.data?.code) {
         const errorCode = e.response.data.code;
         const errorMessage = e.response.data.message;
 
-        // 유저 상태 관련 에러 코드 범위 (UserErrorCode 참고)
+        // Error code range related to user status (refer to UserErrorCode)
         if (errorCode >= 1100 && errorCode <= 1199) {
-          Alert.alert("로그인 실패", errorMessage);
+          Alert.alert("Login Failed", errorMessage);
           setIsLoading(false);
           return;
         }
@@ -208,10 +208,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         picture: "https://via.placeholder.com/150",
         provider: "dev",
       };
-      // JWTFilter에서 devAccessToken-user / devAccessToken-admin 체크함
+      // JWTFilter checks for devAccessToken-user / devAccessToken-admin
       const mockAccessToken =
         role === "admin" ? "devAccessToken-admin" : "devAccessToken-user";
-      const mockRefreshToken = "dev-refresh-token"; // 리프레시는 딱히 검증 안 함(DB에 없으면 만료 처리될 뿐)
+      const mockRefreshToken = "dev-refresh-token"; // Refresh token isn't strictly validated (just handled as expired if not in DB)
 
       await saveSession(mockAccessToken, mockRefreshToken, mockUser);
     } finally {
@@ -225,7 +225,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const refreshToken = await SecureStore.getItemAsync("refreshToken");
 
-      // 1. 서버 로그아웃 호출 (DB 토큰 무효화)
+      // 1. Call server logout (invalidate DB token)
       if (refreshToken) {
         try {
           await axios.post(`${API_SERVER_URL}/jwt/logout`, { refreshToken }, { timeout: 3000 });
@@ -234,7 +234,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // 2. 구글 모듈 로그아웃 (Dev Build 전용)
+      // 2. Google module logout (Dev Build exclusive)
       if (!isExpoGo) {
         try {
           const mod = await import("@react-native-google-signin/google-signin");
@@ -242,7 +242,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch { }
       }
 
-      // 3. 로컬 세션 클리어
+      // 3. Clear local session
       await clearSession();
     } catch (e: any) {
       setError(e?.message ?? String(e));
@@ -265,7 +265,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const requestInterceptor = axios.interceptors.request.use(
       (config) => {
-        // Refresh 요청에는 Authorization 헤더를 붙이지 않음 (JWTFilter에서 만료된 토큰 거부 방지)
+        // Do not attach Authorization header to Refresh requests (prevent rejection of expired tokens in JWTFilter)
         if (token && !config.url?.includes("/jwt/refresh")) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -279,38 +279,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async (error) => {
         const originalRequest = error.config;
 
-        // 401 에러이고, 재시도한 요청이 아닐 경우
+        // If it's a 401 error and not a retried request
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
 
           try {
             const refreshToken = await SecureStore.getItemAsync("refreshToken");
             if (!refreshToken) {
-              // 리프레시 토큰 없으면 로그아웃
+              // Logout if no refresh token
               await clearSession();
               return Promise.reject(error);
             }
 
-            // 토큰 갱신 요청
+            // Token refresh request
             const { data } = await axios.post(`${API_SERVER_URL}/jwt/refresh`, {
               refreshToken,
             });
 
-            // 백엔드 명세에 따라 accessToken, refreshToken 또는 newAccessToken, newRefreshToken 확인
+            // Check for accessToken, refreshToken or newAccessToken, newRefreshToken based on backend spec
             const newAccessToken = data.newAccessToken || data.accessToken;
             const newRefreshToken = data.newRefreshToken || data.refreshToken;
 
             if (newAccessToken) {
-              // 새 토큰 저장. API가 user를 안 주면 기존 user 상태를 유지하기 위해 인자로 넘김
-              // saveSession 로직이 (u) ? set : delete 이므로,
-              // 갱신 시에는 반드시 user 객체를 넘겨야 함.
+              // Save new tokens. Pass existing user state to maintain it if the API doesn't provide user info.
+              // Since the saveSession logic is (u) ? set : delete,
+              // the user object must be passed when refreshing.
               await saveSession(
                 newAccessToken,
                 newRefreshToken,
                 user || undefined,
               );
 
-              // 실패했던 요청에 새 토큰 적용 후 재시도
+              // Retry the failed request after applying the new token
               originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
               return axios(originalRequest);
             }

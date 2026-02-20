@@ -27,7 +27,7 @@ import { useAuth } from "../shared/providers/AuthProvider";
 export type RootStackParamList = {
   Login: undefined;
   Signup: undefined;
-  /** 커뮤니티 탭으로 이동 시 params: { screen: "Community", params: { scrollToPostId } } */
+  /** params when moving to community tab: { screen: "Community", params: { scrollToPostId } } */
   Main: undefined | { screen: "Community"; params: { scrollToPostId: string } };
   Survey: undefined;
   ThemeSelector: undefined;
@@ -48,7 +48,7 @@ export type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// NavigationContainer의 ref (index.tsx에서 사용)
+// NavigationContainer ref (used in index.tsx)
 export const navigationRef = React.createRef<NavigationContainerRef<RootStackParamList>>();
 
 export function RootNavigator() {
@@ -56,18 +56,18 @@ export function RootNavigator() {
   const pendingDeepLinkRef = useRef<string | null>(null);
   const [initialUrl, setInitialUrl] = useState<string | null>(null);
 
-  // 딥링크 처리 함수
+  // Deep link processing function
   const handleDeepLink = (url: string) => {
     if (!navigationRef.current) return;
 
     try {
       const parsed = Linking.parse(url);
-      // path는 문자열 또는 배열일 수 있음
+      // path can be string or array
       const path = Array.isArray(parsed.path)
         ? parsed.path.join("/")
         : parsed.path || "";
 
-      // denticheck://community/post/{id} 형식 처리
+      // Handle denticheck://community/post/{id} format
       if (path.includes("community/post/")) {
         const parts = path.split("/");
         const postIndex = parts.indexOf("post");
@@ -76,7 +76,7 @@ export function RootNavigator() {
           : null;
 
         if (postId && user) {
-          // 로그인되어 있으면 커뮤니티 탭으로 이동 후 해당 게시글 위치로 스크롤
+          // If logged in, move to community tab and scroll to that post
           pendingDeepLinkRef.current = null;
           navigationRef.current.dispatch(
             CommonActions.navigate({
@@ -88,17 +88,17 @@ export function RootNavigator() {
             })
           );
         } else if (postId && !user) {
-          // 로그인 안 되어 있으면 딥링크 저장 후 로그인 페이지로
+          // If not logged in, save deep link and move to login page
           pendingDeepLinkRef.current = url;
           navigationRef.current.navigate("Login");
         }
       }
     } catch (error) {
-      console.error("딥링크 처리 오류:", error);
+      console.error("Deep link processing error:", error);
     }
   };
 
-  // 딥링크 리스너: 앱 실행 중 링크로 들어올 때
+  // Deep link listener: When entering via link while app is running
   useEffect(() => {
     const subscription = Linking.addEventListener("url", ({ url }) => {
       pendingDeepLinkRef.current = url;
@@ -107,14 +107,14 @@ export function RootNavigator() {
     return () => subscription.remove();
   }, [user]);
 
-  // 앱 콜드스타트 시 초기 URL 저장 (state로 두어 URL 도착 시 effect 재실행)
+  // Save initial URL on app cold start (use state to re-run effect when URL arrives)
   useEffect(() => {
     Linking.getInitialURL().then((url) => {
       if (url) setInitialUrl(url);
     });
   }, []);
 
-  // 초기 URL 또는 로그인 후 대기 URL 처리 (네비/화면 준비 후 한 번만)
+  // Process initial URL or wait URL after login (once after nav/screen ready)
   useEffect(() => {
     if (!user) return;
     const url = initialUrl || pendingDeepLinkRef.current;

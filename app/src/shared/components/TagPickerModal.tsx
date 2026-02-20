@@ -22,15 +22,15 @@ export type Tag = {
 type TagPickerModalProps = {
   visible: boolean;
   onClose: () => void;
-  /** 선택된 태그 목록 */
+  /** Selected tags list */
   selectedTags: Tag[];
-  /** 태그 선택 시 호출 (이미 선택된 태그는 호출되지 않음) */
+  /** Called when tag is selected (not called if already selected) */
   onSelectTag: (tag: Tag) => void;
-  /** 태그 제거 시 호출 (index) */
+  /** Called when tag is removed (index) */
   onRemoveTag: (index: number) => void;
-  /** 병원 태그 최대 개수 (기본값: 3) */
+  /** Max number of clinic tags (default: 3) */
   maxHospitalTags?: number;
-  /** 상품 태그 기능 활성화 여부 (기본값: false) */
+  /** Whether product tag functionality is enabled (default: false) */
   enableProductTags?: boolean;
 };
 
@@ -105,7 +105,7 @@ export function TagPickerModal({
       <View className="flex-1 bg-black/60 justify-end">
         <View className="bg-gray-50 dark:bg-slate-900 rounded-t-[32px] h-[85%] p-6">
           <View className="flex-row justify-between items-center mb-6">
-            <Text className="text-xl font-bold text-slate-800 dark:text-white">태그 추가</Text>
+            <Text className="text-xl font-bold text-slate-800 dark:text-white">Add Tag</Text>
             <TouchableOpacity
               onPress={handleClose}
               className="w-8 h-8 items-center justify-center bg-slate-200 rounded-full"
@@ -119,11 +119,10 @@ export function TagPickerModal({
               {enableProductTags ? (
                 <TouchableOpacity
                   onPress={() => setActiveTab('product')}
-                  className={`flex-row items-center border px-3 py-2 rounded-xl ${
-                    activeTab === 'product'
+                  className={`flex-row items-center border px-3 py-2 rounded-xl ${activeTab === 'product'
                       ? 'bg-indigo-100 dark:bg-indigo-900/30 border-indigo-400'
                       : 'bg-white dark:bg-slate-800 border-slate-200'
-                  }`}
+                    }`}
                 >
                   <Package
                     size={16}
@@ -131,13 +130,12 @@ export function TagPickerModal({
                     style={{ marginRight: 6 }}
                   />
                   <Text
-                    className={`text-sm font-medium ${
-                      activeTab === 'product'
+                    className={`text-sm font-medium ${activeTab === 'product'
                         ? 'text-indigo-700 dark:text-indigo-300'
                         : 'text-slate-600 dark:text-slate-300'
-                    }`}
+                      }`}
                   >
-                    상품 태그
+                    Product Tag
                   </Text>
                 </TouchableOpacity>
               ) : (
@@ -146,16 +144,15 @@ export function TagPickerModal({
                   className="flex-row items-center bg-slate-100 dark:bg-slate-700 border border-slate-200 px-3 py-2 rounded-xl opacity-60"
                 >
                   <Package size={16} color="#94a3b8" style={{ marginRight: 6 }} />
-                  <Text className="text-sm font-medium text-slate-400">상품 태그 (준비 중)</Text>
+                  <Text className="text-sm font-medium text-slate-400">Product Tag (Coming soon)</Text>
                 </TouchableOpacity>
               )}
               <TouchableOpacity
                 onPress={() => setActiveTab('hospital')}
-                className={`flex-row items-center border px-3 py-2 rounded-xl ${
-                  activeTab === 'hospital'
+                className={`flex-row items-center border px-3 py-2 rounded-xl ${activeTab === 'hospital'
                     ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-400'
                     : 'bg-white dark:bg-slate-800 border-slate-200'
-                }`}
+                  }`}
               >
                 <LucideHospital
                   size={16}
@@ -163,13 +160,12 @@ export function TagPickerModal({
                   style={{ marginRight: 6 }}
                 />
                 <Text
-                  className={`text-sm font-medium ${
-                    activeTab === 'hospital'
+                  className={`text-sm font-medium ${activeTab === 'hospital'
                       ? 'text-blue-700 dark:text-blue-300'
                       : 'text-slate-600 dark:text-slate-300'
-                  }`}
+                    }`}
                 >
-                  치과 선택
+                  Select Clinic
                 </Text>
               </TouchableOpacity>
             </View>
@@ -198,14 +194,14 @@ export function TagPickerModal({
               )}
               {hospitalTags.length >= maxHospitalTags && (
                 <Text className="text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">
-                  병원은 최대 {maxHospitalTags}개까지 선택할 수 있어요.
+                  You can select up to {maxHospitalTags} clinics.
                 </Text>
               )}
               <Text className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                검색어 없이 보면 최대 50개 목록이 보이고, 입력하면 이름으로 필터돼요.
+                Showing up to 50 items. Enter name to filter.
               </Text>
               <TextInput
-                placeholder="치과 이름 검색 (선택)"
+                placeholder="Search clinic name (Optional)"
                 placeholderTextColor="#94a3b8"
                 value={dentalSearch}
                 onChangeText={setDentalSearch}
@@ -213,16 +209,16 @@ export function TagPickerModal({
               />
               <ScrollView style={{ maxHeight: 400 }} nestedScrollEnabled>
                 {dentalsLoading ? (
-                  <Text className="text-slate-400 text-sm py-2">치과 목록을 불러오는 중...</Text>
+                  <Text className="text-slate-400 text-sm py-2">Loading clinic list...</Text>
                 ) : dentalsError ? (
                   <Text className="text-amber-600 dark:text-amber-400 text-sm py-2">
-                    목록을 불러오지 못했어요. 네트워크를 확인해 주세요.
+                    Failed to load list. Please check your network.
                   </Text>
                 ) : dentals.length === 0 ? (
                   <Text className="text-slate-400 text-sm py-2">
                     {dentalSearch.trim()
-                      ? '검색 결과가 없어요.'
-                      : '등록된 치과가 없어요. load_dentals.py 실행 여부를 확인해 주세요.'}
+                      ? 'No search results.'
+                      : 'No registered clinics found. Please check if load_dentals.py was run.'}
                   </Text>
                 ) : (
                   dentals.map((d) => (
@@ -230,9 +226,8 @@ export function TagPickerModal({
                       key={d.id}
                       onPress={() => handleSelectDental(d)}
                       disabled={!canAddMoreHospital}
-                      className={`py-2.5 px-2 border-b border-slate-100 dark:border-slate-700 last:border-b-0 ${
-                        !canAddMoreHospital ? 'opacity-50' : ''
-                      }`}
+                      className={`py-2.5 px-2 border-b border-slate-100 dark:border-slate-700 last:border-b-0 ${!canAddMoreHospital ? 'opacity-50' : ''
+                        }`}
                     >
                       <Text className="text-slate-800 dark:text-white font-medium" numberOfLines={1}>
                         {d.name}
@@ -272,30 +267,29 @@ export function TagPickerModal({
               )}
               {productTags.length >= maxHospitalTags && (
                 <Text className="text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">
-                  상품은 최대 {maxHospitalTags}개까지 선택할 수 있어요.
+                  You can select up to {maxHospitalTags} products.
                 </Text>
               )}
               <Text className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                제휴 상품 목록이에요. 선택하면 게시글에 태그로 붙어요.
+                Affiliate product list. Selected products will be tagged in the post.
               </Text>
               <ScrollView style={{ maxHeight: 400 }} nestedScrollEnabled>
                 {productsLoading ? (
-                  <Text className="text-slate-400 text-sm py-2">상품 목록을 불러오는 중...</Text>
+                  <Text className="text-slate-400 text-sm py-2">Loading product list...</Text>
                 ) : productsError ? (
                   <Text className="text-amber-600 dark:text-amber-400 text-sm py-2">
-                    목록을 불러오지 못했어요. 네트워크를 확인해 주세요.
+                    Failed to load list. Please check your network.
                   </Text>
                 ) : products.length === 0 ? (
-                  <Text className="text-slate-400 text-sm py-2">등록된 상품이 없어요.</Text>
+                  <Text className="text-slate-400 text-sm py-2">No registered products found.</Text>
                 ) : (
                   products.map((p) => (
                     <TouchableOpacity
                       key={p.id}
                       onPress={() => handleSelectProduct(p)}
                       disabled={!canAddMoreProduct}
-                      className={`py-2.5 px-2 border-b border-slate-100 dark:border-slate-700 last:border-b-0 ${
-                        !canAddMoreProduct ? 'opacity-50' : ''
-                      }`}
+                      className={`py-2.5 px-2 border-b border-slate-100 dark:border-slate-700 last:border-b-0 ${!canAddMoreProduct ? 'opacity-50' : ''
+                        }`}
                     >
                       <Text className="text-slate-800 dark:text-white font-medium" numberOfLines={1}>
                         {p.name}

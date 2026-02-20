@@ -4,7 +4,7 @@ import { View, Text, StyleSheet } from 'react-native';
 export function QualityGateScreen() {
     return (
         <View style={styles.container}>
-            <Text>사진 품질을 확인 중입니다...</Text>
+            <Text>Checking photo quality...</Text>
         </View>
     );
 }

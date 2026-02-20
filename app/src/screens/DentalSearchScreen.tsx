@@ -169,7 +169,7 @@ export default function DentalSearchScreen() {
                 {dental.isAd && (
                     <View className="self-start mb-3">
                         <Badge className="bg-blue-600">
-                            <Text className="text-white text-xs">광고</Text>
+                            <Text className="text-white text-xs">AD</Text>
                         </Badge>
                     </View>
                 )}
@@ -210,7 +210,7 @@ export default function DentalSearchScreen() {
                     <View className="flex-row items-center gap-2">
                         <Clock size={16} color="#4b5563" />
                         <Text className={`text-sm ${dental.isOpen ? 'text-green-600' : 'text-muted-foreground'}`}>
-                            {dental.isOpen ? '영업 중' : '영업 종료'}
+                            {dental.isOpen ? 'Open' : 'Closed'}
                         </Text>
                         <Text className="text-sm text-muted-foreground">• {dental.openTime}</Text>
                     </View>
@@ -227,11 +227,11 @@ export default function DentalSearchScreen() {
                 <View className="flex-row gap-2">
                     <Button variant="outline" size="sm" className="flex-1" onPress={() => Linking.openURL(`tel:${dental.phone}`)}>
                         <Phone size={16} color={theme.primary} style={{ marginRight: 4 }} />
-                        <Text className="text-primary font-medium">전화</Text>
+                        <Text className="text-primary font-medium">Call</Text>
                     </Button>
                     <Button size="sm" className="flex-1 bg-blue-600">
                         <MapPin size={16} color="white" style={{ marginRight: 4 }} />
-                        <Text className="text-white font-medium">길찾기</Text>
+                        <Text className="text-white font-medium">Directions</Text>
                     </Button>
                 </View>
             </Card>
@@ -243,7 +243,7 @@ export default function DentalSearchScreen() {
             <SafeAreaView className="bg-white border-b border-border" edges={['top']}>
                 <View className="px-6 py-4 flex-col space-y-4">
                     <View className="flex-row items-center justify-between">
-                        <Text className="text-2xl font-extrabold text-slate-800 dark:text-white">병원 찾기</Text>
+                        <Text className="text-2xl font-extrabold text-slate-800 dark:text-white">Find Clinic</Text>
                         <TouchableOpacity
                             onPress={() => navigation.navigate('DentalMap')}
                             className="bg-blue-50 p-2 rounded-full"
@@ -254,7 +254,7 @@ export default function DentalSearchScreen() {
                     <View className="relative justify-center">
                         <Search size={20} color="#9ca3af" style={{ position: 'absolute', left: 12, zIndex: 1 }} />
                         <TextInput
-                            placeholder="병원명, 지역으로 검색"
+                            placeholder="Search by name or location"
                             value={searchQuery}
                             onChangeText={setSearchQuery}
                             className="bg-muted pl-10 h-10 rounded-md text-foreground"
@@ -270,13 +270,13 @@ export default function DentalSearchScreen() {
                             value="all"
                             className={`rounded-none px-0 pb-3 border-b-2 ${activeTab === 'all' ? 'border-blue-600' : 'border-transparent'}`}
                         >
-                            <Text className={activeTab === 'all' ? 'text-blue-600 font-semibold' : 'text-muted-foreground'}>전체</Text>
+                            <Text className={activeTab === 'all' ? 'text-blue-600 font-semibold' : 'text-muted-foreground'}>All</Text>
                         </TabsTrigger>
                         <TabsTrigger
                             value="favorites"
                             className={`rounded-none px-0 pb-3 border-b-2 ${activeTab === 'favorites' ? 'border-blue-600' : 'border-transparent'}`}
                         >
-                            <Text className={activeTab === 'favorites' ? 'text-blue-600 font-semibold' : 'text-muted-foreground'}>찜한 병원</Text>
+                            <Text className={activeTab === 'favorites' ? 'text-blue-600 font-semibold' : 'text-muted-foreground'}>Saved</Text>
                         </TabsTrigger>
                     </TabsList>
                 </View>
@@ -287,11 +287,11 @@ export default function DentalSearchScreen() {
                             <View className="flex-row items-center gap-3">
                                 <MapPin size={20} color="#2563eb" />
                                 <View className="flex-1">
-                                    <Text className="font-medium text-sm text-foreground">현재 위치</Text>
-                                    <Text className="text-xs text-muted-foreground">서울특별시 강남구 역삼동</Text>
+                                    <Text className="font-medium text-sm text-foreground">Current Location</Text>
+                                    <Text className="text-xs text-muted-foreground">Gangnam-gu, Seoul</Text>
                                 </View>
                                 <Button size="sm" variant="outline" className="bg-white h-8">
-                                    <Text className="text-xs text-foreground">변경</Text>
+                                    <Text className="text-xs text-foreground">Change</Text>
                                 </Button>
                             </View>
                         </Card>
@@ -303,7 +303,7 @@ export default function DentalSearchScreen() {
                         {filteredDentals.length === 0 && (
                             <View className="items-center py-12">
                                 <MapPin size={48} color="#d1d5db" />
-                                <Text className="text-muted-foreground mt-4">검색 결과가 없습니다</Text>
+                                <Text className="text-muted-foreground mt-4">No search results found</Text>
                             </View>
                         )}
                     </ScrollView>
@@ -318,8 +318,8 @@ export default function DentalSearchScreen() {
                         ) : (
                             <View className="items-center py-12">
                                 <Heart size={48} color="#d1d5db" />
-                                <Text className="text-muted-foreground mt-4 mb-2">찜한 병원이 없습니다</Text>
-                                <Text className="text-sm text-muted-foreground">마음에 드는 병원을 찜해보세요</Text>
+                                <Text className="text-muted-foreground mt-4 mb-2">No saved clinics</Text>
+                                <Text className="text-sm text-muted-foreground">Save clinics you are interested in</Text>
                             </View>
                         )}
                     </ScrollView>

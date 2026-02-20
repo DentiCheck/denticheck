@@ -83,7 +83,7 @@ export default function DentalMapScreen() {
             name: h.name,
             latitude: h.latitude,
             longitude: h.longitude,
-            address: h.address || '주소 정보 없음',
+            address: h.address || 'No address info',
             phone: h.phone || '',
             description: h.description || '',
             ratingAvg: h.ratingAvg || 0.0,
@@ -121,9 +121,9 @@ export default function DentalMapScreen() {
             {/* Error Message */}
             {error && (
                 <View className="absolute top-24 left-4 right-4 z-20 bg-red-50 p-3 rounded-lg border border-red-200">
-                    <Text className="text-red-600 text-xs font-medium">데이터를 불러오지 못했습니다: {error.message}</Text>
+                    <Text className="text-red-600 text-xs font-medium">Failed to load data: {error.message}</Text>
                     <TouchableOpacity onPress={() => refetch()} className="mt-2 bg-red-600 px-3 py-1 rounded self-start">
-                        <Text className="text-white text-xs font-bold">재시도</Text>
+                        <Text className="text-white text-xs font-bold">Retry</Text>
                     </TouchableOpacity>
                 </View>
             )}
@@ -131,7 +131,7 @@ export default function DentalMapScreen() {
             {/* No Data Message */}
             {!loading && !error && dentals.length === 0 && (
                 <View className="absolute top-24 left-4 right-4 z-20 bg-blue-50 p-3 rounded-lg border border-blue-200">
-                    <Text className="text-blue-600 text-xs font-medium text-center">이 주변에는 등록된 치과 정보가 없습니다.</Text>
+                    <Text className="text-blue-600 text-xs font-medium text-center">No registered dental clinics nearby.</Text>
                 </View>
             )}
 
@@ -140,7 +140,7 @@ export default function DentalMapScreen() {
                 <View className="absolute top-24 left-0 right-0 z-20 items-center">
                     <View className="bg-white/90 px-4 py-2 rounded-full shadow-md flex-row items-center gap-2">
                         <ActivityIndicator size="small" color={theme.primary} />
-                        <Text className="text-xs font-semibold text-gray-700">병원 검색 중...</Text>
+                        <Text className="text-xs font-semibold text-gray-700">Searching for clinics...</Text>
                     </View>
                 </View>
             )}
@@ -189,7 +189,7 @@ export default function DentalMapScreen() {
                             navigation.navigate('DentalDetail', { dental: selectedDental });
                         }}
                     >
-                        <Text className="text-white font-bold text-base">상세보기</Text>
+                        <Text className="text-white font-bold text-base">View Details</Text>
                     </TouchableOpacity>
                 </View>
             )}

@@ -14,7 +14,7 @@ export default function ReviewListScreen() {
 
     // Safety check for parameters
     const dentalId = route.params?.dentalId;
-    const dentalName = route.params?.dentalName || '병원';
+    const dentalName = route.params?.dentalName || 'Clinic';
 
     const [reviews, setReviews] = useState<ReviewResponse[]>([]);
     const [loading, setLoading] = useState(true);
@@ -28,7 +28,7 @@ export default function ReviewListScreen() {
             setReviews(data.content);
         } catch (err) {
             console.error(err);
-            setError('후기를 불러오는 데 실패했습니다.');
+            setError('Failed to load reviews.');
         } finally {
             setLoading(false);
         }
@@ -74,14 +74,14 @@ export default function ReviewListScreen() {
                         >
                             <ChevronLeft size={24} color="#1e293b" />
                         </TouchableOpacity>
-                        <Text className="text-lg font-bold text-slate-900 dark:text-white">후기</Text>
+                        <Text className="text-lg font-bold text-slate-900 dark:text-white">Reviews</Text>
                     </View>
                     <TouchableOpacity
                         onPress={() => navigation.navigate('ReviewWrite', { dentalId, dentalName })}
                         className="flex-row items-center gap-1 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-full"
                     >
                         <Plus size={16} color={theme.primary} />
-                        <Text className="text-sm font-bold text-primary dark:text-blue-400">작성하기</Text>
+                        <Text className="text-sm font-bold text-primary dark:text-blue-400">Write</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -94,18 +94,18 @@ export default function ReviewListScreen() {
                     <View className="flex-1 items-center justify-center p-6">
                         <Text className="text-slate-500 mb-4">{error}</Text>
                         <TouchableOpacity onPress={loadReviews} className="bg-slate-100 px-4 py-2 rounded-lg">
-                            <Text className="text-slate-900 font-bold">다시 시도</Text>
+                            <Text className="text-slate-900 font-bold">Try again</Text>
                         </TouchableOpacity>
                     </View>
                 ) : (
                     <ScrollView contentContainerStyle={{ padding: 16 }}>
                         <Text className="text-slate-500 dark:text-slate-400 mb-4">
-                            총 <Text className="font-bold text-slate-900 dark:text-white">{reviews.length}</Text>개의 후기가 있습니다.
+                            Total <Text className="font-bold text-slate-900 dark:text-white">{reviews.length}</Text> reviews.
                         </Text>
 
                         {reviews.length === 0 ? (
                             <View className="py-20 items-center">
-                                <Text className="text-slate-400 text-center">아직 작성된 후기가 없습니다.{'\n'}첫 번째 후기를 남겨보세요!</Text>
+                                <Text className="text-slate-400 text-center">No reviews yet.{'\n'}Be the first to leave a review!</Text>
                             </View>
                         ) : (
                             reviews.map((review) => (
@@ -114,12 +114,12 @@ export default function ReviewListScreen() {
                                         <View className="flex-row items-center gap-2">
                                             <View className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 items-center justify-center">
                                                 <Text className="font-bold text-slate-500 dark:text-slate-300">
-                                                    {review.userName ? review.userName[0] : '익'}
+                                                    {review.userName ? review.userName[0] : 'An'}
                                                 </Text>
                                             </View>
                                             <View>
                                                 <Text className="font-bold text-slate-900 dark:text-white text-sm">
-                                                    {review.userName || '익명 사용자'}
+                                                    {review.userName || 'Anonymous User'}
                                                 </Text>
                                                 <View className="flex-row items-center gap-2">
                                                     {renderStars(review.rating)}

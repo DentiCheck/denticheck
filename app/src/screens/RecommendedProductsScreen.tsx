@@ -16,9 +16,9 @@ export default function RecommendedProductsScreen() {
     const products = [
         {
             id: 1,
-            name: '덴티마스터 치실',
-            detail: '치간 케어 필수품. 부드러운 왁스 코팅으로 잇몸 자극 최소화.',
-            price: '12,900원',
+            name: 'DentiMaster Floss',
+            detail: 'Essential for interdental care. Soft wax coating minimizes gum irritation.',
+            price: '₩12,900',
             rating: 4.8,
             reviewCount: 1240,
             tag: 'BEST',
@@ -27,9 +27,9 @@ export default function RecommendedProductsScreen() {
         },
         {
             id: 2,
-            name: '센서티브 치약',
-            detail: '시린이 완화 효과. 임상 시험으로 입증된 시린이 개선 효과.',
-            price: '8,500원',
+            name: 'Sensitive Toothpaste',
+            detail: 'Relief for sensitive teeth. Proven improvement effect through clinical trials.',
+            price: '₩8,500',
             rating: 4.6,
             reviewCount: 856,
             tag: 'SALE',
@@ -38,9 +38,9 @@ export default function RecommendedProductsScreen() {
         },
         {
             id: 3,
-            name: '음파 전동 칫솔',
-            detail: '분당 3만회 진동. 구석구석 깨끗하게 플라그 제거.',
-            price: '45,000원',
+            name: 'Sonic Electric Toothbrush',
+            detail: '30,000 vibrations per minute. Removes plaque thoroughly.',
+            price: '₩45,000',
             rating: 4.9,
             reviewCount: 2103,
             tag: 'HOT',
@@ -49,9 +49,9 @@ export default function RecommendedProductsScreen() {
         },
         {
             id: 4,
-            name: '프리미엄 구강세정기',
-            detail: '강력한 물줄기로 잇몸 마사지와 세정을 동시에.',
-            price: '89,900원',
+            name: 'Premium Water Flosser',
+            detail: 'Powerful water stream for simultaneous gum massage and cleaning.',
+            price: '₩89,900',
             rating: 4.7,
             reviewCount: 542,
             tag: 'NEW',
@@ -60,9 +60,9 @@ export default function RecommendedProductsScreen() {
         },
         {
             id: 5,
-            name: '미백 치아 패치',
-            detail: '하루 30분, 2주 만에 경험하는 놀라운 하얀 치아.',
-            price: '24,000원',
+            name: 'Whitening Teeth Patches',
+            detail: 'Experience amazing white teeth in 2 weeks with 30 minutes a day.',
+            price: '₩24,000',
             rating: 4.5,
             reviewCount: 320,
             tag: 'BEST',
@@ -82,7 +82,7 @@ export default function RecommendedProductsScreen() {
                     >
                         <ChevronLeft size={24} color="#1e293b" />
                     </TouchableOpacity>
-                    <Text className="text-xl font-bold text-slate-800 dark:text-white">추천 상품</Text>
+                    <Text className="text-xl font-bold text-slate-800 dark:text-white">Recommended Products</Text>
                     <View className="flex-1" />
                     <TouchableOpacity onPress={() => navigation.navigate('Cart')}>
                         <ShoppingCart size={24} color="#1e293b" />
@@ -122,7 +122,7 @@ export default function RecommendedProductsScreen() {
                                         <View className="flex-row items-center justify-between mt-2">
                                             <Text className="font-bold text-lg text-primary">{product.price}</Text>
                                             <Button size="sm" className="h-8 px-3 rounded-full">
-                                                <Text className="text-xs font-bold text-white">담기</Text>
+                                                <Text className="text-xs font-bold text-white">Add</Text>
                                             </Button>
                                         </View>
                                     </View>

@@ -14,11 +14,11 @@ export default function ThemeSelectorScreen() {
     const navigation = useNavigation();
 
     const themesList: { name: string; label: string; colors: ColorTheme }[] = [
-        { name: 'ocean', label: '오션 블루', colors: themeConfig.ocean },
-        { name: 'mint', label: '민트 프레시', colors: themeConfig.mint },
-        { name: 'sunset', label: '선셋 오렌지', colors: themeConfig.sunset },
-        { name: 'lavender', label: '라벤더 퍼플', colors: themeConfig.lavender },
-        { name: 'coral', label: '코랄 핑크', colors: themeConfig.coral },
+        { name: 'ocean', label: 'Ocean Blue', colors: themeConfig.ocean },
+        { name: 'mint', label: 'Mint Fresh', colors: themeConfig.mint },
+        { name: 'sunset', label: 'Sunset Orange', colors: themeConfig.sunset },
+        { name: 'lavender', label: 'Lavender Purple', colors: themeConfig.lavender },
+        { name: 'coral', label: 'Coral Pink', colors: themeConfig.coral },
     ];
 
     return (
@@ -27,11 +27,11 @@ export default function ThemeSelectorScreen() {
                 <TouchableOpacity onPress={() => navigation.goBack()}>
                     <ArrowLeft size={24} color="#374151" />
                 </TouchableOpacity>
-                <Text className="text-lg font-semibold text-foreground">테마 설정</Text>
+                <Text className="text-lg font-semibold text-foreground">Theme Settings</Text>
             </View>
 
             <ScrollView contentContainerStyle={{ padding: 24 }}>
-                <Text className="text-sm text-gray-500 mb-6">앱의 전체적인 색상 분위기를 변경할 수 있습니다.</Text>
+                <Text className="text-sm text-gray-500 mb-6">You can change the overall color atmosphere of the app.</Text>
 
                 <View className="space-y-4">
                     {themesList.map((t) => (

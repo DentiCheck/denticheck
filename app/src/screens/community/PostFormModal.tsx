@@ -53,7 +53,7 @@ export type PostFormModalProps = {
   onSubmit: (data: PostFormSubmitPayload) => void | Promise<void>;
   submitLoading?: boolean;
   title?: string;
-  /** 수정 시 기존 값 (나중에 재사용) */
+  /** Existing values when editing (for reuse later) */
   initialValues?: PostFormInitialValues | null;
 };
 
@@ -62,7 +62,7 @@ export function PostFormModal({
   onClose,
   onSubmit,
   submitLoading = false,
-  title = "글쓰기",
+  title = "Write Post",
   initialValues,
 }: PostFormModalProps) {
   const [formData, setFormData] = useState(defaultFormState);
@@ -107,7 +107,7 @@ export function PostFormModal({
         try {
           const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
           if (status !== "granted") {
-            Alert.alert("권한 필요", "사진을 선택하려면 갤러리 권한이 필요합니다.");
+            Alert.alert("Permission Required", "Gallery permission is required to select photos.");
             return;
           }
           const result = await ImagePicker.launchImageLibraryAsync({
@@ -135,7 +135,7 @@ export function PostFormModal({
   const handleSubmit = async () => {
     const content = formData.content.trim();
     if (!content) {
-      Alert.alert("알림", "내용을 입력해 주세요.");
+      Alert.alert("Notice", "Please enter content.");
       return;
     }
     const dentalIds = formData.tags
@@ -176,31 +176,28 @@ export function PostFormModal({
 
           <ScrollView className="flex-1">
             <View className="mb-4">
-              <Text className="text-sm font-bold text-slate-500 mb-3 ml-1">게시글 종류</Text>
+              <Text className="text-sm font-bold text-slate-500 mb-3 ml-1">Post Type</Text>
               <View className="flex-row gap-3">
                 <TouchableOpacity
                   onPress={() => setFormData({ ...formData, postType: "all" })}
-                  className={`flex-1 flex-row items-center justify-center py-3 rounded-xl border ${
-                    formData.postType === "all"
-                      ? "bg-slate-200 dark:bg-slate-700 border-slate-400"
-                      : "bg-white dark:bg-slate-800 border-slate-200"
-                  }`}
+                  className={`flex-1 flex-row items-center justify-center py-3 rounded-xl border ${formData.postType === "all"
+                    ? "bg-slate-200 dark:bg-slate-700 border-slate-400"
+                    : "bg-white dark:bg-slate-800 border-slate-200"
+                    }`}
                 >
                   <Text
-                    className={`text-sm font-medium ${
-                      formData.postType === "all" ? "text-slate-800 dark:text-white" : "text-slate-500"
-                    }`}
+                    className={`text-sm font-medium ${formData.postType === "all" ? "text-slate-800 dark:text-white" : "text-slate-500"
+                      }`}
                   >
-                    선택 안 함(전체)
+                    Not selected (General)
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setFormData({ ...formData, postType: "product" })}
-                  className={`flex-1 flex-row items-center justify-center py-3 rounded-xl border ${
-                    formData.postType === "product"
-                      ? "bg-indigo-100 border-indigo-400"
-                      : "bg-white dark:bg-slate-800 border-slate-200"
-                  }`}
+                  className={`flex-1 flex-row items-center justify-center py-3 rounded-xl border ${formData.postType === "product"
+                    ? "bg-indigo-100 border-indigo-400"
+                    : "bg-white dark:bg-slate-800 border-slate-200"
+                    }`}
                 >
                   <Package
                     size={16}
@@ -208,20 +205,18 @@ export function PostFormModal({
                     style={{ marginRight: 4 }}
                   />
                   <Text
-                    className={`text-sm font-medium ${
-                      formData.postType === "product" ? "text-indigo-700" : "text-slate-500"
-                    }`}
+                    className={`text-sm font-medium ${formData.postType === "product" ? "text-indigo-700" : "text-slate-500"
+                      }`}
                   >
-                    상품후기
+                    Product Review
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setFormData({ ...formData, postType: "hospital" })}
-                  className={`flex-1 flex-row items-center justify-center py-3 rounded-xl border ${
-                    formData.postType === "hospital"
-                      ? "bg-blue-100 border-blue-400"
-                      : "bg-white dark:bg-slate-800 border-slate-200"
-                  }`}
+                  className={`flex-1 flex-row items-center justify-center py-3 rounded-xl border ${formData.postType === "hospital"
+                    ? "bg-blue-100 border-blue-400"
+                    : "bg-white dark:bg-slate-800 border-slate-200"
+                    }`}
                 >
                   <LucideHospital
                     size={16}
@@ -229,11 +224,10 @@ export function PostFormModal({
                     style={{ marginRight: 4 }}
                   />
                   <Text
-                    className={`text-sm font-medium ${
-                      formData.postType === "hospital" ? "text-blue-700" : "text-slate-500"
-                    }`}
+                    className={`text-sm font-medium ${formData.postType === "hospital" ? "text-blue-700" : "text-slate-500"
+                      }`}
                   >
-                    병원후기
+                    Clinic Review
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -242,7 +236,7 @@ export function PostFormModal({
             <View className="mb-6">
               <TextInput
                 multiline
-                placeholder="어떤 이야기를 나누고 싶으신가요?"
+                placeholder="What's on your mind?"
                 placeholderTextColor="#94a3b8"
                 value={formData.content}
                 onChangeText={(text) => setFormData({ ...formData, content: text })}
@@ -252,7 +246,7 @@ export function PostFormModal({
             </View>
 
             <View className="mb-6">
-              <Text className="text-sm font-bold text-slate-500 mb-3 ml-1">사진 (최대 {MAX_IMAGES}장)</Text>
+              <Text className="text-sm font-bold text-slate-500 mb-3 ml-1">Photos (Up to {MAX_IMAGES})</Text>
               {formData.images.length > 0 && (
                 <View className="flex-row flex-wrap gap-2 mb-3">
                   {formData.images.map((img, idx) => (
@@ -281,13 +275,13 @@ export function PostFormModal({
                   {imagePickerOpening ? (
                     <>
                       <ActivityIndicator size="small" color="#64748b" />
-                      <Text className="text-sm font-medium text-slate-500">갤러리 여는 중...</Text>
+                      <Text className="text-sm font-medium text-slate-500">Opening gallery...</Text>
                     </>
                   ) : (
                     <>
                       <ImagePlus size={20} color="#64748b" />
                       <Text className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        사진 추가 ({formData.images.length}/{MAX_IMAGES})
+                        Add Photo ({formData.images.length}/{MAX_IMAGES})
                       </Text>
                     </>
                   )}
@@ -296,15 +290,14 @@ export function PostFormModal({
             </View>
 
             <View>
-              <Text className="text-sm font-bold text-slate-500 mb-3 ml-1">태그 추가</Text>
+              <Text className="text-sm font-bold text-slate-500 mb-3 ml-1">Add Tags</Text>
               <View className="flex-row gap-3 mb-2">
                 <TouchableOpacity
                   onPress={() => setShowTagPicker(true)}
-                  className={`flex-row items-center border px-3 py-2 rounded-xl ${
-                    formData.tags.filter((t) => t.type === "product").length > 0
-                      ? "bg-indigo-100 dark:bg-indigo-900/30 border-indigo-400"
-                      : "bg-white dark:bg-slate-800 border-slate-200"
-                  }`}
+                  className={`flex-row items-center border px-3 py-2 rounded-xl ${formData.tags.filter((t) => t.type === "product").length > 0
+                    ? "bg-indigo-100 dark:bg-indigo-900/30 border-indigo-400"
+                    : "bg-white dark:bg-slate-800 border-slate-200"
+                    }`}
                 >
                   <Package
                     size={16}
@@ -312,22 +305,20 @@ export function PostFormModal({
                     style={{ marginRight: 6 }}
                   />
                   <Text
-                    className={`text-sm font-medium ${
-                      formData.tags.filter((t) => t.type === "product").length > 0
-                        ? "text-indigo-700 dark:text-indigo-300"
-                        : "text-slate-600 dark:text-slate-300"
-                    }`}
+                    className={`text-sm font-medium ${formData.tags.filter((t) => t.type === "product").length > 0
+                      ? "text-indigo-700 dark:text-indigo-300"
+                      : "text-slate-600 dark:text-slate-300"
+                      }`}
                   >
-                    상품 태그
+                    Product Tag
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setShowTagPicker(true)}
-                  className={`flex-row items-center border px-3 py-2 rounded-xl ${
-                    formData.tags.filter((t) => t.type === "hospital").length > 0
-                      ? "bg-blue-100 dark:bg-blue-900/30 border-blue-400"
-                      : "bg-white dark:bg-slate-800 border-slate-200"
-                  }`}
+                  className={`flex-row items-center border px-3 py-2 rounded-xl ${formData.tags.filter((t) => t.type === "hospital").length > 0
+                    ? "bg-blue-100 dark:bg-blue-900/30 border-blue-400"
+                    : "bg-white dark:bg-slate-800 border-slate-200"
+                    }`}
                 >
                   <LucideHospital
                     size={16}
@@ -335,36 +326,33 @@ export function PostFormModal({
                     style={{ marginRight: 6 }}
                   />
                   <Text
-                    className={`text-sm font-medium ${
-                      formData.tags.filter((t) => t.type === "hospital").length > 0
-                        ? "text-blue-700 dark:text-blue-300"
-                        : "text-slate-600 dark:text-slate-300"
-                    }`}
+                    className={`text-sm font-medium ${formData.tags.filter((t) => t.type === "hospital").length > 0
+                      ? "text-blue-700 dark:text-blue-300"
+                      : "text-slate-600 dark:text-slate-300"
+                      }`}
                   >
-                    치과 선택
+                    Select Clinic
                   </Text>
                 </TouchableOpacity>
               </View>
 
-              {/* 선택된 태그 표시 */}
+              {/* Display selected tags */}
               {formData.tags.length > 0 && (
                 <View className="flex-row flex-wrap gap-2 mt-2">
                   {formData.tags.map((tag, idx) => (
                     <TouchableOpacity
                       key={idx}
                       onPress={() => handleRemoveTag(idx)}
-                      className={`flex-row items-center pl-3 pr-2 py-1.5 rounded-full ${
-                        tag.type === "hospital"
-                          ? "bg-blue-100 dark:bg-blue-900/50"
-                          : "bg-indigo-100"
-                      }`}
+                      className={`flex-row items-center pl-3 pr-2 py-1.5 rounded-full ${tag.type === "hospital"
+                        ? "bg-blue-100 dark:bg-blue-900/50"
+                        : "bg-indigo-100"
+                        }`}
                     >
                       <Text
-                        className={`text-xs font-bold mr-1 ${
-                          tag.type === "hospital"
-                            ? "text-blue-700 dark:text-blue-300"
-                            : "text-indigo-700"
-                        }`}
+                        className={`text-xs font-bold mr-1 ${tag.type === "hospital"
+                          ? "text-blue-700 dark:text-blue-300"
+                          : "text-indigo-700"
+                          }`}
                       >
                         {tag.name}
                       </Text>
@@ -393,13 +381,13 @@ export function PostFormModal({
             }}
           >
             <Text className="font-bold text-white text-lg">
-              {submitLoading ? "등록 중..." : initialValues ? "수정하기" : "등록하기"}
+              {submitLoading ? "Registering..." : initialValues ? "Update" : "Post"}
             </Text>
           </Button>
         </View>
       </View>
 
-      {/* 태그 선택 모달 */}
+      {/* Tag selection modal */}
       <TagPickerModal
         visible={showTagPicker}
         onClose={() => setShowTagPicker(false)}

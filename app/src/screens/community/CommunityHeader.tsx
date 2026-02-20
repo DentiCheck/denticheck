@@ -51,7 +51,7 @@ export function CommunityHeader({
               color={colorScheme === "dark" ? "#fff" : "#1e293b"}
             />
             <Text className="text-base font-semibold text-slate-700 dark:text-slate-200">
-              커뮤니티
+              Community
             </Text>
           </TouchableOpacity>
         ) : null}
@@ -59,7 +59,7 @@ export function CommunityHeader({
           className={`text-2xl font-extrabold text-slate-800 dark:text-white ${isSpecialView ? "absolute left-0 right-0 text-center z-0" : ""}`}
           pointerEvents="none"
         >
-          {isMyPostsView ? "내 게시글" : isLikedView ? "좋아요한 게시글" : "커뮤니티"}
+          {isMyPostsView ? "My Posts" : isLikedView ? "Liked Posts" : "Community"}
         </Text>
         {isSpecialView ? <View className="w-24" /> : null}
         {!isSpecialView ? (
@@ -90,10 +90,10 @@ export function CommunityHeader({
             <TextInput
               placeholder={
                 isMyPostsView
-                  ? "내 게시글 검색"
+                  ? "Search my posts"
                   : isLikedView
-                    ? "좋아요한 게시글 검색"
-                    : "관심있는 내용을 검색해보세요"
+                    ? "Search liked posts"
+                    : "Search topics of interest"
               }
               placeholderTextColor="#94a3b8"
               value={searchQuery}
@@ -117,7 +117,7 @@ export function CommunityHeader({
                 <Text
                   className={`text-xs font-bold ${selectedTab === "all" ? "text-slate-800" : "text-slate-500"}`}
                 >
-                  전체
+                  All
                 </Text>
               </TabsTrigger>
               <TabsTrigger
@@ -127,7 +127,7 @@ export function CommunityHeader({
                 <Text
                   className={`text-xs font-bold ${selectedTab === "product" ? "text-slate-800" : "text-slate-500"}`}
                 >
-                  상품후기
+                  Product Reviews
                 </Text>
               </TabsTrigger>
               <TabsTrigger
@@ -137,7 +137,7 @@ export function CommunityHeader({
                 <Text
                   className={`text-xs font-bold ${selectedTab === "hospital" ? "text-slate-800" : "text-slate-500"}`}
                 >
-                  병원후기
+                  Clinic Reviews
                 </Text>
               </TabsTrigger>
             </TabsList>

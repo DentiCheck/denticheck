@@ -23,11 +23,11 @@ export default function DentalMapScreen() {
 
             <View className="flex-1 items-center justify-center p-6">
                 <Text className="text-xl font-bold text-slate-800 mb-2">
-                    지도 보기
+                    View Map
                 </Text>
                 <Text className="text-slate-500 text-center">
-                    현재 웹 환경에서는 지도를 지원하지 않습니다.{'\n'}
-                    모바일 앱에서 확인해 주세요.
+                    Maps are not supported in the current web environment.{'\n'}
+                    Please check in the mobile app.
                 </Text>
             </View>
         </View>

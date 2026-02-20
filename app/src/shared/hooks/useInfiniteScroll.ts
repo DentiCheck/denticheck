@@ -7,13 +7,13 @@ const DEFAULT_PAGE_SIZE = 10;
 export type UseInfiniteScrollOptions<TData, TItem> = {
   query: DocumentNode;
   pageSize?: number;
-  /** 응답에서 리스트 추출 (예: (data) => data.posts) */
+  /** Extract list from response (e.g. (data) => data.posts) */
   parseItems: (data: TData) => TItem[];
-  /** 쿼리 변수에 limit/offset 외 추가 변수 (선택) */
+  /** Additional variables for query besides limit/offset (Optional) */
   baseVariables?: Record<string, unknown>;
-  /** 아이템 고유 키. 넣으면 이어붙일 때 같은 key 있는 항목은 제외해 중복 key 오류 방지 */
+  /** Item unique key. If provided, excludes items with the same key when appending to prevent duplicate key errors. */
   getItemId?: (item: TItem) => string;
-  /** 이 값이 바뀌면 목록 초기화 후 첫 페이지 다시 조회 (예: 필터 탭 selectedTab) */
+  /** If this value changes, the list is reset and the first page is queried again (e.g. filter tab selectedTab) */
   resetKey?: unknown;
 };
 
@@ -28,8 +28,8 @@ export type UseInfiniteScrollResult<TItem> = {
 };
 
 /**
- * limit/offset 기반 무한 스크롤 훅.
- * 쿼리는 $limit, $offset 변수를 받아야 함.
+ * Infinite scroll hook based on limit/offset.
+ * Query must accept $limit, $offset variables.
  */
 export function useInfiniteScroll<TData, TItem>({
   query,
@@ -48,10 +48,10 @@ export function useInfiniteScroll<TData, TItem>({
   const { data, loading, error, refetch: refetchQuery } = useQuery<TData>(query, {
     variables: { ...baseVariables, limit: pageSize, offset: 0 },
     notifyOnNetworkStatusChange: true,
-    fetchPolicy: "cache-and-network", // 캐시로 즉시 그리기, 백그라운드에서 최신 데이터 갱신
+    fetchPolicy: "cache-and-network", // Draw immediately with cache, update with latest data in background
   });
 
-  // 필터(탭)이 바뀌면 목록 초기화. useQuery 변수 변경으로 자동 재조회됨
+  // Reset list if filter (tab) changes. Automatically requeried due to useQuery variable change.
   useEffect(() => {
     if (isFirstMount.current) {
       isFirstMount.current = false;
@@ -65,7 +65,7 @@ export function useInfiniteScroll<TData, TItem>({
     fetchPolicy: "network-only",
   });
 
-  // data가 바뀔 때만 items 동기화 (초기 로드 + refetch 완료 시). parseItems는 ref로 참조해 불필요한 재실행 방지
+  // Sync items only when data changes (initial load + refetch completed). parseItems is referenced via ref to prevent unnecessary re-execution.
   useEffect(() => {
     if (!data) return;
     const list = parseItemsRef.current(data);
@@ -97,7 +97,7 @@ export function useInfiniteScroll<TData, TItem>({
   const refetch = () => {
     setHasMore(true);
     refetchQuery({ fetchPolicy: "network-only" });
-    // 목록은 비우지 않음. 새 data 도착 시 위 useEffect에서 갱신됨 (깜빡임 방지)
+    // List is not cleared. Updated in the useEffect above when new data arrives (prevents flickering)
   };
 
   return {

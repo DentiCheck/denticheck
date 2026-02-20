@@ -10,10 +10,10 @@ function getTimeAgo(date: Date | string) {
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
-  if (minutes < 1) return '방금 전';
-  if (minutes < 60) return `${minutes}분 전`;
-  if (hours < 24) return `${hours}시간 전`;
-  return `${days}일 전`;
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  return `${days}d ago`;
 }
 
 function resolveImageUrl(url: string): string {
@@ -24,7 +24,7 @@ function resolveImageUrl(url: string): string {
       const base = new URL(BASE_URL);
       return base.origin + u.pathname + (u.search || '');
     }
-  } catch (_) {}
+  } catch (_) { }
   return url;
 }
 
@@ -47,8 +47,8 @@ type CommentPostCardProps = {
 
 function postTypeLabel(postType: string | null | undefined) {
   if (!postType || postType === 'all') return null;
-  if (postType === 'product') return { label: '상품후기', icon: Package, bg: 'bg-indigo-50', text: 'text-indigo-600' };
-  if (postType === 'hospital') return { label: '병원후기', icon: LucideHospital, bg: 'bg-blue-50', text: 'text-blue-600' };
+  if (postType === 'product') return { label: 'Product Review', icon: Package, bg: 'bg-indigo-50', text: 'text-indigo-600' };
+  if (postType === 'hospital') return { label: 'Clinic Review', icon: LucideHospital, bg: 'bg-blue-50', text: 'text-blue-600' };
   return null;
 }
 
@@ -184,9 +184,8 @@ export function CommentPostCard({ post }: CommentPostCardProps) {
           {post.tags.map((tag, idx) => (
             <View
               key={idx}
-              className={`flex-row items-center px-2 py-1 rounded-md ${
-                tag.type === 'product' ? 'bg-indigo-50' : 'bg-blue-50'
-              }`}
+              className={`flex-row items-center px-2 py-1 rounded-md ${tag.type === 'product' ? 'bg-indigo-50' : 'bg-blue-50'
+                }`}
             >
               {tag.type === 'product' ? (
                 <Package size={12} color="#4f46e5" />
@@ -194,9 +193,8 @@ export function CommentPostCard({ post }: CommentPostCardProps) {
                 <LucideHospital size={12} color="#2563eb" />
               )}
               <Text
-                className={`ml-1 text-xs font-bold ${
-                  tag.type === 'product' ? 'text-indigo-600' : 'text-blue-600'
-                }`}
+                className={`ml-1 text-xs font-bold ${tag.type === 'product' ? 'text-indigo-600' : 'text-blue-600'
+                  }`}
               >
                 {tag.name}
               </Text>
@@ -205,8 +203,8 @@ export function CommentPostCard({ post }: CommentPostCardProps) {
         </View>
       )}
       <View className="flex-row items-center gap-4 mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
-        <Text className="text-sm text-slate-500">좋아요 {post.likes}</Text>
-        <Text className="text-sm text-slate-500">댓글 {post.comments}</Text>
+        <Text className="text-sm text-slate-500">Likes {post.likes}</Text>
+        <Text className="text-sm text-slate-500">Comments {post.comments}</Text>
       </View>
     </View>
   );

@@ -33,11 +33,11 @@ function resolveImageUrl(url: string): string {
       const base = new URL(BASE_URL);
       return base.origin + u.pathname + (u.search || '');
     }
-  } catch (_) {}
+  } catch (_) { }
   return url;
 }
 
-/** ISO-8601 문자열을 상대 시간 문자열로 변환 */
+/** Convert ISO-8601 string to relative time string */
 function formatRelativeTime(iso: string | null | undefined): string {
   if (!iso) return '';
   const date = new Date(iso);
@@ -46,11 +46,11 @@ function formatRelativeTime(iso: string | null | undefined): string {
   const diffMin = Math.floor(diffMs / 60_000);
   const diffHour = Math.floor(diffMs / 3_600_000);
   const diffDay = Math.floor(diffMs / 86_400_000);
-  if (diffMin < 1) return '방금 전';
-  if (diffMin < 60) return `${diffMin}분 전`;
-  if (diffHour < 24) return `${diffHour}시간 전`;
-  if (diffDay < 7) return `${diffDay}일 전`;
-  return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
+  if (diffMin < 1) return 'Just now';
+  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffHour < 24) return `${diffHour}h ago`;
+  if (diffDay < 7) return `${diffDay}d ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
 }
 
 export default function CommentListScreen() {
@@ -113,9 +113,9 @@ export default function CommentListScreen() {
       isMine: c.isMine ?? false,
       replyCount: c.replyCount ?? 0,
     }));
-    console.log('[댓글 조회] 프론트엔드 - 매핑된 댓글 개수:', mapped.length);
+    console.log('[Comment Query] Frontend - Mapped comments count:', mapped.length);
     mapped.forEach(c => {
-      console.log('[댓글 조회] 프론트엔드 - 댓글 ID:', c.id, 'tags 개수:', c.tags?.length ?? 0, 'tags:', c.tags);
+      console.log('[Comment Query] Frontend - Comment ID:', c.id, 'tags count:', c.tags?.length ?? 0, 'tags:', c.tags);
     });
     return mapped;
   }, [rawCommentItems]);
@@ -145,15 +145,15 @@ export default function CommentListScreen() {
   const [comment, setComment] = useState('');
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
-  /** 수정 모달: 수정 중인 댓글/답글 id */
+  /** Edit modal: id of the comment/reply being edited */
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
-  /** 수정 모달: 답글 수정 시 부모 댓글 id (댓글 수정이면 null) */
+  /** Edit modal: parent comment id for reply editing (null for comment editing) */
   const [editingParentId, setEditingParentId] = useState<string | null>(null);
-  /** 답글 모달: 답글 달 댓글(부모) id */
+  /** Reply modal: id of the parent comment to reply to */
   const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
-  /** 답글 펼친 댓글 id 목록 (탭 시 토글) */
+  /** List of expanded reply parent ids (toggled on tap) */
   const [expandedReplyParentIds, setExpandedReplyParentIds] = useState<string[]>([]);
-  /** 부모 댓글 id → 답글 목록 캐시 */
+  /** Parent comment id → Reply list cache */
   const [repliesMap, setRepliesMap] = useState<Record<string, CommentItemData[]>>({});
   const [fetchReplies, { loading: repliesLoading }] = useLazyQuery<{ replies: RawCommentItem[] }>(GET_REPLIES, {
     fetchPolicy: 'network-only',
@@ -215,7 +215,7 @@ export default function CommentListScreen() {
     });
     if (!res.ok) {
       const body = await res.text();
-      throw new Error(body || `업로드 실패 (${res.status})`);
+      throw new Error(body || `Upload failed (${res.status})`);
     }
     const json = (await res.json()) as { url: string };
     return json.url;
@@ -224,7 +224,7 @@ export default function CommentListScreen() {
   const pickCommentImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('알림', '갤러리 접근 권한이 필요해요.');
+      Alert.alert('Notice', 'Gallery permission is required.');
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -245,7 +245,7 @@ export default function CommentListScreen() {
     if (!content || !postId) return;
     const imageUriToSend = selectedImageUri;
     const tagsToSend = selectedTags;
-    
+
     try {
       let imageUrl: string | null = null;
       if (imageUriToSend) {
@@ -257,7 +257,7 @@ export default function CommentListScreen() {
       const productIds = tagsToSend
         .filter((t): t is Tag & { id: string } => t.type === 'product' && !!t.id)
         .map((t) => t.id);
-      
+
       const result = await createComment({
         variables: {
           input: {
@@ -269,21 +269,21 @@ export default function CommentListScreen() {
           },
         },
       });
-      
-      console.log('[댓글 작성] 프론트엔드 - 응답 받음:', result.data?.createComment);
-      console.log('[댓글 작성] 프론트엔드 - 응답 tags:', result.data?.createComment?.tags);
-      
-      // 성공 시 입력창과 태그 비우기
+
+      console.log('[Comment Creation] Frontend - Response received:', result.data?.createComment);
+      console.log('[Comment Creation] Frontend - Response tags:', result.data?.createComment?.tags);
+
+      // Clear input and tags on success
       setComment('');
       setSelectedImageUri(null);
       setSelectedTags([]);
-      
-      // 댓글 목록 새로고침
+
+      // Refresh comment list
       await refetchComments();
     } catch (e) {
-      // 실패 시 입력 복원하지 않음 (사용자가 다시 입력할 수 있도록)
-      const msg = e instanceof Error ? e.message : '댓글 등록에 실패했어요.';
-      Alert.alert('오류', msg);
+      // Do not restore input on failure (so user can try again)
+      const msg = e instanceof Error ? e.message : 'Failed to post comment.';
+      Alert.alert('Error', msg);
     }
   };
 
@@ -291,11 +291,11 @@ export default function CommentListScreen() {
     try {
       await toggleCommentLike({ variables: { commentId: id } });
     } catch (_e) {
-      // 실패 시 refetch로 원래 상태 유지
+      // Maintain original state with refetch on failure
     }
   };
 
-  /** 댓글 또는 답글 수정 (답글일 때만 parentId 전달) */
+  /** Edit comment or reply (pass parentId only for replies) */
   const handleEditComment = (commentId: string, parentId?: string) => {
     setEditingCommentId(commentId);
     setEditingParentId(parentId ?? null);
@@ -304,7 +304,7 @@ export default function CommentListScreen() {
   const pickImageForModal = async (): Promise<string | null> => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('알림', '갤러리 접근 권한이 필요해요.');
+      Alert.alert('Notice', 'Gallery permission is required.');
       return null;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -335,10 +335,10 @@ export default function CommentListScreen() {
   const initialTags: Tag[] =
     formModalMode === 'edit' && editItem
       ? (editItem.tags ?? []).map((tag) => ({
-          type: tag.type as 'hospital' | 'product',
-          name: tag.name,
-          id: (tag as { id?: string }).id ?? undefined,
-        }))
+        type: tag.type as 'hospital' | 'product',
+        name: tag.name,
+        id: (tag as { id?: string }).id ?? undefined,
+      }))
       : [];
 
   const handleFormModalSave = async (payload: { content: string; imageUrl: string; dentalIds: string[]; productIds: string[] }) => {
@@ -390,7 +390,7 @@ export default function CommentListScreen() {
     }
   };
 
-  /** 댓글 또는 답글 삭제 (답글일 때 parentId 전달 시 즉시 UI에서 제거 후 서버에서 목록 재조회) */
+  /** Delete comment or reply (when parentId is passed for a reply, remove from UI immediately then refetch search list) */
   const handleDeleteComment = async (commentId: string, parentId?: string) => {
     try {
       await deleteComment({ variables: { id: commentId } });
@@ -408,42 +408,42 @@ export default function CommentListScreen() {
         });
       }
     } catch (_e) {
-      // 삭제 실패 시 토스트 등 처리 가능
+      // Delete failure can be handled (e.g. toast)
     }
   };
 
   return (
     <View className="flex-1 bg-background dark:bg-slate-900">
       <SafeAreaView className="flex-1" edges={['top']}>
-        {/* 헤더 */}
+        {/* Header */}
         <View className="px-4 py-3 flex-row items-center border-b border-border dark:border-slate-800 bg-background dark:bg-slate-900">
           <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4 p-1">
             <ChevronLeft size={24} color="#1e293b" />
           </TouchableOpacity>
-          <Text className="text-lg font-bold text-slate-800 dark:text-white">댓글</Text>
+          <Text className="text-lg font-bold text-slate-800 dark:text-white">Comments</Text>
         </View>
 
         {postId && postLoading && (
           <View className="py-12 items-center">
             <ActivityIndicator size="large" color={theme?.primary ?? '#3b82f6'} />
-            <Text className="mt-2 text-slate-500">게시글 불러오는 중...</Text>
+            <Text className="mt-2 text-slate-500">Loading post...</Text>
           </View>
         )}
 
         {postId && postError && (
           <View className="py-8 px-4">
-            <Text className="text-center text-red-500">게시글을 불러오지 못했어요.</Text>
+            <Text className="text-center text-red-500">Failed to load post.</Text>
             <TouchableOpacity onPress={() => navigation.goBack()} className="mt-4 py-2">
-              <Text className="text-center text-blue-600 font-medium">목록으로 돌아가기</Text>
+              <Text className="text-center text-blue-600 font-medium">Return to list</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {postId && post === null && !postLoading && !postError && (
           <View className="py-8 px-4">
-            <Text className="text-center text-slate-500">삭제되었거나 존재하지 않는 게시글이에요.</Text>
+            <Text className="text-center text-slate-500">This post has been deleted or does not exist.</Text>
             <TouchableOpacity onPress={() => navigation.goBack()} className="mt-4 py-2">
-              <Text className="text-center text-blue-600 font-medium">목록으로 돌아가기</Text>
+              <Text className="text-center text-blue-600 font-medium">Return to list</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -460,18 +460,18 @@ export default function CommentListScreen() {
             ListHeaderComponent={
               <>
                 {post ? <CommentPostCard post={post} /> : null}
-                <Text className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-3 mt-4">댓글</Text>
+                <Text className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-3 mt-4">Comments</Text>
                 {postId && commentsLoading ? (
                   <View className="py-8 items-center">
                     <ActivityIndicator size="small" color={theme?.primary ?? '#3b82f6'} />
-                    <Text className="mt-2 text-sm text-slate-500">댓글 불러오는 중...</Text>
+                    <Text className="mt-2 text-sm text-slate-500">Loading comments...</Text>
                   </View>
                 ) : null}
               </>
             }
             ListEmptyComponent={
               postId && !commentsLoading ? (
-                <Text className="text-sm text-slate-400 dark:text-slate-500 py-4">아직 댓글이 없습니다.</Text>
+                <Text className="text-sm text-slate-400 dark:text-slate-500 py-4">No comments yet.</Text>
               ) : null
             }
             renderItem={({ item }) => (
@@ -490,9 +490,8 @@ export default function CommentListScreen() {
                       {item.tags.map((tag, idx) => (
                         <View
                           key={idx}
-                          className={`flex-row items-center px-2 py-1 rounded-md ${
-                            tag.type === 'product' ? 'bg-indigo-50' : 'bg-blue-50'
-                          }`}
+                          className={`flex-row items-center px-2 py-1 rounded-md ${tag.type === 'product' ? 'bg-indigo-50' : 'bg-blue-50'
+                            }`}
                         >
                           {tag.type === 'product' ? (
                             <Package size={12} color="#4f46e5" />
@@ -500,9 +499,8 @@ export default function CommentListScreen() {
                             <LucideHospital size={12} color="#2563eb" />
                           )}
                           <Text
-                            className={`ml-1 text-xs font-bold ${
-                              tag.type === 'product' ? 'text-indigo-600' : 'text-blue-600'
-                            }`}
+                            className={`ml-1 text-xs font-bold ${tag.type === 'product' ? 'text-indigo-600' : 'text-blue-600'
+                              }`}
                           >
                             {tag.name}
                           </Text>
@@ -517,7 +515,7 @@ export default function CommentListScreen() {
                       resizeMode="cover"
                     />
                   ) : null}
-                  {/* 답글 개수: 한 번이라도 불러온 적 있으면 repliesMap 길이 사용(서버와 동기화), 없으면 댓글 목록의 replyCount */}
+                  {/* Reply count: Use length from repliesMap if fetched (synced with server), otherwise use replyCount from comment list */}
                   {(() => {
                     const displayReplyCount = repliesMap[item.id] !== undefined ? repliesMap[item.id].length : (item.replyCount ?? 0);
                     return displayReplyCount > 0 ? (
@@ -527,11 +525,11 @@ export default function CommentListScreen() {
                         activeOpacity={0.7}
                       >
                         <Text className="text-xs font-medium text-green-600 dark:text-green-400">
-                          {expandedReplyParentIds.includes(item.id) ? '답글 접기' : `${displayReplyCount}개의 답글 보기`}
+                          {expandedReplyParentIds.includes(item.id) ? 'Hide replies' : `View ${displayReplyCount} replies`}
                         </Text>
                       </TouchableOpacity>
                     ) : (
-                      <Text className="text-xs text-slate-400 dark:text-slate-500 mb-1">0개의 답글</Text>
+                      <Text className="text-xs text-slate-400 dark:text-slate-500 mb-1">0 replies</Text>
                     );
                   })()}
                   <TouchableOpacity
@@ -540,9 +538,9 @@ export default function CommentListScreen() {
                     activeOpacity={0.7}
                   >
                     <MessageCirclePlus size={14} color="#22c55e" />
-                    <Text className="text-xs font-medium text-green-500">답글 달기</Text>
+                    <Text className="text-xs font-medium text-green-500">Reply</Text>
                   </TouchableOpacity>
-                  {/* 펼친 답글 목록 */}
+                  {/* Expanded reply list */}
                   {expandedReplyParentIds.includes(item.id) && (
                     <View className="mt-2 ml-2 pl-3 border-l-2 border-slate-200 dark:border-slate-700">
                       {repliesMap[item.id] === undefined && loadingRepliesParentId === item.id ? (
@@ -564,9 +562,8 @@ export default function CommentListScreen() {
                                   {reply.tags.map((tag, idx) => (
                                     <View
                                       key={idx}
-                                      className={`flex-row items-center px-1.5 py-0.5 rounded ${
-                                        tag.type === 'product' ? 'bg-indigo-50' : 'bg-blue-50'
-                                      }`}
+                                      className={`flex-row items-center px-1.5 py-0.5 rounded ${tag.type === 'product' ? 'bg-indigo-50' : 'bg-blue-50'
+                                        }`}
                                     >
                                       {tag.type === 'product' ? (
                                         <Package size={10} color="#4f46e5" />
@@ -592,10 +589,10 @@ export default function CommentListScreen() {
                               {reply.isMine && (
                                 <>
                                   <TouchableOpacity onPress={() => handleEditComment(reply.id, item.id)}>
-                                    <Text className="text-[10px] font-bold text-slate-400">수정</Text>
+                                    <Text className="text-[10px] font-bold text-slate-400">Edit</Text>
                                   </TouchableOpacity>
                                   <TouchableOpacity onPress={() => handleDeleteComment(reply.id, item.id)}>
-                                    <Text className="text-[10px] font-bold text-red-500">삭제</Text>
+                                    <Text className="text-[10px] font-bold text-red-500">Delete</Text>
                                   </TouchableOpacity>
                                 </>
                               )}
@@ -611,7 +608,7 @@ export default function CommentListScreen() {
                           </View>
                         ))
                       ) : repliesMap[item.id] && repliesMap[item.id].length === 0 ? (
-                        <Text className="text-xs text-slate-400 py-2">답글이 없습니다.</Text>
+                        <Text className="text-xs text-slate-400 py-2">No replies yet.</Text>
                       ) : null}
                     </View>
                   )}
@@ -620,10 +617,10 @@ export default function CommentListScreen() {
                   {item.isMine && (
                     <>
                       <TouchableOpacity onPress={() => handleEditComment(item.id)}>
-                        <Text className="text-xs font-bold text-slate-400">수정</Text>
+                        <Text className="text-xs font-bold text-slate-400">Edit</Text>
                       </TouchableOpacity>
                       <TouchableOpacity onPress={() => handleDeleteComment(item.id)}>
-                        <Text className="text-xs font-bold text-red-500">삭제</Text>
+                        <Text className="text-xs font-bold text-red-500">Delete</Text>
                       </TouchableOpacity>
                     </>
                   )}
@@ -665,13 +662,13 @@ export default function CommentListScreen() {
           />
         )}
 
-        {/* 댓글 수정 / 답글 달기 공용 모달 */}
+        {/* Shared modal for comment edit / reply creation */}
         <CommentFormModal
           key={editingCommentId ?? replyingToCommentId ?? editingParentId ?? 'closed'}
           visible={isFormModalOpen}
           onClose={closeFormModal}
           mode={formModalMode}
-          title={formModalMode === 'edit' ? '댓글 수정' : '답글 달기'}
+          title={formModalMode === 'edit' ? 'Edit Comment' : 'Reply'}
           initialContent={initialContent}
           initialImageUrl={initialImageUrl}
           initialTags={initialTags}

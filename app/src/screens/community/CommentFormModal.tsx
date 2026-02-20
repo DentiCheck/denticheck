@@ -20,7 +20,7 @@ function resolveImageUrl(url: string): string {
       const base = new URL(BASE_URL);
       return base.origin + u.pathname + (u.search || '');
     }
-  } catch (_) {}
+  } catch (_) { }
   return url;
 }
 
@@ -29,23 +29,23 @@ export type CommentFormModalMode = 'edit' | 'reply';
 export type CommentFormModalProps = {
   visible: boolean;
   onClose: () => void;
-  /** 'edit' = 댓글 수정, 'reply' = 답글 달기 */
+  /** 'edit' = comment edit, 'reply' = reply creation */
   mode: CommentFormModalMode;
-  /** 모달 제목 (예: '댓글 수정', '답글 달기') */
+  /** Modal title (e.g. 'Edit Comment', 'Reply') */
   title: string;
-  /** 초기 내용 (edit 시 기존 댓글, reply 시 빈 문자열) */
+  /** Initial content (existing comment for edit, empty string for reply) */
   initialContent: string;
-  /** 초기 이미지 URL (edit 시 기존 이미지, reply 시 null) */
+  /** Initial image URL (existing image for edit, null for reply) */
   initialImageUrl: string | null;
-  /** 초기 태그 (edit 시 기존 태그, reply 시 []) */
+  /** Initial tags (existing tags for edit, [] for reply) */
   initialTags: Tag[];
-  /** 저장 버튼 클릭 시. 이미지 업로드는 호출 전에 처리됨. */
+  /** When save button is clicked. Image upload is handled before calling. */
   onSave: (payload: { content: string; imageUrl: string; dentalIds: string[]; productIds: string[] }) => Promise<void>;
-  /** 저장 중 여부 (버튼 비활성/로딩 문구) */
+  /** Saving status (button disabled/loading text) */
   saving: boolean;
-  /** 이미지 선택 시 (갤러리 등). 선택된 uri 또는 null 반환. */
+  /** When picking image (gallery etc.). Returns selected uri or null. */
   onPickImage: () => Promise<string | null>;
-  /** 선택된 이미지 uri를 업로드하고 서버 URL 반환 */
+  /** Upload selected image uri and return server URL */
   uploadImage: (uri: string) => Promise<string>;
 };
 
@@ -102,7 +102,7 @@ export function CommentFormModal({
       onClose();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      Alert.alert(mode === 'edit' ? '댓글 수정 실패' : '답글 등록 실패', msg);
+      Alert.alert(mode === 'edit' ? 'Edit Failed' : 'Reply Failed', msg);
     }
   };
 
@@ -127,7 +127,7 @@ export function CommentFormModal({
             <Text className="text-base font-bold text-slate-800 dark:text-white mb-3">{title}</Text>
             <TextInput
               className="bg-gray-50 dark:bg-slate-700 rounded-lg px-4 py-3 text-slate-800 dark:text-white text-sm min-h-[80px]"
-              placeholder="댓글 내용"
+              placeholder="Comment content"
               placeholderTextColor="#94a3b8"
               value={content}
               onChangeText={setContent}
@@ -138,9 +138,8 @@ export function CommentFormModal({
                 {tags.map((tag, idx) => (
                   <View
                     key={idx}
-                    className={`flex-row items-center px-2 py-1 rounded-md ${
-                      tag.type === 'product' ? 'bg-indigo-50' : 'bg-blue-50'
-                    }`}
+                    className={`flex-row items-center px-2 py-1 rounded-md ${tag.type === 'product' ? 'bg-indigo-50' : 'bg-blue-50'
+                      }`}
                   >
                     {tag.type === 'product' ? (
                       <Package size={12} color="#4f46e5" />
@@ -148,9 +147,8 @@ export function CommentFormModal({
                       <LucideHospital size={12} color="#2563eb" />
                     )}
                     <Text
-                      className={`ml-1 text-xs font-bold ${
-                        tag.type === 'product' ? 'text-indigo-600' : 'text-blue-600'
-                      }`}
+                      className={`ml-1 text-xs font-bold ${tag.type === 'product' ? 'text-indigo-600' : 'text-blue-600'
+                        }`}
                     >
                       {tag.name}
                     </Text>
@@ -169,7 +167,7 @@ export function CommentFormModal({
               className="mt-3 flex-row items-center justify-center px-4 py-2 bg-gray-100 dark:bg-slate-700 rounded-lg"
             >
               <LucideHospital size={16} color="#64748b" />
-              <Text className="ml-2 text-sm text-slate-600 dark:text-slate-300">태그 선택 (치과/상품)</Text>
+              <Text className="ml-2 text-sm text-slate-600 dark:text-slate-300">Select tags (Clinic/Product)</Text>
             </TouchableOpacity>
             <View className="mt-3 flex-row items-center gap-3">
               {newImageUri ? (
@@ -206,12 +204,12 @@ export function CommentFormModal({
                 className="w-20 h-20 rounded-lg bg-gray-100 dark:bg-slate-700 items-center justify-center border border-dashed border-slate-300 dark:border-slate-600"
               >
                 <ImagePlus size={28} color="#64748b" />
-                <Text className="text-xs text-slate-500 mt-1">이미지</Text>
+                <Text className="text-xs text-slate-500 mt-1">Image</Text>
               </TouchableOpacity>
             </View>
             <View className="flex-row justify-end gap-3 mt-4">
               <TouchableOpacity onPress={onClose} className="px-4 py-2">
-                <Text className="text-slate-500 font-medium">취소</Text>
+                <Text className="text-slate-500 font-medium">Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleSave}
@@ -219,7 +217,7 @@ export function CommentFormModal({
                 className="px-4 py-2"
               >
                 <Text className={`font-medium ${content.trim() && !saving ? 'text-blue-600' : 'text-slate-300'}`}>
-                  {saving ? '저장 중...' : '저장'}
+                  {saving ? 'Saving...' : 'Save'}
                 </Text>
               </TouchableOpacity>
             </View>

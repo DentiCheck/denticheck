@@ -12,7 +12,7 @@ export type ColorTheme = {
 
 export const themes: Record<string, ColorTheme> = {
     coral: {
-        name: '코랄 피치',
+        name: 'Coral Peach',
         primary: '#FF6B6B',
         secondary: '#8B5CF6',
         accent: '#FFB8A8',
@@ -23,7 +23,7 @@ export const themes: Record<string, ColorTheme> = {
         gradient: ['#FF6B6B', '#FFB8A8'],
     },
     mint: {
-        name: '민트 그린',
+        name: 'Mint Green',
         primary: '#10B981',
         secondary: '#06B6D4',
         accent: '#A7F3D0',
@@ -34,7 +34,7 @@ export const themes: Record<string, ColorTheme> = {
         gradient: ['#10B981', '#A7F3D0'],
     },
     lavender: {
-        name: '라벤더 퍼플',
+        name: 'Lavender Purple',
         primary: '#9333EA',
         secondary: '#EC4899',
         accent: '#E9D5FF',
@@ -45,7 +45,7 @@ export const themes: Record<string, ColorTheme> = {
         gradient: ['#9333EA', '#E9D5FF'],
     },
     ocean: {
-        name: '오션 블루',
+        name: 'Ocean Blue',
         primary: '#0EA5E9',
         secondary: '#6366F1',
         accent: '#93C5FD',
@@ -56,7 +56,7 @@ export const themes: Record<string, ColorTheme> = {
         gradient: ['#0EA5E9', '#93C5FD'],
     },
     sunset: {
-        name: '선셋 오렌지',
+        name: 'Sunset Orange',
         primary: '#F97316',
         secondary: '#EF4444',
         accent: '#FDBA74',

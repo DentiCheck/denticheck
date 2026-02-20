@@ -14,9 +14,9 @@ export type InfiniteScrollViewProps<T> = {
   contentContainerStyle?: object;
   loadingColor?: string;
   className?: string;
-  /** ref 전달 시 scrollToIndex 등 FlatList 메서드 사용 가능 */
+  /** FlatList methods like scrollToIndex can be used when ref is passed */
   listRef?: React.RefObject<FlatList<T> | null>;
-  /** 이 값이 바뀌면 행을 다시 그림 (예: 답글 펼침 상태). data 외 상태로 렌더가 바뀔 때 필수 */
+  /** Redraw rows if this value changes (e.g. reply expand state). Required when rendering changes by status other than data. */
   extraData?: unknown;
 };
 
@@ -45,7 +45,7 @@ export function InfiniteScrollView<T>({
     return (
       <View className="py-4 items-center">
         <ActivityIndicator size="small" color={loadingColor} />
-        <Text className="text-slate-400 text-xs mt-2">불러오는 중...</Text>
+        <Text className="text-slate-400 text-xs mt-2">Loading...</Text>
       </View>
     );
   };

@@ -47,41 +47,41 @@ export default function NotificationSettingsScreen() {
                     >
                         <ChevronLeft size={24} color="#1e293b" />
                     </TouchableOpacity>
-                    <Text className="text-xl font-bold text-slate-800">알림 설정</Text>
+                    <Text className="text-xl font-bold text-slate-800">Notification Settings</Text>
                 </View>
 
                 <ScrollView contentContainerStyle={{ padding: 24 }}>
-                    <Text className="text-sm font-bold text-slate-400 mb-2">기본 알림</Text>
+                    <Text className="text-sm font-bold text-slate-400 mb-2">Basic Notifications</Text>
                     <View className="mb-8">
                         <SettingItem
-                            label="푸시 알림"
-                            description="앱의 모든 푸시 알림을 받습니다."
+                            label="Push Notifications"
+                            description="Receive all push notifications from the app."
                             value={settings.push}
                             onValueChange={() => toggleSwitch('push')}
                         />
                     </View>
 
-                    <Text className="text-sm font-bold text-slate-400 mb-2">서비스 알림</Text>
+                    <Text className="text-sm font-bold text-slate-400 mb-2">Service Notifications</Text>
                     <View className="mb-8">
                         <SettingItem
-                            label="건강 검진 알림"
-                            description="정기 검진 및 양치 알림을 받습니다."
+                            label="Health Check Notifications"
+                            description="Receive regular checkup and brushing notifications."
                             value={settings.healthCheck}
                             onValueChange={() => toggleSwitch('healthCheck')}
                         />
                         <SettingItem
-                            label="커뮤니티 활동"
-                            description="내 글에 달린 댓글, 좋아요 알림을 받습니다."
+                            label="Community Activity"
+                            description="Receive notifications for comments and likes on your posts."
                             value={settings.community}
                             onValueChange={() => toggleSwitch('community')}
                         />
                     </View>
 
-                    <Text className="text-sm font-bold text-slate-400 mb-2">마케팅 정보</Text>
+                    <Text className="text-sm font-bold text-slate-400 mb-2">Marketing Information</Text>
                     <View>
                         <SettingItem
-                            label="혜택 및 이벤트 알림"
-                            description="다양한 할인 혜택과 이벤트 소식을 받습니다."
+                            label="Benefits and Event Notifications"
+                            description="Receive news about various discount benefits and events."
                             value={settings.marketing}
                             onValueChange={() => toggleSwitch('marketing')}
                         />

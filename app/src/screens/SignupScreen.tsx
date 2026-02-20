@@ -52,19 +52,19 @@ export default function SignupScreen() {
             if (agreements.service && agreements.privacy && agreements.age) {
                 setStep(2);
             } else {
-                Alert.alert("알림", "필수 약관에 동의해주세요.");
+                Alert.alert("Notice", "Please agree to the required terms.");
             }
         }
     };
 
     const handleSignup = () => {
         if (formData.password !== formData.confirmPassword) {
-            Alert.alert("알림", "비밀번호가 일치하지 않습니다.");
+            Alert.alert("Notice", "Passwords do not match.");
             return;
         }
         // Mock signup and navigate to survey
-        Alert.alert("성공", "회원가입이 완료되었습니다!", [
-            { text: "확인", onPress: () => navigation.replace('Survey') }
+        Alert.alert("Success", "Sign up complete!", [
+            { text: "OK", onPress: () => navigation.replace('Survey') }
         ]);
     };
 
@@ -74,13 +74,13 @@ export default function SignupScreen() {
                 <TouchableOpacity onPress={() => step === 1 ? navigation.goBack() : setStep(1)}>
                     <ArrowLeft size={24} color="#374151" />
                 </TouchableOpacity>
-                <Text className="text-lg font-semibold text-foreground">회원가입</Text>
+                <Text className="text-lg font-semibold text-foreground">Sign Up</Text>
             </View>
 
             <View className="flex-1 p-6">
                 <View className="mb-8">
                     <View className="flex-row justify-between mb-2">
-                        <Text className="text-sm text-gray-600">{step === 1 ? '약관 동의' : '정보 입력'}</Text>
+                        <Text className="text-sm text-gray-600">{step === 1 ? 'Agreement' : 'Information'}</Text>
                         <Text className="text-sm text-gray-600">{step}/2</Text>
                     </View>
                     <View className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -99,15 +99,15 @@ export default function SignupScreen() {
                                             onValueChange={handleAllAgree}
                                             color={allAgreed ? theme.primary : undefined}
                                         />
-                                        <Label className="font-semibold text-base">전체 동의</Label>
+                                        <Label className="font-semibold text-base">Agree All</Label>
                                     </View>
 
                                     <View className="space-y-4">
                                         {[
-                                            { key: 'service', label: '[필수] 서비스 이용약관' },
-                                            { key: 'privacy', label: '[필수] 개인정보 수집 및 이용' },
-                                            { key: 'age', label: '[필수] 만 14세 이상입니다' },
-                                            { key: 'marketing', label: '[선택] 마케팅 정보 수신', isLast: true },
+                                            { key: 'service', label: '[Required] Terms of Service' },
+                                            { key: 'privacy', label: '[Required] Privacy Policy' },
+                                            { key: 'age', label: '[Required] I am over 14 years old' },
+                                            { key: 'marketing', label: '[Optional] Marketing Information', isLast: true },
                                         ].map((item: any) => (
                                             <View key={item.key} className={`flex-row items-center justify-between ${item.key === 'marketing' ? 'pt-4 border-t border-border' : ''}`}>
                                                 <View className="flex-row items-center gap-3">
@@ -125,7 +125,7 @@ export default function SignupScreen() {
                                 </Card>
 
                                 <Button onPress={handleNextStep} className="mt-4">
-                                    <Text className="text-primary-foreground">다음</Text>
+                                    <Text className="text-primary-foreground">Next</Text>
                                 </Button>
                             </View>
                         )}
@@ -134,15 +134,15 @@ export default function SignupScreen() {
                             <View className="space-y-4">
                                 <Card className="p-6 space-y-4">
                                     <View>
-                                        <Label>이름</Label>
+                                        <Label>Name</Label>
                                         <Input
-                                            placeholder="홍길동"
+                                            placeholder="John Doe"
                                             value={formData.name}
                                             onChangeText={(text) => setFormData({ ...formData, name: text })}
                                         />
                                     </View>
                                     <View>
-                                        <Label>이메일</Label>
+                                        <Label>Email</Label>
                                         <Input
                                             placeholder="example@email.com"
                                             value={formData.email}
@@ -151,7 +151,7 @@ export default function SignupScreen() {
                                         />
                                     </View>
                                     <View>
-                                        <Label>휴대폰 번호</Label>
+                                        <Label>Phone Number</Label>
                                         <Input
                                             placeholder="010-1234-5678"
                                             value={formData.phone}
@@ -160,18 +160,18 @@ export default function SignupScreen() {
                                         />
                                     </View>
                                     <View>
-                                        <Label>비밀번호</Label>
+                                        <Label>Password</Label>
                                         <Input
-                                            placeholder="8자 이상 입력해주세요"
+                                            placeholder="At least 8 characters"
                                             value={formData.password}
                                             onChangeText={(text) => setFormData({ ...formData, password: text })}
                                             secureTextEntry
                                         />
                                     </View>
                                     <View>
-                                        <Label>비밀번호 확인</Label>
+                                        <Label>Confirm Password</Label>
                                         <Input
-                                            placeholder="비밀번호를 다시 입력해주세요"
+                                            placeholder="Re-enter password"
                                             value={formData.confirmPassword}
                                             onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
                                             secureTextEntry
@@ -180,7 +180,7 @@ export default function SignupScreen() {
                                 </Card>
 
                                 <Button onPress={handleSignup} className="mt-4">
-                                    <Text className="text-primary-foreground">회원가입 완료</Text>
+                                    <Text className="text-primary-foreground">Complete Sign Up</Text>
                                 </Button>
                             </View>
                         )}

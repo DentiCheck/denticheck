@@ -18,15 +18,15 @@ export default function ProductDetailScreen() {
     const params = route.params || {};
     const product = params.product || {
         id: 1,
-        name: '덴티마스터 치실',
-        detail: '치간 케어 필수품. 부드러운 왁스 코팅으로 잇몸 자극 최소화.',
-        price: '12,900원',
+        name: 'DentiMaster Floss',
+        detail: 'Essential for interdental care. Soft wax coating minimizes gum irritation.',
+        price: '₩12,900',
         rating: 4.8,
         reviewCount: 1240,
         tag: 'BEST',
         color: 'bg-teal-50',
         iconColor: 'text-teal-600',
-        description: '잇몸에 자극 없이 부드럽게 들어가는 얇은 치실입니다. 민트향이 첨가되어 사용 후 상쾌함을 느낄 수 있습니다. 50m 대용량으로 온 가족이 넉넉하게 사용할 수 있습니다.'
+        description: 'A thin floss that enters smoothly without irritating the gums. Added mint scent for a fresh feeling after use. Large 50m capacity for the whole family.'
     };
 
     return (
@@ -80,7 +80,7 @@ export default function ProductDetailScreen() {
 
                         {/* Details */}
                         <View className="mb-6">
-                            <Text className="text-lg font-bold text-slate-900 dark:text-white mb-3">상품 정보</Text>
+                            <Text className="text-lg font-bold text-slate-900 dark:text-white mb-3">Product Info</Text>
                             <Text className="text-base text-slate-600 dark:text-slate-400 leading-7">
                                 {product.detail}
                                 {'\n\n'}
@@ -92,8 +92,8 @@ export default function ProductDetailScreen() {
                         <View className="flex-row items-center gap-3 p-4 bg-green-50 dark:bg-green-900/10 rounded-xl mb-6">
                             <ShieldCheck size={24} color="#16a34a" />
                             <View>
-                                <Text className="font-bold text-green-800 dark:text-green-400">의약외품 인증 완료</Text>
-                                <Text className="text-xs text-green-600 dark:text-green-500">식약처 허가를 받은 안전한 제품입니다.</Text>
+                                <Text className="font-bold text-green-800 dark:text-green-400">Quasi-drug Certified</Text>
+                                <Text className="text-xs text-green-600 dark:text-green-500">A safe product approved by the Ministry of Food and Drug Safety.</Text>
                             </View>
                         </View>
                     </View>
@@ -121,7 +121,7 @@ export default function ProductDetailScreen() {
 
                         {/* Buy Button */}
                         <Button className="flex-1 h-14 bg-slate-900 dark:bg-white rounded-full">
-                            <Text className="text-white dark:text-slate-900 font-bold text-lg">구매하기</Text>
+                            <Text className="text-white dark:text-slate-900 font-bold text-lg">Buy Now</Text>
                         </Button>
                     </View>
                 </View>

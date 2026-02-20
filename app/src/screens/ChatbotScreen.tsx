@@ -30,7 +30,7 @@ const INITIAL_MESSAGE: Message = {
   id: "1",
   role: "assistant",
   content:
-    "안녕하세요! 구강 건강 상담 AI입니다. 궁금하신 점을 편하게 물어보세요.",
+    "Hello! I am your dental health AI assistant. Feel free to ask any questions.",
   timestamp: new Date(),
 };
 
@@ -49,10 +49,10 @@ export default function ChatbotScreen() {
   }, [messages, isTyping]);
 
   const quickQuestions = [
-    "충치 원인",
-    "스케일링 주기",
-    "올바른 양치법",
-    "치실 사용법",
+    "Cavity causes",
+    "Scaling cycle",
+    "Proper brushing",
+    "How to floss",
   ];
 
   const handleNewChat = async () => {
@@ -106,7 +106,7 @@ export default function ChatbotScreen() {
       const errorMessage: Message = {
         id: Date.now().toString(),
         role: "assistant",
-        content: "죄송합니다. 메시지 전송 중 오류가 발생했습니다.",
+        content: "Sorry, an error occurred while sending the message.",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -121,7 +121,7 @@ export default function ChatbotScreen() {
         {/* Minimal Header */}
         <View className="px-6 py-4 flex-row items-center justify-between border-b border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 z-10">
           <Text className="text-2xl font-extrabold text-slate-800 dark:text-white">
-            AI 상담
+            AI Consultation
           </Text>
           <View className="flex-row items-center gap-4">
             <TouchableOpacity onPress={handleNewChat} className="p-2">
@@ -157,8 +157,8 @@ export default function ChatbotScreen() {
               >
                 <View
                   className={`p-4 rounded-2xl ${message.role === "user"
-                      ? "bg-blue-500 rounded-tr-none"
-                      : "bg-white rounded-tl-none border border-slate-100"
+                    ? "bg-blue-500 rounded-tr-none"
+                    : "bg-white rounded-tl-none border border-slate-100"
                     }`}
                   style={
                     message.role === "assistant"
@@ -179,7 +179,7 @@ export default function ChatbotScreen() {
                   </Text>
                 </View>
                 <Text className="text-[10px] text-slate-400 mt-1 px-1">
-                  {message.timestamp.toLocaleTimeString("ko-KR", {
+                  {message.timestamp.toLocaleTimeString("en-US", {
                     hour: "2-digit",
                     minute: "2-digit",
                   })}
@@ -238,7 +238,7 @@ export default function ChatbotScreen() {
             <View className="px-4 py-3 flex-row gap-3 items-center">
               <TextInput
                 className="flex-1 bg-slate-50 dark:bg-slate-800 rounded-2xl px-4 py-3 text-slate-800 dark:text-white text-base max-h-24"
-                placeholder="메시지를 입력하세요..."
+                placeholder="Enter your message..."
                 placeholderTextColor="#94a3b8"
                 value={input}
                 onChangeText={setInput}

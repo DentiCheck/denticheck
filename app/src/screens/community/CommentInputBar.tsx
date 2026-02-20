@@ -18,19 +18,19 @@ type CommentInputBarProps = {
   onSend: () => void;
   placeholder?: string;
   sendLabel?: string;
-  /** 전송 중이면 버튼 비활성화 */
+  /** Disable button if sending */
   sending?: boolean;
-  /** 선택된 이미지 1장 (로컬 uri). 있으면 썸네일 표시 */
+  /** 1 selected image (local uri). Show thumbnail if present. */
   imageUri?: string | null;
-  /** 이미지 추가 버튼 탭 (갤러리/카메라 선택은 부모에서 처리) */
+  /** Tap image add button (gallery/camera selection handled in parent) */
   onAddImage?: () => void;
-  /** 선택 이미지 제거 */
+  /** Remove selected image */
   onRemoveImage?: () => void;
-  /** 선택된 태그 목록 */
+  /** Selected tags list */
   selectedTags?: Tag[];
-  /** 태그 선택 시 호출 */
+  /** Called when tag is selected */
   onSelectTag?: (tag: Tag) => void;
-  /** 태그 제거 시 호출 */
+  /** Called when tag is removed */
   onRemoveTag?: (index: number) => void;
 };
 
@@ -38,8 +38,8 @@ export function CommentInputBar({
   value,
   onChangeText,
   onSend,
-  placeholder = '댓글 달기...',
-  sendLabel = '게시',
+  placeholder = 'Reply...',
+  sendLabel = 'Post',
   sending = false,
   imageUri = null,
   onAddImage,
@@ -55,7 +55,7 @@ export function CommentInputBar({
 
   const profileInitial = user?.name?.trim()?.[0]
     ?? user?.email?.trim()?.[0]
-    ?? '나';
+    ?? 'Me';
 
   return (
     <KeyboardAvoidingView
@@ -77,25 +77,23 @@ export function CommentInputBar({
           )}
         </View>
         <View className="flex-1">
-          {/* 선택된 태그 표시 */}
+          {/* Display selected tags */}
           {selectedTags.length > 0 && (
             <View className="flex-row flex-wrap gap-2 mb-2">
               {selectedTags.map((tag, idx) => (
                 <TouchableOpacity
                   key={idx}
                   onPress={() => onRemoveTag?.(idx)}
-                  className={`flex-row items-center pl-3 pr-2 py-1.5 rounded-full ${
-                    tag.type === 'hospital'
-                      ? 'bg-blue-100 dark:bg-blue-900/50'
-                      : 'bg-indigo-100'
-                  }`}
+                  className={`flex-row items-center pl-3 pr-2 py-1.5 rounded-full ${tag.type === 'hospital'
+                    ? 'bg-blue-100 dark:bg-blue-900/50'
+                    : 'bg-indigo-100'
+                    }`}
                 >
                   <Text
-                    className={`text-xs font-bold mr-1 ${
-                      tag.type === 'hospital'
-                        ? 'text-blue-700 dark:text-blue-300'
-                        : 'text-indigo-700'
-                    }`}
+                    className={`text-xs font-bold mr-1 ${tag.type === 'hospital'
+                      ? 'text-blue-700 dark:text-blue-300'
+                      : 'text-indigo-700'
+                      }`}
                   >
                     {tag.name}
                   </Text>
@@ -128,11 +126,10 @@ export function CommentInputBar({
             />
             <TouchableOpacity onPress={onSend} disabled={!canSend} className="ml-1">
               <Text
-                className={`text-sm font-bold ${
-                  canSend ? 'text-blue-600' : 'text-slate-300'
-                }`}
+                className={`text-sm font-bold ${canSend ? 'text-blue-600' : 'text-slate-300'
+                  }`}
               >
-                {sending ? '등록 중...' : sendLabel}
+                {sending ? 'Posting...' : sendLabel}
               </Text>
             </TouchableOpacity>
           </View>
@@ -156,13 +153,13 @@ export function CommentInputBar({
         </View>
       </View>
 
-      {/* 태그 추가 모달 */}
+      {/* Tag add modal */}
       <TagPickerModal
         visible={showTagPicker}
         onClose={() => setShowTagPicker(false)}
         selectedTags={selectedTags}
-        onSelectTag={onSelectTag || (() => {})}
-        onRemoveTag={onRemoveTag || (() => {})}
+        onSelectTag={onSelectTag || (() => { })}
+        onRemoveTag={onRemoveTag || (() => { })}
         maxHospitalTags={3}
         enableProductTags={true}
       />

@@ -23,7 +23,7 @@ export function BottomTabs() {
                 name="Home"
                 component={HomeScreen}
                 options={{
-                    tabBarLabel: '홈',
+                    tabBarLabel: 'Home',
                     tabBarIcon: ({ color, size }) => <Home color={color} size={size} />
                 }}
             />
@@ -31,7 +31,7 @@ export function BottomTabs() {
                 name="AICheck"
                 component={AICheckScreen}
                 options={{
-                    tabBarLabel: 'AI체크',
+                    tabBarLabel: 'AI Check',
                     tabBarIcon: ({ color, size }) => <Camera color={color} size={size} />
                 }}
             />
@@ -39,7 +39,7 @@ export function BottomTabs() {
                 name="Chatbot"
                 component={ChatbotScreen}
                 options={{
-                    tabBarLabel: '상식챗',
+                    tabBarLabel: 'Chatbot',
                     tabBarIcon: ({ color, size }) => <MessageSquare color={color} size={size} />
                 }}
             />
@@ -47,7 +47,7 @@ export function BottomTabs() {
                 name="DentalSearch"
                 component={DentalSearchScreen}
                 options={{
-                    tabBarLabel: '병원찾기',
+                    tabBarLabel: 'Hospital',
                     tabBarIcon: ({ color, size }) => <Search color={color} size={size} />
                 }}
             />
@@ -55,7 +55,7 @@ export function BottomTabs() {
                 name="Community"
                 component={CommunityScreen}
                 options={{
-                    tabBarLabel: '커뮤니티',
+                    tabBarLabel: 'Community',
                     tabBarIcon: ({ color, size }) => <Users color={color} size={size} />
                 }}
             />
@@ -63,7 +63,7 @@ export function BottomTabs() {
                 name="MyPage"
                 component={MyPageScreen}
                 options={{
-                    tabBarLabel: '마이',
+                    tabBarLabel: 'Profile',
                     tabBarIcon: ({ color, size }) => <User color={color} size={size} />
                 }}
             />

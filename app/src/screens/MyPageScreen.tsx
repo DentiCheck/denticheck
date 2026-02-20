@@ -41,32 +41,32 @@ export default function MyPageScreen() {
       date: new Date("2026-02-03"),
       type: "ai-check",
       riskLevel: "medium",
-      summary: "치석과 잇몸 염증 관찰",
+      summary: "Observed tartar and gum inflammation",
     },
     {
       id: "2",
       date: new Date("2026-02-01"),
       type: "survey",
       score: 75,
-      summary: "전반적으로 양호, 치실 사용 권장",
+      summary: "Overall good, flossing recommended",
     },
     {
       id: "3",
       date: new Date("2026-01-28"),
       type: "note",
-      summary: "잇몸 출혈 있음",
-      note: "양치 후 약간의 출혈이 있어 기록함",
+      summary: "Gum bleeding present",
+      note: "Recorded slight bleeding after brushing",
     },
   ];
 
   const handleDeleteAccount = () => {
     Alert.alert(
-      "회원탈퇴",
-      "정말로 탈퇴하시겠습니까? 모든 데이터가 삭제되며 복구할 수 없습니다.",
+      "Delete Account",
+      "Are you sure you want to delete your account? All data will be permanently deleted.",
       [
-        { text: "취소", style: "cancel" },
+        { text: "Cancel", style: "cancel" },
         {
-          text: "탈퇴하기",
+          text: "Delete",
           style: "destructive",
           onPress: () => navigation.replace("Login"),
         },
@@ -113,10 +113,10 @@ export default function MyPageScreen() {
           <View className="flex-row items-center justify-between mb-1">
             <Text className="text-xs font-bold text-slate-400">
               {record.type === "ai-check"
-                ? "AI 분석"
+                ? "AI Analysis"
                 : record.type === "survey"
-                  ? "건강 설문"
-                  : "메모"}{" "}
+                  ? "Health Survey"
+                  : "Note"}{" "}
               • {record.date.toLocaleDateString()}
             </Text>
           </View>
@@ -127,7 +127,7 @@ export default function MyPageScreen() {
           {record.score && (
             <View className="self-start bg-violet-50 px-2 py-0.5 rounded-md">
               <Text className="text-xs font-bold text-violet-700">
-                점수 {record.score}점
+                Score {record.score}
               </Text>
             </View>
           )}
@@ -138,7 +138,7 @@ export default function MyPageScreen() {
               <Text
                 className={`text-xs font-bold ${record.riskLevel === "low" ? "text-green-700" : "text-orange-700"}`}
               >
-                위험도 {record.riskLevel === "low" ? "낮음" : "보통"}
+                Risk {record.riskLevel === "low" ? "Low" : "Med"}
               </Text>
             </View>
           )}
@@ -183,7 +183,7 @@ export default function MyPageScreen() {
         {/* Minimal Header */}
         <View className="px-6 py-4 flex-row items-center justify-between border-b border-gray-100 dark:border-slate-800 z-10">
           <Text className="text-2xl font-extrabold text-slate-800 dark:text-white">
-            마이페이지
+            My Profile
           </Text>
           <TouchableOpacity>
             <Settings size={22} color="#1e293b" />
@@ -204,12 +204,12 @@ export default function MyPageScreen() {
               <View className="flex-row mt-3 gap-2">
                 <View className="bg-blue-50 px-3 py-1 rounded-full">
                   <Text className="text-xs font-bold text-blue-600">
-                    건강점수 75점
+                    Health Score 75
                   </Text>
                 </View>
                 <View className="bg-slate-50 px-3 py-1 rounded-full">
                   <Text className="text-xs font-bold text-slate-500">
-                    관리 12일차
+                    Day 12
                   </Text>
                 </View>
               </View>
@@ -218,23 +218,23 @@ export default function MyPageScreen() {
 
           {/* Menu Group 1 */}
           <Text className="text-sm font-bold text-slate-400 mb-2 ml-1">
-            계정 및 설정
+            Account & Settings
           </Text>
           <View className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-6">
             <MenuItem
               icon={Palette}
-              label="테마 변경"
+              label="Change Theme"
               color="#8b5cf6"
               onPress={() => navigation.navigate("ThemeSelector")}
             />
             <MenuItem
               icon={Bell}
-              label="알림 설정"
+              label="Notification Settings"
               onPress={() => navigation.navigate("NotificationSettings")}
             />
             <MenuItem
               icon={Heart}
-              label="찜한 병원"
+              label="Saved Hospitals"
               color="#ef4444"
               onPress={() =>
                 navigation.navigate("Main", {
@@ -245,7 +245,7 @@ export default function MyPageScreen() {
             />
             <MenuItem
               icon={MessageSquare}
-              label="내 게시글 관리"
+              label="My Posts"
               color="#0ea5e9"
               onPress={() =>
                 navigation.navigate("Community", { view: "myPosts" })
@@ -253,7 +253,7 @@ export default function MyPageScreen() {
             />
             <MenuItem
               icon={ThumbsUp}
-              label="좋아요한 게시글 보기"
+              label="Liked Posts"
               color="#f59e0b"
               onPress={() =>
                 navigation.navigate("Community", { view: "liked" })
@@ -263,26 +263,26 @@ export default function MyPageScreen() {
 
           {/* Menu Group 2 */}
           <Text className="text-sm font-bold text-slate-400 mb-2 ml-1">
-            고객 지원
+            Support
           </Text>
           <View className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-6">
             <MenuItem
               icon={HelpCircle}
-              label="고객센터"
+              label="Help Center"
               onPress={() => navigation.navigate("CustomerService")}
             />
             <MenuItem
               icon={Shield}
-              label="약관 및 정책"
+              label="Terms & Policies"
               onPress={() => navigation.navigate("TermsPolicies")}
             />
           </View>
 
           {/* Health Records (Preview) */}
           <View className="flex-row items-center justify-between mb-3 ml-1">
-            <Text className="text-lg font-bold text-slate-800">최근 기록</Text>
+            <Text className="text-lg font-bold text-slate-800">Recent Records</Text>
             <TouchableOpacity>
-              <Text className="text-sm font-bold text-blue-500">전체보기</Text>
+              <Text className="text-sm font-bold text-blue-500">View All</Text>
             </TouchableOpacity>
           </View>
           <View className="mb-8">
@@ -293,17 +293,17 @@ export default function MyPageScreen() {
 
           {/* Logout Group */}
           <View className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-8">
-            <MenuItem icon={LogOut} label="로그아웃" onPress={signOut} />
+            <MenuItem icon={LogOut} label="Logout" onPress={signOut} />
             <MenuItem
               icon={AlertCircle}
-              label="회원탈퇴"
+              label="Delete Account"
               isDestructive
               onPress={handleDeleteAccount}
             />
           </View>
 
           <View className="items-center">
-            <Text className="text-xs text-slate-300">버전 1.0.0</Text>
+            <Text className="text-xs text-slate-300">Version 1.0.0</Text>
           </View>
         </ScrollView>
       </SafeAreaView>
