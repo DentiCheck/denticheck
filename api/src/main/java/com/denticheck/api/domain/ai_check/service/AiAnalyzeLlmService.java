@@ -28,8 +28,9 @@ public class AiAnalyzeLlmService {
 
     private static final String SYSTEM_PROMPT = """
             You are a dental screening assistant.
-            Use only provided detections and rag evidence.
-            Return strict JSON only.
+            Use only the provided detections and RAG evidence.
+            Output strict JSON only.
+            All output text must be in English.
             """;
 
     private static final String USER_PROMPT_TEMPLATE = """
@@ -48,6 +49,12 @@ public class AiAnalyzeLlmService {
               "careGuide": ["string"],
               "disclaimer": ["string"]
             }
+
+            Rules:
+            - If oral_cancer confidence >= 0.5 then RED.
+            - If caries or tartar exists then YELLOW.
+            - Otherwise GREEN.
+            - All text must be in English.
             """;
 
     private final ObjectMapper objectMapper;
@@ -139,14 +146,18 @@ public class AiAnalyzeLlmService {
             findings = fallback.getFindings();
         } else {
             findings = findings.stream().limit(3).map(v -> AnalyzeResponse.Finding.builder()
-                    .title(hasText(v.getTitle()) ? v.getTitle() : "소견")
-                    .detail(hasText(v.getDetail()) ? v.getDetail() : "치과 검진으로 정확한 확인이 필요합니다.")
+                    .title(hasText(v.getTitle()) ? v.getTitle() : "Finding")
+                    .detail(hasText(v.getDetail()) ? v.getDetail() : "Further clinical verification is recommended.")
                     .evidence((v.getEvidence() == null || v.getEvidence().isEmpty()) ? List.of("rag:0") : v.getEvidence())
                     .build()).toList();
         }
 
-        List<String> careGuide = (llm.getCareGuide() == null || llm.getCareGuide().isEmpty()) ? fallback.getCareGuide() : llm.getCareGuide();
-        List<String> disclaimer = (llm.getDisclaimer() == null || llm.getDisclaimer().isEmpty()) ? fallback.getDisclaimer() : llm.getDisclaimer();
+        List<String> careGuide = (llm.getCareGuide() == null || llm.getCareGuide().isEmpty())
+                ? fallback.getCareGuide()
+                : llm.getCareGuide();
+        List<String> disclaimer = (llm.getDisclaimer() == null || llm.getDisclaimer().isEmpty())
+                ? fallback.getDisclaimer()
+                : llm.getDisclaimer();
 
         return AnalyzeResponse.LlmResult.builder()
                 .riskLevel(riskLevel)
@@ -163,9 +174,9 @@ public class AiAnalyzeLlmService {
     ) {
         String riskLevel = computeRiskLevel(detections);
         String summary = switch (riskLevel) {
-            case "RED" -> "고위험 소견이 감지되어 빠른 치과 진료가 필요합니다.";
-            case "YELLOW" -> "주의가 필요한 소견이 있어 조기 검진을 권장합니다.";
-            default -> "현재 고위험 신호는 크지 않지만 정기 관리를 유지하세요.";
+            case "RED" -> "High-risk findings were detected. Prompt in-person dental consultation is recommended.";
+            case "YELLOW" -> "Findings requiring attention were detected. Early dental check-up is recommended.";
+            default -> "No strong high-risk signal was detected. Maintain regular oral care and periodic check-ups.";
         };
 
         List<AnalyzeResponse.Finding> findings = buildFindings(detections, ragSources);
@@ -175,14 +186,14 @@ public class AiAnalyzeLlmService {
                 .summary(summary)
                 .findings(findings)
                 .careGuide(List.of(
-                        "하루 2~3회, 불소 치약으로 양치하세요.",
-                        "치실/치간칫솔을 하루 1회 사용하세요.",
-                        "당류 섭취를 줄이고 식후 구강 관리를 하세요.",
-                        "증상이 지속되면 치과 진료를 예약하세요."
+                        "Brush with fluoride toothpaste 2-3 times daily.",
+                        "Use floss or interdental brush once per day.",
+                        "Reduce sugar intake and rinse after meals.",
+                        "If symptoms persist, schedule a dental visit promptly."
                 ))
                 .disclaimer(List.of(
-                        "이 결과는 AI 보조 스크리닝 정보이며 의학적 진단을 대체하지 않습니다.",
-                        "통증, 출혈, 궤양, 부종이 지속되면 전문 진료를 받으세요."
+                        "This result is AI-assisted screening information and does not replace medical diagnosis.",
+                        "If pain, bleeding, ulceration, or swelling persists, seek professional care."
                 ))
                 .build();
     }
@@ -193,8 +204,8 @@ public class AiAnalyzeLlmService {
     ) {
         if (detections == null || detections.isEmpty()) {
             return List.of(AnalyzeResponse.Finding.builder()
-                    .title("특이 소견 없음")
-                    .detail("현재 이미지에서 뚜렷한 이상 소견은 확인되지 않았습니다.")
+                    .title("No significant finding")
+                    .detail("No clear high-risk pattern was detected in the submitted image.")
                     .evidence(defaultEvidence(ragSources))
                     .build());
         }
@@ -232,19 +243,19 @@ public class AiAnalyzeLlmService {
 
     private String detailFor(String label, int count, double maxConfidence) {
         return switch (label) {
-            case "oral_cancer" -> "구강 병변 의심 소견이 있습니다 (" + count + "개, 최대 신뢰도 " + String.format(Locale.ROOT, "%.2f", maxConfidence) + ").";
-            case "caries" -> "충치 의심 소견이 있습니다 (" + count + "개, 최대 신뢰도 " + String.format(Locale.ROOT, "%.2f", maxConfidence) + ").";
-            case "tartar" -> "치석/플라그 축적 소견이 있습니다 (" + count + "개, 최대 신뢰도 " + String.format(Locale.ROOT, "%.2f", maxConfidence) + ").";
-            default -> "중요 이상 소견이 감지되지 않았습니다.";
+            case "oral_cancer" -> "Possible oral lesion signal detected (" + count + " area(s), max confidence " + String.format(Locale.ROOT, "%.2f", maxConfidence) + ").";
+            case "caries" -> "Possible caries signal detected (" + count + " area(s), max confidence " + String.format(Locale.ROOT, "%.2f", maxConfidence) + ").";
+            case "tartar" -> "Possible tartar/plaque signal detected (" + count + " area(s), max confidence " + String.format(Locale.ROOT, "%.2f", maxConfidence) + ").";
+            default -> "No major abnormal finding was detected.";
         };
     }
 
     private String titleFor(String label) {
         return switch (label) {
-            case "oral_cancer" -> "구강 병변 의심";
-            case "caries" -> "충치 의심";
-            case "tartar" -> "치석 의심";
-            default -> "정상";
+            case "oral_cancer" -> "Possible Oral Lesion";
+            case "caries" -> "Possible Caries";
+            case "tartar" -> "Possible Tartar";
+            default -> "Normal";
         };
     }
 
