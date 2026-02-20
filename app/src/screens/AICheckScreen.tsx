@@ -67,6 +67,64 @@ const FOXIT_PACKAGE_CANDIDATES = [
   "com.foxit.mobile.pdf",
 ];
 
+const K = {
+  title: "AI Analysis",
+  subtitle: "Upload an image to see AI analysis results.",
+  useCamera: "Take Photo",
+  chooseGallery: "From Gallery",
+  quickCheck: "Quick Check",
+  quickChecking: "Quick Checking...",
+  aiCheck: "AI Analysis",
+  aiChecking: "Analyzing AI...",
+  processing: "Processing...",
+  needPermission: "Permission Required",
+  needCameraPermission: "Camera permission is required.",
+  needGalleryPermission: "Gallery permission is required.",
+  loadImageFail: "Failed to load image.",
+  requestFail: "Request failed",
+  networkError: "Network Error",
+  timeoutQuick: "Quick check timed out.",
+  timeoutAnalyze: "AI analysis timed out.",
+  noPdfUrl: "No PDF available for download.",
+  invalidPdf: "Downloaded PDF is empty or corrupted.",
+  nonPdfResponse: "Download response is not a valid PDF.",
+  downloadFail: "PDF download failed.",
+  openPdfDialog: "Open PDF Report",
+  notice: "Notice",
+  error: "Error",
+  info: "Notice",
+  savedPdf: "PDF saved to internal storage.",
+  savedPath: "Save path",
+  foxitMissingDefault: "Foxit app not found, opened with default PDF app.",
+  foxitMissingShare: "Foxit app not found, opened via share menu.",
+  quickFailTitle: "Quick Check Failed",
+  quickDoneTitle: "Quick Check Complete",
+  quickDoneDesc: "Run AI Analysis for detailed results.",
+  aiFailTitle: "AI Analysis Failed",
+  riskSummary: "Risk Summary",
+  riskLabel: "Risk Level",
+  noSummary: "Dental check-up recommended.",
+  issuesTitle: "Findings",
+  noIssue: "No significant issues found.",
+  reason: "Reason",
+  action: "Action",
+  todoTitle: "Recommended Actions",
+  clinicTitle: "Hospital Visit Needed?",
+  level: "Visit Status",
+  downloadPdf: "PDF Download",
+  downloadingPdf: "Downloading...",
+  riskHigh: "High (Red)",
+  riskMedium: "Medium (Yellow)",
+  riskLow: "Low (Green)",
+};
+
+const fallbackActions = [
+  "Brush gently 2-3 times a day for 2 minutes starting today.",
+  "Use floss once before bed and rinse with water after use.",
+  "Eat sugary foods only during meals and drink water afterwards.",
+  "Schedule a dental check-up within a week.",
+];
+
 function resolvePdfDownloadUrl(rawUrl: string): string {
   if (!__DEV__ || Platform.OS !== "android") return rawUrl;
 
@@ -87,24 +145,6 @@ function resolvePdfDownloadUrl(rawUrl: string): string {
     return pdf.toString();
   } catch {
     return hostRewritten;
-  }
-}
-
-const fallbackActions = [
-  "Brush gently 2-3 times a day for 2 minutes starting today.",
-  "Use floss once before bed and rinse with water after use.",
-  "Eat sugary foods only during meals and drink water afterwards.",
-  "Schedule a dental check-up within a week.",
-];
-
-function riskUi(level?: "GREEN" | "YELLOW" | "RED"): RiskUi {
-  switch (level) {
-    case "RED":
-      return { text: "High (Red)", badgeClassName: "bg-red-100 text-red-700" };
-    case "YELLOW":
-      return { text: "Medium (Yellow)", badgeClassName: "bg-amber-100 text-amber-700" };
-    default:
-      return { text: "Low (Green)", badgeClassName: "bg-emerald-100 text-emerald-700" };
   }
 }
 
@@ -130,7 +170,7 @@ async function openDownloadedPdf(uri: string): Promise<"foxit" | "default" | "sh
   if (Platform.OS !== "android") {
     await Sharing.shareAsync(uri, {
       mimeType: "application/pdf",
-      dialogTitle: "Open PDF Report",
+      dialogTitle: K.openPdfDialog,
       UTI: "com.adobe.pdf",
     });
     return "shared";
@@ -142,10 +182,21 @@ async function openDownloadedPdf(uri: string): Promise<"foxit" | "default" | "sh
 
   await Sharing.shareAsync(uri, {
     mimeType: "application/pdf",
-    dialogTitle: "Open PDF Report",
+    dialogTitle: K.openPdfDialog,
     UTI: "com.adobe.pdf",
   });
   return "shared";
+}
+
+function riskUi(level?: "GREEN" | "YELLOW" | "RED"): RiskUi {
+  switch (level) {
+    case "RED":
+      return { text: K.riskHigh, badgeClassName: "bg-red-100 text-red-700" };
+    case "YELLOW":
+      return { text: K.riskMedium, badgeClassName: "bg-amber-100 text-amber-700" };
+    default:
+      return { text: K.riskLow, badgeClassName: "bg-emerald-100 text-emerald-700" };
+  }
 }
 
 function problemFromLabel(label: Detection["label"]): ProblemCard | null {
@@ -153,20 +204,20 @@ function problemFromLabel(label: Detection["label"]): ProblemCard | null {
     case "caries":
       return {
         title: "Suspected Cavity",
-        reason: "There is an area that looks like damage on the tooth surface.",
-        action: "Reduce sugary foods and sodas, and schedule a dental check-up.",
+        reason: "The model detected an area where a cavity is possible.",
+        action: "Reduce sugar intake and book a dental check-up.",
       };
     case "tartar":
       return {
-        title: "Suspected Tartar/Gum Irritation",
-        reason: "An area that could irritate the gums is visible.",
-        action: "Brush gently and consult about scaling.",
+        title: "Suspected Tartar/Plaque",
+        reason: "Deposits near the gumline were detected.",
+        action: "Scaling and regular cleanings are recommended.",
       };
     case "oral_cancer":
       return {
-        title: "Suspected Abnormal Area",
-        reason: "An area needing verification is visible on the oral mucosa.",
-        action: "Visit a dentist soon for accurate confirmation.",
+        title: "Suspected Oral Lesion",
+        reason: "An abnormal area was detected that needs clinical verification.",
+        action: "See a dentist or oral surgeon as soon as possible.",
       };
     default:
       return null;
@@ -182,8 +233,8 @@ function buildProblems(detections: Detection[], findings: AnalyzeFinding[]): Pro
 
   return findings.slice(0, 3).map((f, idx) => ({
     title: f.title || `Finding ${idx + 1}`,
-    reason: f.detail || "An area needing verification is visible.",
-    action: "Confirm with a dental check-up rather than self-judgment.",
+    reason: f.detail || "Further verification is recommended.",
+    action: "Get an accurate diagnosis with professional medical care.",
   }));
 }
 
@@ -198,20 +249,20 @@ function visitNeed(level?: "GREEN" | "YELLOW" | "RED", detections: Detection[] =
   if (hasOralFinding) {
     return {
       level: "Urgent",
-      reason: "An abnormal area is suspected, requiring quick medical confirmation.",
+      reason: "Suspected oral lesion found; prompt in-person consultation is necessary.",
     };
   }
 
   if (level === "RED" || level === "YELLOW") {
     return {
       level: "Recommended",
-      reason: "A check-up is recommended soon as there is an area needing verification.",
+      reason: "Based on detected findings, a dental visit is recommended.",
     };
   }
 
   return {
     level: "Observe",
-    reason: "Few distinct abnormal signals, but maintain regular check-ups.",
+    reason: "No high-risk signals detected, but maintain regular check-ups.",
   };
 }
 
@@ -236,7 +287,7 @@ export default function AICheckScreen() {
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
-      Alert.alert("Permission Required", useCamera ? "Camera permission is required." : "Gallery permission is required.");
+      Alert.alert(K.needPermission, useCamera ? K.needCameraPermission : K.needGalleryPermission);
       return;
     }
 
@@ -248,7 +299,7 @@ export default function AICheckScreen() {
 
     const asset = picked.assets[0];
     if (!asset?.uri) {
-      Alert.alert("Error", "Failed to load image.");
+      Alert.alert(K.error, K.loadImageFail);
       return;
     }
 
@@ -292,13 +343,13 @@ export default function AICheckScreen() {
       const parsed = text ? (JSON.parse(text) as QuickResponse) : null;
       if (!res.ok || !parsed) {
         setQuickState("error");
-        setQuickError(`Request failed (HTTP ${res.status})`);
+        setQuickError(`${K.requestFail} (HTTP ${res.status})`);
         return;
       }
       setQuickResult(parsed);
       setQuickState("success");
     } catch (e) {
-      const message = e instanceof Error && e.name === "AbortError" ? "Quick check timed out." : e instanceof Error ? e.message : "Network Error";
+      const message = e instanceof Error && e.name === "AbortError" ? K.timeoutQuick : e instanceof Error ? e.message : K.networkError;
       setQuickState("error");
       setQuickError(message);
     } finally {
@@ -326,13 +377,13 @@ export default function AICheckScreen() {
       const parsed = text ? (JSON.parse(text) as AnalyzeResponse) : null;
       if (!res.ok || !parsed) {
         setAnalyzeState("error");
-        setAnalyzeError(`Request failed (HTTP ${res.status})`);
+        setAnalyzeError(`${K.requestFail} (HTTP ${res.status})`);
         return;
       }
       setAnalyzeResult(parsed);
       setAnalyzeState("success");
     } catch (e) {
-      const message = e instanceof Error && e.name === "AbortError" ? "AI analysis timed out." : e instanceof Error ? e.message : "Network Error";
+      const message = e instanceof Error && e.name === "AbortError" ? K.timeoutAnalyze : e instanceof Error ? e.message : K.networkError;
       setAnalyzeState("error");
       setAnalyzeError(message);
     } finally {
@@ -345,7 +396,7 @@ export default function AICheckScreen() {
 
     const pdfUrl = analyzeResult?.pdfUrl?.trim();
     if (!pdfUrl) {
-      Alert.alert("Notice", "No PDF available for download.");
+      Alert.alert(K.info, K.noPdfUrl);
       return;
     }
 
@@ -359,7 +410,7 @@ export default function AICheckScreen() {
       const info = (await FileSystemLegacy.getInfoAsync(result.uri)) as FileSystemLegacy.FileInfo;
       const fileSize = "size" in info && typeof info.size === "number" ? info.size : 0;
       if (!info.exists || fileSize < 512) {
-        throw new Error("Downloaded PDF is empty or corrupted.");
+        throw new Error(K.invalidPdf);
       }
 
       const headBase64 = await FileSystemLegacy.readAsStringAsync(result.uri, {
@@ -368,20 +419,20 @@ export default function AICheckScreen() {
         length: 16,
       });
       if (!headBase64.startsWith("JVBERi0")) {
-        throw new Error("Download response is not a valid PDF.");
+        throw new Error(K.nonPdfResponse);
       }
 
       const openedBy = await openDownloadedPdf(result.uri);
       if (openedBy === "default") {
-        Alert.alert("Notice", `PDF saved.\nPath: ${result.uri}\nOpened with default PDF app.`);
+        Alert.alert(K.notice, `${K.savedPdf}\n${K.savedPath}: ${result.uri}\n${K.foxitMissingDefault}`);
       } else if (openedBy === "shared") {
-        Alert.alert("Notice", `PDF saved.\nPath: ${result.uri}\nOpened via share menu.`);
+        Alert.alert(K.notice, `${K.savedPdf}\n${K.savedPath}: ${result.uri}\n${K.foxitMissingShare}`);
       } else {
-        Alert.alert("Notice", `PDF saved to ${result.uri}`);
+        Alert.alert(K.notice, `${K.savedPdf}\n${K.savedPath}: ${result.uri}`);
       }
     } catch (e) {
-      const message = e instanceof Error ? e.message : "PDF download failed.";
-      Alert.alert("Error", `${message}\nURL: ${downloadUrl}`);
+      const message = e instanceof Error ? e.message : K.downloadFail;
+      Alert.alert(K.error, `${message}\nURL: ${downloadUrl}`);
     } finally {
       setIsDownloadingPdf(false);
     }
@@ -405,18 +456,18 @@ export default function AICheckScreen() {
     <View className="flex-1 bg-slate-50">
       <SafeAreaView className="flex-1">
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
-          <Text className="text-2xl font-bold text-slate-800">AI Analysis</Text>
-          <Text className="text-sm text-slate-500 mt-2">Upload an image to see AI analysis results.</Text>
+          <Text className="text-2xl font-bold text-slate-800">{K.title}</Text>
+          <Text className="text-sm text-slate-500 mt-2">{K.subtitle}</Text>
 
           <View className="flex-row gap-3 mt-6">
             <TouchableOpacity onPress={() => pickImage(true)} className="flex-1 bg-white rounded-2xl p-4 border border-slate-200" activeOpacity={0.85}>
               <Camera size={24} color="#0ea5e9" />
-              <Text className="mt-2 font-semibold text-slate-700">Take Photo</Text>
+              <Text className="mt-2 font-semibold text-slate-700">{K.useCamera}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => pickImage(false)} className="flex-1 bg-white rounded-2xl p-4 border border-slate-200" activeOpacity={0.85}>
               <ImagePlus size={24} color="#0ea5e9" />
-              <Text className="mt-2 font-semibold text-slate-700">From Gallery</Text>
+              <Text className="mt-2 font-semibold text-slate-700">{K.chooseGallery}</Text>
             </TouchableOpacity>
           </View>
 
@@ -428,37 +479,37 @@ export default function AICheckScreen() {
 
           <View className="mt-6 gap-3">
             <Button className="rounded-xl" onPress={runQuick} disabled={!canRunQuick}>
-              <Text className="text-white font-semibold">{quickState === "loading" ? "Quick Checking..." : "Quick Check"}</Text>
+              <Text className="text-white font-semibold">{quickState === "loading" ? K.quickChecking : K.quickCheck}</Text>
             </Button>
             <Button className="rounded-xl" onPress={runAnalyze} disabled={!canRunAnalyze}>
-              <Text className="text-white font-semibold">{analyzeState === "loading" ? "Analyzing AI..." : "AI Analysis"}</Text>
+              <Text className="text-white font-semibold">{analyzeState === "loading" ? K.aiChecking : K.aiCheck}</Text>
             </Button>
           </View>
 
           {(quickState === "loading" || analyzeState === "loading") && (
             <View className="mt-6 bg-white border border-slate-200 rounded-2xl p-4 flex-row items-center gap-3">
               <ActivityIndicator />
-              <Text className="text-slate-700">Processing...</Text>
+              <Text className="text-slate-700">{K.processing}</Text>
             </View>
           )}
 
           {quickState === "error" && (
             <View className="mt-6 bg-white border border-red-200 rounded-2xl p-4">
-              <Text className="text-red-700 font-semibold">Quick Check Failed</Text>
+              <Text className="text-red-700 font-semibold">{K.quickFailTitle}</Text>
               <Text className="text-red-600 mt-2 text-sm">{quickError}</Text>
             </View>
           )}
 
           {quickState === "success" && quickResult && !analyzeResult && (
             <View className="mt-6 bg-white border border-slate-200 rounded-2xl p-4">
-              <Text className="text-slate-800 font-semibold">Quick Check Complete</Text>
-              <Text className="text-slate-600 mt-2 text-sm">Run AI Analysis for detailed results.</Text>
+              <Text className="text-slate-800 font-semibold">{K.quickDoneTitle}</Text>
+              <Text className="text-slate-600 mt-2 text-sm">{K.quickDoneDesc}</Text>
             </View>
           )}
 
           {analyzeState === "error" && (
             <View className="mt-6 bg-white border border-red-200 rounded-2xl p-4">
-              <Text className="text-red-700 font-semibold">AI Analysis Failed</Text>
+              <Text className="text-red-700 font-semibold">{K.aiFailTitle}</Text>
               <Text className="text-red-600 mt-2 text-sm">{analyzeError}</Text>
             </View>
           )}
@@ -466,42 +517,42 @@ export default function AICheckScreen() {
           {analyzeResult?.llmResult && (
             <View className="mt-6 bg-white border border-slate-200 rounded-2xl p-4 gap-4">
               <View className="gap-2">
-                <Text className="text-lg font-bold text-slate-800">Risk Summary</Text>
+                <Text className="text-lg font-bold text-slate-800">{K.riskSummary}</Text>
                 <View className="flex-row items-center gap-2">
-                  <Text className="text-slate-700">Risk Level:</Text>
+                  <Text className="text-slate-700">{K.riskLabel}</Text>
                   <Text className={`px-2 py-1 rounded-full text-xs font-semibold ${risk.badgeClassName}`}>{risk.text}</Text>
                 </View>
-                <Text className="text-slate-700">{llm?.summary?.trim() || "An area needing verification is visible, dental check-up recommended."}</Text>
+                <Text className="text-slate-700">{llm?.summary?.trim() || K.noSummary}</Text>
               </View>
 
               <View className="gap-2">
-                <Text className="text-lg font-bold text-slate-800">Findings</Text>
-                {problems.length === 0 && <Text className="text-slate-700">No significant issues found.</Text>}
+                <Text className="text-lg font-bold text-slate-800">{K.issuesTitle}</Text>
+                {problems.length === 0 && <Text className="text-slate-700">{K.noIssue}</Text>}
                 {problems.map((p, idx) => (
                   <View key={`problem-${idx}`} className="rounded-xl bg-slate-50 p-3">
                     <Text className="text-slate-800 font-semibold">{`Finding ${idx + 1}: ${p.title}`}</Text>
-                    <Text className="text-slate-700 text-sm mt-1">{`Reason: ${p.reason}`}</Text>
-                    <Text className="text-slate-700 text-sm mt-1">{`Action: ${p.action}`}</Text>
+                    <Text className="text-slate-700 text-sm mt-1">{`${K.reason}: ${p.reason}`}</Text>
+                    <Text className="text-slate-700 text-sm mt-1">{`${K.action}: ${p.action}`}</Text>
                   </View>
                 ))}
               </View>
 
               <View className="gap-2">
-                <Text className="text-lg font-bold text-slate-800">Recommended Actions</Text>
+                <Text className="text-lg font-bold text-slate-800">{K.todoTitle}</Text>
                 {actions.map((line, idx) => (
                   <Text key={`action-${idx}`} className="text-slate-700">{`${idx + 1}. ${line}`}</Text>
                 ))}
               </View>
 
               <View className="gap-2">
-                <Text className="text-lg font-bold text-slate-800">Hospital Visit Needed?</Text>
-                <Text className="text-slate-800 font-semibold">{`Visit Status: ${visit.level}`}</Text>
-                <Text className="text-slate-700">{`Reason: ${visit.reason}`}</Text>
+                <Text className="text-lg font-bold text-slate-800">{K.clinicTitle}</Text>
+                <Text className="text-slate-800 font-semibold">{`${K.level}: ${visit.level}`}</Text>
+                <Text className="text-slate-700">{`${K.reason}: ${visit.reason}`}</Text>
               </View>
 
               <View className="pt-2">
                 <Button className="rounded-xl" onPress={downloadPdf} disabled={!canDownloadPdf}>
-                  <Text className="text-white font-semibold">{isDownloadingPdf ? "Downloading..." : "PDF Download"}</Text>
+                  <Text className="text-white font-semibold">{isDownloadingPdf ? K.downloadingPdf : K.downloadPdf}</Text>
                 </Button>
               </View>
             </View>
